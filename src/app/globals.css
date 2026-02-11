@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Primary Colors */
+  --color-primary: #8808CC;
+  --color-primary-dark: #39005E;
+  --color-primary-light: #a840e0;
+
+  /* Secondary Colors */
+  --color-secondary: #9AFFA3;
+  --color-secondary-dark: #1DBA2B;
+
+  /* Neutrals */
+  --color-background: #ffffff;
+  --color-foreground: #0f0a18;
+  --color-muted: #f5f3f7;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e1eb;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f0a18;
+
+  /* Dark mode overrides */
+  --color-dark-bg: #0a0614;
+  --color-dark-surface: #140e20;
+  --color-dark-border: #2a1f3d;
+  --color-dark-muted: #1c1528;
+
+  /* Semantic Colors */
+  --color-success: #1DBA2B;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #8808CC;
+
+  /* Sidebar */
+  --color-sidebar: #0a0614;
+  --color-sidebar-hover: #1c1528;
+  --color-sidebar-active: #39005E;
+
+  /* Font families */
+  --font-sans: "Aeonik", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Baru Sans", "Aeonik", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base styles */
+* {
+  border-color: var(--color-border);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(136, 8, 204, 0.2);
+  color: var(--color-primary-dark);
+}
+
+/* Gradient utilities */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #0a0614 0%, #39005E 50%, #8808CC 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(136, 8, 204, 0.3), 0 0 60px rgba(136, 8, 204, 0.1);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 20px rgba(29, 186, 43, 0.3), 0 0 60px rgba(29, 186, 43, 0.1);
 }
