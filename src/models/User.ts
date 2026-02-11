@@ -11,6 +11,8 @@ export interface IUser extends Document {
   hasPaidSignup: boolean;
   signupPaymentRef: string | null;
   isEmailVerified: boolean;
+  emailVerificationToken: string | null;
+  emailVerificationExpires: Date | null;
   isActive: boolean;
   telegramId: string | null;
   telegramLinked: boolean;
@@ -48,6 +50,8 @@ const UserSchema = new Schema<IUser>(
     hasPaidSignup: { type: Boolean, default: false },
     signupPaymentRef: { type: String, default: null },
     isEmailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String, default: null },
+    emailVerificationExpires: { type: Date, default: null },
     isActive: { type: Boolean, default: false }, // Inactive until payment
     telegramId: { type: String, default: null },
     telegramLinked: { type: Boolean, default: false },

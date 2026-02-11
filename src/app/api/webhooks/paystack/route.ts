@@ -6,6 +6,7 @@ import Referral from "@/models/Referral";
 import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { sendMessage } from "@/lib/telegram";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,6 +62,9 @@ export async function POST(req: NextRequest) {
               { status: "active" }
             );
           }
+
+          // Send welcome email
+          sendWelcomeEmail(user.email, user.firstName).catch(() => {});
 
           // Notify via Telegram if linked
           if (user.telegramId) {

@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  GoogleReCaptchaProvider,
+  useGoogleReCaptcha,
+} from "react-google-recaptcha-v3";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +39,12 @@ function RegisterForm() {
     referralCode: referralCode,
   });
   const [error, setError] = useState("");
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
+  const getCaptchaToken = useCallback(async () => {
+    if (!executeRecaptcha) return "";
+    return executeRecaptcha("register");
+  }, [executeRecaptcha]);
 
   async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,10 +61,12 @@ function RegisterForm() {
 
     setIsLoading(true);
     try {
+      const captchaToken = await getCaptchaToken();
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, captchaToken }),
       });
 
       const data = await res.json();
@@ -281,7 +293,29 @@ function RegisterForm() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://policies.google.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Terms of Service
+              </a>{" "}
+              apply.
+            </p>
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
@@ -309,7 +343,17 @@ function RegisterForm() {
               Pay the one-time signup fee to activate your affiliate account.
             </p>
 
-            <div className="mt-8 rounded-2xl border border-border bg-card p-6 space-y-6">
+            {/* Email verification notice */}
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 px-4 py-3">
+              <Mail className="h-5 w-5 text-secondary-dark flex-shrink-0" />
+              <p className="text-sm text-foreground">
+                A verification email has been sent to{" "}
+                <span className="font-medium">{formData.email}</span>. Please
+                check your inbox and verify your email.
+              </p>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-border bg-card p-6 space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Account</span>
@@ -409,10 +453,25 @@ function RegisterForm() {
   );
 }
 
-export default function RegisterPage() {
+function RegisterFormWrapper() {
   return (
     <Suspense>
       <RegisterForm />
     </Suspense>
+  );
+}
+
+export default function RegisterPage() {
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+  if (!siteKey) {
+    // Fallback: render without reCAPTCHA provider if key not set
+    return <RegisterFormWrapper />;
+  }
+
+  return (
+    <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
+      <RegisterFormWrapper />
+    </GoogleReCaptchaProvider>
   );
 }

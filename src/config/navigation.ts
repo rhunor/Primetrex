@@ -4,6 +4,9 @@ import {
   TrendingUp,
   Wallet,
   Settings,
+  ShieldCheck,
+  CreditCard,
+  ArrowDownUp,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,4 +29,11 @@ export const dashboardNav: NavItem[] = [
   { label: "Earnings", href: "/dashboard/earnings", icon: TrendingUp },
   { label: "Withdrawals", href: "/dashboard/withdrawals", icon: Wallet },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
+];
+
+export const adminNav: NavItem[] = [
+  { label: "Overview", href: "/admin", icon: ShieldCheck },
+  { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Transactions", href: "/admin/transactions", icon: CreditCard },
+  { label: "Withdrawals", href: "/admin/withdrawals", icon: ArrowDownUp },
 ];
