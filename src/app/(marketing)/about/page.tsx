@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import {
   Target,
   Eye,
@@ -12,6 +13,9 @@ import {
   Layers,
   Heart,
   ArrowRight,
+  TrendingUp,
+  Award,
+  Users,
 } from "lucide-react";
 
 const values = [
@@ -208,6 +212,103 @@ export default function AboutPage() {
                 </div>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CEO / Founder */}
+      <section className="py-24 md:py-32 bg-muted/50">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Photo */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
+              <div className="absolute -inset-4 bg-primary/10 rounded-3xl blur-3xl" />
+              <div className="relative aspect-4/5 max-w-md mx-auto lg:mx-0 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl bg-muted">
+                {/* Placeholder for CEO photo — replace src with actual photo */}
+                <Image
+                  src="/images/ceo-placeholder.jpg"
+                  alt="Caleb Nwanneka — Founder & CEO of Primetrex"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+                {/* Fallback overlay when image is missing */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-to-b from-primary-dark/80 to-primary/60 text-white">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 mb-4">
+                    <span className="text-4xl font-bold font-heading">CN</span>
+                  </div>
+                  <p className="text-lg font-semibold font-heading">Caleb Nwanneka</p>
+                  <p className="text-sm text-white/60">Founder & CEO</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Bio */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Meet the Founder
+              </span>
+              <h2 className="mt-3 text-3xl font-bold font-heading text-foreground md:text-4xl">
+                Caleb Nwanneka
+              </h2>
+              <p className="text-lg text-primary font-medium mt-1">
+                Founder & CEO, Primetrex
+              </p>
+
+              <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
+                <p>
+                  Caleb Nwanneka is a highly profitable and respected forex trader from
+                  Nigeria who has dedicated his career to helping everyday people build
+                  real wealth through the financial markets. With years of experience
+                  navigating the complexities of forex, stocks, and cryptocurrency
+                  trading, Caleb has earned a reputation as one of the most consistent
+                  and transparent traders in the Nigerian trading community.
+                </p>
+                <p>
+                  What sets Caleb apart is not just his personal trading success — it is
+                  his unwavering commitment to lifting others up. He has personally
+                  mentored and empowered hundreds of individuals, many of whom had zero
+                  financial market experience, helping them generate consistent income
+                  through structured copy trading and affiliate systems.
+                </p>
+                <p>
+                  Caleb founded Primetrex with a clear vision: to build a platform where
+                  anyone — regardless of their trading knowledge — can participate in the
+                  financial markets and earn recurring income. His philosophy is simple:
+                  <span className="text-foreground font-medium">
+                    {" "}let the experts trade, and let the people build the business.
+                  </span>
+                </p>
+              </div>
+
+              {/* Quick stats */}
+              <div className="mt-8 grid grid-cols-3 gap-6">
+                {[
+                  { icon: TrendingUp, value: "5+ Years", label: "Trading Experience" },
+                  { icon: Users, value: "500+", label: "Lives Changed" },
+                  { icon: Award, value: "Top 1%", label: "Trader Ranking" },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <stat.icon className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold font-heading text-foreground">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

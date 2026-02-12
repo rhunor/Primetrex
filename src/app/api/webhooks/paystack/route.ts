@@ -7,6 +7,12 @@ import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { sendMessage } from "@/lib/telegram";
 import { sendWelcomeEmail } from "@/lib/email";
+import {
+  notifyWelcome,
+  notifyCommissionEarned,
+  notifyReferralSignup,
+  notifyWithdrawalUpdate,
+} from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,6 +72,17 @@ export async function POST(req: NextRequest) {
           // Send welcome email
           sendWelcomeEmail(user.email, user.firstName).catch(() => {});
 
+          // In-app welcome notification
+          notifyWelcome(user._id, user.firstName).catch(() => {});
+
+          // Notify referrer that their referral signed up
+          if (user.referredBy) {
+            notifyReferralSignup(
+              user.referredBy,
+              `${user.firstName} ${user.lastName}`
+            ).catch(() => {});
+          }
+
           // Notify via Telegram if linked
           if (user.telegramId) {
             await sendMessage(
@@ -106,6 +123,14 @@ export async function POST(req: NextRequest) {
               description: `Tier 1 commission from ${subscriber.firstName} ${subscriber.lastName}`,
             });
 
+            // In-app notification for Tier 1 commission
+            notifyCommissionEarned(
+              subscriber.referredBy,
+              tier1Amount,
+              1,
+              `${subscriber.firstName} ${subscriber.lastName}`
+            ).catch(() => {});
+
             // Notify Tier 1 referrer via Telegram
             const tier1Referrer = await User.findById(subscriber.referredBy);
             if (tier1Referrer?.telegramId) {
@@ -131,6 +156,14 @@ export async function POST(req: NextRequest) {
                 paymentReference: reference,
                 description: `Tier 2 commission from ${subscriber.firstName} ${subscriber.lastName}`,
               });
+
+              // In-app notification for Tier 2 commission
+              notifyCommissionEarned(
+                tier1Referrer.referredBy,
+                tier2Amount,
+                2,
+                `${subscriber.firstName} ${subscriber.lastName}`
+              ).catch(() => {});
 
               // Notify Tier 2 referrer via Telegram
               const tier2Referrer = await User.findById(
@@ -173,6 +206,13 @@ export async function POST(req: NextRequest) {
         withdrawal.processedAt = new Date();
         await withdrawal.save();
 
+        // In-app notification
+        notifyWithdrawalUpdate(
+          withdrawal.userId,
+          "completed",
+          withdrawal.amount
+        ).catch(() => {});
+
         // Notify user via Telegram
         const user = await User.findById(withdrawal.userId);
         if (user?.telegramId) {
@@ -199,6 +239,14 @@ export async function POST(req: NextRequest) {
         withdrawal.rejectionReason = "Transfer failed. Please try again.";
         await withdrawal.save();
 
+        // In-app notification
+        notifyWithdrawalUpdate(
+          withdrawal.userId,
+          "failed",
+          withdrawal.amount,
+          "Transfer failed. Please try again."
+        ).catch(() => {});
+
         // Notify user via Telegram
         const user = await User.findById(withdrawal.userId);
         if (user?.telegramId) {
@@ -223,6 +271,14 @@ export async function POST(req: NextRequest) {
         withdrawal.status = "failed";
         withdrawal.rejectionReason = "Transfer was reversed by the bank.";
         await withdrawal.save();
+
+        // In-app notification
+        notifyWithdrawalUpdate(
+          withdrawal.userId,
+          "failed",
+          withdrawal.amount,
+          "Transfer was reversed by the bank."
+        ).catch(() => {});
 
         const user = await User.findById(withdrawal.userId);
         if (user?.telegramId) {
