@@ -15,7 +15,7 @@ const registerSchema = z.object({
   password: z.string().min(8),
   confirmPassword: z.string(),
   referralCode: z.string().optional(),
-  captchaToken: z.string().min(1, "CAPTCHA verification required"),
+  captchaToken: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -37,23 +37,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify reCAPTCHA token
+    // Verify reCAPTCHA token (non-blocking on failure)
     const captchaSecret = process.env.RECAPTCHA_SECRET_KEY;
-    if (captchaSecret) {
-      const captchaRes = await fetch(
-        "https://www.google.com/recaptcha/api/siteverify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `secret=${captchaSecret}&response=${parsed.data.captchaToken}`,
-        }
-      );
-      const captchaData = await captchaRes.json();
-      if (!captchaData.success || captchaData.score < 0.5) {
-        return NextResponse.json(
-          { error: "CAPTCHA verification failed. Please try again." },
-          { status: 400 }
+    if (captchaSecret && parsed.data.captchaToken) {
+      try {
+        const captchaRes = await fetch(
+          "https://www.google.com/recaptcha/api/siteverify",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `secret=${captchaSecret}&response=${parsed.data.captchaToken}`,
+            signal: AbortSignal.timeout(5000),
+          }
         );
+        const captchaData = await captchaRes.json();
+        if (captchaData.success === true && captchaData.score < 0.5) {
+          return NextResponse.json(
+            { error: "CAPTCHA verification failed. Please try again." },
+            { status: 400 }
+          );
+        }
+      } catch (err) {
+        // Log but don't block registration if captcha service is unreachable
+        console.warn("reCAPTCHA verification skipped (service error):", err);
       }
     }
 

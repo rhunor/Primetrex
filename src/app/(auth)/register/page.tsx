@@ -42,8 +42,12 @@ function RegisterForm() {
   const { executeRecaptcha } = useGoogleReCaptcha();
 
   const getCaptchaToken = useCallback(async () => {
-    if (!executeRecaptcha) return "";
-    return executeRecaptcha("register");
+    if (!executeRecaptcha) return undefined;
+    try {
+      return await executeRecaptcha("register");
+    } catch {
+      return undefined;
+    }
   }, [executeRecaptcha]);
 
   async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
