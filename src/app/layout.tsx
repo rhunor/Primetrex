@@ -18,6 +18,10 @@ export const metadata: Metadata = {
     "forex",
     "passive income",
   ],
+  icons: {
+    icon: "/favicon/SVG/Vector-1.svg",
+    apple: "/favicon/PNG/Vector-1.png",
+  },
 };
 
 export default function RootLayout({

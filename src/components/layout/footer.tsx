@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { siteConfig } from "@/config/site";
 
 const footerLinks = {
@@ -25,12 +26,12 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="text-xl font-bold text-white font-heading">P</span>
-              </div>
-              <span className="text-xl font-bold font-heading">Primetrex</span>
-            </div>
+            <Image
+              src="/logos/SVG/light-comb.svg"
+              alt="Primetrex"
+              width={160}
+              height={40}
+            />
             <p className="text-sm text-white/60 leading-relaxed max-w-xs">
               {siteConfig.description}
             </p>

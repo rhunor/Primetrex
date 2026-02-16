@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -11,13 +12,14 @@ export default function AuthLayout({
       <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-20">
         <div className="mx-auto w-full max-w-md">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 mb-10">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
-              <span className="text-xl font-bold text-white font-heading">P</span>
-            </div>
-            <span className="text-xl font-bold font-heading text-primary-dark">
-              Primetrex
-            </span>
+          <Link href="/" className="flex items-center mb-10">
+            <Image
+              src="/logos/SVG/dark-comb.svg"
+              alt="Primetrex"
+              width={160}
+              height={40}
+              priority
+            />
           </Link>
 
           {children}
@@ -29,8 +31,13 @@ export default function AuthLayout({
         {/* Decorative elements */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center px-12">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm mx-auto mb-8">
-              <span className="text-4xl font-bold text-white font-heading">P</span>
+            <div className="flex items-center justify-center mx-auto mb-8">
+              <Image
+                src="/logos/SVG/light-comb.svg"
+                alt="Primetrex"
+                width={200}
+                height={50}
+              />
             </div>
             <h2 className="text-3xl font-bold text-white font-heading">
               Let the Experts Trade,<br />

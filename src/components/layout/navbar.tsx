@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { publicNav } from "@/config/navigation";
-import { cn } from "@/lib/utils";
+
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,13 +21,14 @@ export function Navbar() {
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
-            <span className="text-xl font-bold text-white font-heading">P</span>
-          </div>
-          <span className="text-xl font-bold font-heading text-primary-dark">
-            Primetrex
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logos/SVG/dark-comb.svg"
+            alt="Primetrex"
+            width={160}
+            height={40}
+            priority
+          />
         </Link>
 
         {/* Desktop Nav */}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "motion/react";
@@ -20,13 +21,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center justify-between px-6 py-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-white font-heading">P</span>
-          </div>
-          <span className="text-lg font-bold font-heading text-white">
-            Primetrex
-          </span>
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/logos/SVG/light-comb.svg"
+            alt="Primetrex"
+            width={140}
+            height={36}
+          />
         </Link>
         <button
           onClick={onClose}

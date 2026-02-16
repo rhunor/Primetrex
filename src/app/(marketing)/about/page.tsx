@@ -230,22 +230,13 @@ export default function AboutPage() {
             >
               <div className="absolute -inset-4 bg-primary/10 rounded-3xl blur-3xl" />
               <div className="relative aspect-4/5 max-w-md mx-auto lg:mx-0 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl bg-muted">
-                {/* Placeholder for CEO photo — replace src with actual photo */}
                 <Image
-                  src="/images/ceo-placeholder.jpg"
+                  src="/caleb.jpg"
                   alt="Caleb Nwanneka — Founder & CEO of Primetrex"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
-                {/* Fallback overlay when image is missing */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-to-b from-primary-dark/80 to-primary/60 text-white">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 mb-4">
-                    <span className="text-4xl font-bold font-heading">CN</span>
-                  </div>
-                  <p className="text-lg font-semibold font-heading">Caleb Nwanneka</p>
-                  <p className="text-sm text-white/60">Founder & CEO</p>
-                </div>
               </div>
             </motion.div>
 

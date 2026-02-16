@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "motion/react";
@@ -21,17 +22,15 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Logo */}
       <div className="flex items-center justify-between px-6 py-6">
         <Link href="/admin" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-danger">
-            <span className="text-lg font-bold text-white font-heading">P</span>
-          </div>
-          <div>
-            <span className="text-lg font-bold font-heading text-white">
-              Primetrex
-            </span>
-            <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium">
-              Admin Panel
-            </span>
-          </div>
+          <Image
+            src="/logos/SVG/light-comb.svg"
+            alt="Primetrex"
+            width={140}
+            height={36}
+          />
+          <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium">
+            Admin
+          </span>
         </Link>
         <button
           onClick={onClose}
