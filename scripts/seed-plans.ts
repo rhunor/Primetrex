@@ -23,8 +23,8 @@ const Plan = mongoose.models.Plan || mongoose.model("Plan", PlanSchema);
 const plans = [
   {
     name: "Primetrex Standard",
-    price: 15000, // ₦15,000 first-time
-    renewalPrice: 10000, // ₦10,000 renewal
+    price: 50000, // ₦15,000 first-time
+    renewalPrice: 35000, // ₦10,000 renewal
     durationDays: 30,
     channelId: "-1003879775166", // TODO: Replace with your actual Telegram channel ID
     channelName: "Primetrex Signals",

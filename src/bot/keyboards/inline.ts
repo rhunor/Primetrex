@@ -10,6 +10,8 @@ export function mainMenuKeyboard(isAdmin: boolean): InlineKeyboard {
     .text(`${EMOJI.PAID} I've Paid`, CALLBACK.PAID)
     .row()
     .text(`${EMOJI.HELP} Help`, CALLBACK.HELP)
+    .row()
+    .text(`${EMOJI.AFFILIATE} Get Affiliate Link`, CALLBACK.AFFILIATE)
     .row();
 
   if (isAdmin) {

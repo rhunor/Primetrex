@@ -23,6 +23,7 @@ import { registerCouponHandlers } from "@/bot/handlers/coupons";
 import { registerAnalyticsHandlers } from "@/bot/handlers/analytics";
 import { registerBroadcastHandlers } from "@/bot/handlers/broadcast";
 import { registerPaymentHandlers } from "@/bot/handlers/payment";
+import { registerAffiliateHandlers } from "@/bot/handlers/affiliate";
 
 registerStartHandlers(bot);
 registerAdminHandlers(bot);
@@ -34,6 +35,27 @@ registerCouponHandlers(bot);
 registerAnalyticsHandlers(bot);
 registerBroadcastHandlers(bot);
 registerPaymentHandlers(bot);
+registerAffiliateHandlers(bot);
+
+// Set up bot commands and menu button (runs once, idempotent)
+let commandsSet = false;
+async function setupBotCommands() {
+  if (commandsSet) return;
+  try {
+    await bot.api.setMyCommands([
+      { command: "start", description: "Open the main menu" },
+      { command: "help", description: "How to subscribe" },
+      { command: "status", description: "Check your account status" },
+    ]);
+    await bot.api.setChatMenuButton({
+      menu_button: { type: "commands" },
+    });
+    commandsSet = true;
+  } catch (err) {
+    console.error("Failed to set bot commands:", err);
+  }
+}
+setupBotCommands();
 
 // Error handler
 bot.catch((err) => {

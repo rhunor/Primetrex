@@ -45,6 +45,7 @@ export const EMOJI = {
   MONEY: "\u{1F4B0}",
   CHART: "\u{1F4C8}",
   MEGAPHONE: "\u{1F4E3}",
+  AFFILIATE: "\u{1F91D}",
 } as const;
 
 export const CALLBACK = {
@@ -54,6 +55,7 @@ export const CALLBACK = {
   RENEW: "renew",
   PAID: "ive_paid",
   HELP: "help",
+  AFFILIATE: "affiliate",
 
   // Admin
   ADMIN_PANEL: "admin_panel",
