@@ -10,6 +10,7 @@ export interface SessionData {
     | "awaiting_plan_selection"
     | "awaiting_start_date"
     | "awaiting_expiry_date"
+    | "awaiting_payment_proof"
     | "awaiting_payment_ref"
     | "awaiting_search_query"
     | "awaiting_broadcast_message"

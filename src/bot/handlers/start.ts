@@ -3,6 +3,7 @@ import type { BotContext } from "@/bot/context";
 import { EMOJI, CALLBACK } from "@/bot/constants";
 import { mainMenuKeyboard, helpKeyboard } from "@/bot/keyboards/inline";
 import { isAdmin } from "@/bot/middleware/auth";
+import { showSubscriptionSummary } from "@/bot/handlers/subscribe";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Plan from "@/models/Plan";
@@ -164,9 +165,7 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
   // "Main Menu" text from reply keyboard
   bot.hears("\u2261 Main Menu", showMainMenu);
   bot.hears(`${EMOJI.SUBSCRIBE} Subscribe`, async (ctx) => {
-    // Trigger subscribe callback
-    await ctx.reply("Loading subscription...");
-    // Will be handled by subscribe handler's callback
+    await showSubscriptionSummary(ctx, false);
   });
 
   // Callback: main_menu

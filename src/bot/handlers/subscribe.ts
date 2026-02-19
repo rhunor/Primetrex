@@ -20,7 +20,7 @@ function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 }
 
-async function showSubscriptionSummary(
+export async function showSubscriptionSummary(
   ctx: BotContext,
   isRenewal: boolean
 ) {
