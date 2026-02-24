@@ -16,89 +16,94 @@ const steps = [
     step: "02",
     title: "Share Your Link",
     description:
-      "Get your unique referral link and share it with friends, family, and your network.",
+      "Get your unique referral link and share it with friends, family, and your entire network.",
   },
   {
     icon: CreditCard,
     step: "03",
     title: "Referrals Subscribe",
     description:
-      "When someone clicks your link and subscribes to Primetrex copy trading, you earn.",
+      "When someone clicks your link and subscribes to Primetrex copy trading, you earn instantly.",
   },
   {
     icon: TrendingUp,
     step: "04",
     title: "Earn Every Month",
     description:
-      "Receive recurring commissions every month your referrals stay subscribed. Passive income.",
+      "Receive recurring commissions every month your referrals stay subscribed. Passive income on autopilot.",
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="how-it-works" className="py-24 md:py-32 relative overflow-hidden bg-muted/40">
+      {/* Top/bottom accent lines */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-2/3 bg-linear-to-r from-transparent via-primary/20 to-transparent" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px w-2/3 bg-linear-to-r from-transparent via-primary/20 to-transparent" />
+
+      <div className="relative mx-auto max-w-7xl px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-20"
+          className="text-center max-w-2xl mx-auto mb-16"
         >
-          <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-            How It Works
+          <span className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Simple Process
           </span>
           <h2 className="mt-3 text-3xl font-bold font-heading text-foreground md:text-4xl lg:text-5xl">
             Start Earning in{" "}
             <span className="gradient-text">4 Simple Steps</span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Getting started is easy. No trading knowledge required — just share
-            and earn.
+            No trading knowledge required — just share your link and earn every month.
           </p>
         </motion.div>
 
-        {/* Steps */}
-        <div className="relative">
-          {/* Connection line */}
-          <div className="absolute top-24 left-0 right-0 hidden lg:block">
-            <div className="mx-auto max-w-4xl h-0.5 bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0" />
-          </div>
+        {/* Steps grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {steps.map((step, index) => (
+            <motion.div
+              key={step.step}
+              initial={{ opacity: 0, y: 36 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="group relative rounded-2xl border border-border bg-card p-6 overflow-hidden transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20"
+            >
+              {/* Watermark step number */}
+              <span className="absolute -right-1 -top-3 text-8xl font-bold font-heading text-foreground/[0.035] select-none pointer-events-none leading-none">
+                {step.step}
+              </span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
-            {steps.map((step, index) => (
-              <motion.div
-                key={step.step}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-                className="text-center relative"
+              {/* Hover accent */}
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-primary/0 via-primary/50 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Icon */}
+              <div
+                className="inline-flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary text-white shadow-lg shadow-primary/20 mb-5 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3"
               >
-                {/* Step number */}
-                <div className="relative inline-flex">
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="flex h-20 w-20 items-center justify-center rounded-2xl gradient-primary text-white shadow-lg shadow-primary/25 mx-auto"
-                  >
-                    <step.icon className="h-8 w-8" />
-                  </motion.div>
-                  <span className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-bold text-primary-dark">
-                    {step.step}
-                  </span>
-                </div>
+                <step.icon className="h-7 w-7" />
+              </div>
 
-                <h3 className="mt-6 text-lg font-semibold font-heading text-foreground">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                  {step.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
+              {/* Step label */}
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary/50 mb-1.5">
+                Step {step.step}
+              </p>
+
+              {/* Title */}
+              <h3 className="text-base font-bold font-heading text-foreground">
+                {step.title}
+              </h3>
+
+              {/* Description */}
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {step.description}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
