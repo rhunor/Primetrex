@@ -2,7 +2,8 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "Primetrex <noreply@primetrex.com>";
+// Use onboarding@resend.dev as the default — Resend's shared domain, works without domain verification
+const FROM_EMAIL = process.env.EMAIL_FROM || "Primetrex <onboarding@resend.dev>";
 
 export async function sendVerificationEmail(
   email: string,
@@ -11,6 +12,11 @@ export async function sendVerificationEmail(
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const verifyUrl = `${appUrl}/verify-email?token=${token}`;
+
+  // Log URL in non-production so it's visible in Vercel function logs during testing
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[DEV] Email verification URL for ${email}:`, verifyUrl);
+  }
 
   await resend.emails.send({
     from: FROM_EMAIL,

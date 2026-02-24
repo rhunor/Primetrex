@@ -30,13 +30,6 @@ export async function PUT(req: NextRequest) {
         );
       }
       user.bankDetails = { bankName, bankCode: bankCode || "", accountNumber, accountName };
-      // Reset recipient code if bank details change
-      if (
-        user.bankDetails?.bankCode !== bankCode ||
-        user.bankDetails?.accountNumber !== accountNumber
-      ) {
-        user.paystackRecipientCode = null;
-      }
       await user.save();
       return NextResponse.json({ success: true, message: "Bank details updated" });
     }

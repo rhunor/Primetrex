@@ -1,54 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { initializePayment, generatePaymentReference } from "@/lib/paystack";
+import {
+  initializePayment,
+  generateWebTxRef,
+} from "@/lib/flutterwave-web";
 import { siteConfig } from "@/config/site";
+
+// Simple in-memory rate limiter (resets per serverless instance)
+const ipLimits = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const max = 3;
+  const windowMs = 10 * 60 * 1000; // 10 minutes
+  const now = Date.now();
+  const entry = ipLimits.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipLimits.set(ip, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Too many payment requests. Please wait a few minutes." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
-    const { email, type, userId, referralCode } = body;
+    const { email, name, referralCode } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const reference = generatePaymentReference();
+    const txRef = generateWebTxRef();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const redirectUrl = `${appUrl}/register/verify?tx_ref=${txRef}`;
 
-    let amount: number;
-    let callbackUrl: string;
-
-    if (type === "signup") {
-      amount = siteConfig.signupFee * 100; // Convert to kobo
-      callbackUrl = `${appUrl}/register/verify?reference=${reference}`;
-    } else if (type === "subscription") {
-      amount = siteConfig.subscription.price * 100;
-      callbackUrl = `${appUrl}/dashboard?payment=success&reference=${reference}`;
-    } else {
-      return NextResponse.json(
-        { error: "Invalid payment type" },
-        { status: 400 }
-      );
-    }
-
-    const response = await initializePayment({
+    const paymentUrl = await initializePayment({
+      txRef,
+      amount: siteConfig.signupFee,
       email,
-      amount,
-      reference,
-      callbackUrl,
-      metadata: {
-        type,
-        userId: userId || null,
+      name: name || email,
+      description: "Primetrex Affiliate Signup Fee",
+      redirectUrl,
+      meta: {
+        type: "signup",
         referralCode: referralCode || null,
       },
     });
 
-    return NextResponse.json({
-      authorizationUrl: response.data.authorization_url,
-      reference: response.data.reference,
-    });
+    return NextResponse.json({ paymentUrl, txRef });
   } catch (error) {
     console.error("Payment initialization error:", error);
     return NextResponse.json(

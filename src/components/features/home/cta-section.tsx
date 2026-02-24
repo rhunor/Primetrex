@@ -35,12 +35,12 @@ export function CTASection() {
           </h2>
           <p className="mt-6 text-lg text-white/60 leading-relaxed max-w-xl mx-auto">
             Join thousands of affiliates who are earning recurring commissions
-            every month. Sign up today — it&apos;s completely free.
+            every month. Join today for a one-time ₦15,000 signup fee and start earning immediately.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <Button size="lg" variant="secondary">
-                Create Free Account
+                Join for ₦15,000
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>

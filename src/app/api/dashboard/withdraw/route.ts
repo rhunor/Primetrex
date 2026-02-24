@@ -5,10 +5,9 @@ import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import {
-  createTransferRecipient,
   initiateTransfer,
-  generateTransferReference,
-} from "@/lib/paystack";
+  generateTransferRef,
+} from "@/lib/flutterwave-web";
 import { siteConfig } from "@/config/site";
 
 export async function POST(req: NextRequest) {
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!numAmount || numAmount < siteConfig.minWithdrawal) {
       return NextResponse.json(
         {
-          error: `Minimum withdrawal is ₦${siteConfig.minWithdrawal.toLocaleString()}`,
+          error: `Minimum withdrawal is \u20a6${siteConfig.minWithdrawal.toLocaleString()}`,
         },
         { status: 400 }
       );
@@ -69,34 +68,12 @@ export async function POST(req: NextRequest) {
 
     const user = await User.findById(userId);
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get or create Paystack transfer recipient
-    let recipientCode = user.paystackRecipientCode;
-
-    // Check if bank details changed — need new recipient
-    const bankChanged =
-      !recipientCode ||
-      user.bankDetails?.bankCode !== bankCode ||
-      user.bankDetails?.accountNumber !== accountNumber;
-
-    if (bankChanged) {
-      const recipientResult = await createTransferRecipient({
-        name: accountName,
-        accountNumber,
-        bankCode,
-      });
-      recipientCode = recipientResult.data.recipient_code;
-
-      // Cache the recipient code and update bank details
-      user.paystackRecipientCode = recipientCode;
-      user.bankDetails = { bankName, bankCode, accountNumber, accountName };
-      await user.save();
-    }
+    // Update cached bank details on user
+    user.bankDetails = { bankName, bankCode, accountNumber, accountName };
+    await user.save();
 
     // Create withdrawal record
     const withdrawal = await Withdrawal.create({
@@ -109,25 +86,22 @@ export async function POST(req: NextRequest) {
       status: "processing",
     });
 
-    // Initiate Paystack transfer
-    const transferRef = generateTransferReference(
-      withdrawal._id.toString()
-    );
+    const transferRef = generateTransferRef(withdrawal._id.toString());
 
     try {
       const transferResult = await initiateTransfer({
+        accountBank: bankCode,
+        accountNumber,
         amount: numAmount,
-        recipientCode: recipientCode!,
-        reason: `Primetrex affiliate withdrawal #${withdrawal._id}`,
+        narration: `Primetrex affiliate withdrawal`,
         reference: transferRef,
+        beneficiaryName: accountName,
       });
 
-      // Update withdrawal with transfer details
-      withdrawal.transferCode = transferResult.data.transfer_code;
-      withdrawal.paystackReference = transferRef;
+      withdrawal.transferReference = transferRef;
+      withdrawal.transferCode = transferResult.data?.id?.toString() ?? null;
       await withdrawal.save();
     } catch (transferError) {
-      // Transfer initiation failed — mark withdrawal as failed
       withdrawal.status = "failed";
       withdrawal.rejectionReason =
         transferError instanceof Error

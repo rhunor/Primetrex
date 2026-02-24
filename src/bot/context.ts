@@ -10,7 +10,6 @@ export interface SessionData {
     | "awaiting_plan_selection"
     | "awaiting_start_date"
     | "awaiting_expiry_date"
-    | "awaiting_payment_proof"
     | "awaiting_payment_ref"
     | "awaiting_search_query"
     | "awaiting_broadcast_message"
@@ -22,7 +21,11 @@ export interface SessionData {
     | "awaiting_coupon_expiry"
     | "awaiting_special_user_id"
     | "awaiting_special_expiry"
-    | "awaiting_discount_value";
+    | "awaiting_discount_value"
+    | "awaiting_channel_id"
+    | "awaiting_channel_name"
+    | "awaiting_plan_price"
+    | "awaiting_renewal_price";
 
   // Temporary data during multi-step flows
   pendingUserId?: number;

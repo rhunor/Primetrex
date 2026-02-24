@@ -88,6 +88,12 @@ export const CALLBACK = {
   COUPON_CREATE: "coupon_create",
   COUPON_BACK: "coupon_back",
 
+  // Channels
+  ADMIN_CH_EDIT_ID: "admin_ch_edit_id",
+  ADMIN_CH_EDIT_NAME: "admin_ch_edit_name",
+  ADMIN_CH_EDIT_PRICE: "admin_ch_edit_price",
+  ADMIN_CH_EDIT_RENEWAL: "admin_ch_edit_renewal",
+
   // Broadcast
   BROADCAST_SEND: "broadcast_send",
   BROADCAST_CANCEL: "broadcast_cancel",

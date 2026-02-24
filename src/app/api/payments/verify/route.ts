@@ -1,77 +1,149 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyPayment } from "@/lib/paystack";
+import { verifyPaymentByRef } from "@/lib/flutterwave-web";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Referral from "@/models/Referral";
 import Transaction from "@/models/Transaction";
+import { sendWelcomeEmail } from "@/lib/email";
+import {
+  notifyWelcome,
+  notifyCommissionEarned,
+  notifyReferralSignup,
+} from "@/lib/notifications";
+import { siteConfig } from "@/config/site";
 
 export async function GET(req: NextRequest) {
   try {
-    const reference = req.nextUrl.searchParams.get("reference");
+    const txRef = req.nextUrl.searchParams.get("tx_ref");
 
-    if (!reference) {
+    if (!txRef) {
       return NextResponse.json(
         { error: "Payment reference is required" },
         { status: 400 }
       );
     }
 
-    // Verify with Paystack
-    const verification = await verifyPayment(reference);
+    // Verify with Flutterwave
+    const verification = await verifyPaymentByRef(txRef);
 
-    if (!verification.status || verification.data.status !== "success") {
+    if (
+      verification.status !== "success" ||
+      verification.data?.status !== "successful"
+    ) {
       return NextResponse.json(
-        { error: "Payment verification failed", verified: false },
+        {
+          error: "Payment verification failed",
+          verified: false,
+          status: verification.data?.status,
+        },
         { status: 400 }
       );
     }
 
-    const { customer, metadata, amount } = verification.data;
-
+    const { customer, amount } = verification.data;
     await dbConnect();
 
-    // Handle signup payment — activate user if webhook hasn't already
-    if (metadata?.type === "signup") {
-      const user = await User.findOne({ email: customer.email });
+    // Find the user by email — idempotent if already activated
+    const user = await User.findOne({ email: customer.email });
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found for this payment", verified: false },
+        { status: 404 }
+      );
+    }
 
-      if (user && !user.hasPaidSignup) {
-        user.hasPaidSignup = true;
-        user.isActive = true;
-        user.signupPaymentRef = reference;
-        await user.save();
+    if (!user.hasPaidSignup) {
+      user.hasPaidSignup = true;
+      user.isActive = true;
+      user.signupPaymentRef = txRef;
+      await user.save();
 
-        // Record the transaction if not already recorded
-        const existingTx = await Transaction.findOne({ paymentReference: reference });
-        if (!existingTx) {
+      // Record signup transaction if not already done
+      const existingTx = await Transaction.findOne({ paymentReference: txRef, type: "subscription" });
+      if (!existingTx) {
+        await Transaction.create({
+          userId: user._id,
+          type: "subscription",
+          amount,
+          status: "completed",
+          paymentReference: txRef,
+          description: "Affiliate signup fee",
+          metadata: { type: "signup" },
+        });
+      }
+
+      // Activate referral records
+      if (user.referredBy) {
+        await Referral.updateMany(
+          { referredUserId: user._id },
+          { status: "active" }
+        );
+
+        // Generate commissions (idempotent — skip if already recorded)
+        const existingCommission = await Transaction.findOne({
+          paymentReference: txRef,
+          type: "commission",
+        });
+
+        if (!existingCommission) {
+          const tier1Amount = amount * (siteConfig.commission.tier1Rate / 100);
           await Transaction.create({
-            userId: user._id,
-            type: "subscription",
-            amount: amount / 100,
+            userId: user.referredBy,
+            type: "commission",
+            amount: tier1Amount,
+            tier: 1,
             status: "completed",
-            paymentReference: reference,
-            description: "Affiliate signup fee",
-            metadata: { type: "signup" },
+            sourceUserId: user._id,
+            paymentReference: txRef,
+            description: `Tier 1 commission from ${user.firstName} ${user.lastName} (signup)`,
           });
-        }
 
-        // Activate referral records
-        if (user.referredBy) {
-          await Referral.updateMany(
-            { referredUserId: user._id },
-            { status: "active" }
-          );
+          notifyCommissionEarned(
+            user.referredBy,
+            tier1Amount,
+            1,
+            `${user.firstName} ${user.lastName}`
+          ).catch(() => {});
+
+          // Tier 2
+          const tier1Referrer = await User.findById(user.referredBy);
+          if (tier1Referrer?.referredBy) {
+            const tier2Amount = amount * (siteConfig.commission.tier2Rate / 100);
+            await Transaction.create({
+              userId: tier1Referrer.referredBy,
+              type: "commission",
+              amount: tier2Amount,
+              tier: 2,
+              status: "completed",
+              sourceUserId: user._id,
+              paymentReference: `${txRef}-t2`,
+              description: `Tier 2 commission from ${user.firstName} ${user.lastName} (signup)`,
+            });
+
+            notifyCommissionEarned(
+              tier1Referrer.referredBy,
+              tier2Amount,
+              2,
+              `${user.firstName} ${user.lastName}`
+            ).catch(() => {});
+          }
         }
       }
 
-      return NextResponse.json({
-        verified: true,
-        message: "Payment verified successfully. Your account is now active.",
-      });
+      // Send welcome email and notification
+      sendWelcomeEmail(user.email, user.firstName).catch(() => {});
+      notifyWelcome(user._id, user.firstName).catch(() => {});
+      if (user.referredBy) {
+        notifyReferralSignup(
+          user.referredBy,
+          `${user.firstName} ${user.lastName}`
+        ).catch(() => {});
+      }
     }
 
     return NextResponse.json({
       verified: true,
-      message: "Payment verified successfully.",
+      message: "Payment verified successfully. Your account is now active.",
     });
   } catch (error) {
     console.error("Payment verification error:", error);

@@ -8,6 +8,23 @@ import Referral from "@/models/Referral";
 import { generateReferralCode } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/email";
 
+// In-memory rate limiter (5 attempts per IP per 15 minutes)
+const ipLimits = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const max = 5;
+  const entry = ipLimits.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipLimits.set(ip, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+}
+
 const registerSchema = z.object({
   firstName: z.string().min(1).max(50),
   lastName: z.string().min(1).max(50),
@@ -20,6 +37,17 @@ const registerSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
 

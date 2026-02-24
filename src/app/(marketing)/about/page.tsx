@@ -324,7 +324,7 @@ export default function AboutPage() {
             <div className="mt-10">
               <Link href="/register">
                 <Button size="lg" variant="secondary">
-                  Get Started Free
+                  Get Started
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>

@@ -13,12 +13,25 @@ type Status = "verifying" | "signing-in" | "success" | "error";
 function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const reference = searchParams.get("reference");
+  // Flutterwave redirect: ?status=successful&tx_ref=PTXW-SIGNUP-xxx&transaction_id=yyy
+  const txRef = searchParams.get("tx_ref");
+  const flwStatus = searchParams.get("status");
   const [status, setStatus] = useState<Status>("verifying");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (!reference) {
+    // Handle explicit cancellation/failure from Flutterwave redirect
+    if (flwStatus && flwStatus !== "successful" && flwStatus !== "completed") {
+      setStatus("error");
+      setMessage(
+        flwStatus === "cancelled"
+          ? "Payment was cancelled. Please try again."
+          : "Payment failed. Please try again or contact support."
+      );
+      return;
+    }
+
+    if (!txRef) {
       setStatus("error");
       setMessage("No payment reference found.");
       return;
@@ -27,7 +40,7 @@ function VerifyContent() {
     async function verifyAndSignIn() {
       try {
         // Step 1: Verify the payment
-        const res = await fetch(`/api/payments/verify?reference=${reference}`);
+        const res = await fetch(`/api/payments/verify?tx_ref=${txRef}`);
         const data = await res.json();
 
         if (!res.ok || !data.verified) {
@@ -71,7 +84,7 @@ function VerifyContent() {
     }
 
     verifyAndSignIn();
-  }, [reference, router]);
+  }, [txRef, flwStatus, router]);
 
   return (
     <div className="text-center py-8">

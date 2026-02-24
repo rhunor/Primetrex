@@ -7,9 +7,9 @@ const steps = [
   {
     icon: UserPlus,
     step: "01",
-    title: "Sign Up Free",
+    title: "Pay Once & Sign Up",
     description:
-      "Create your free account in under a minute. No fees, no commitments.",
+      "Pay a one-time ₦15,000 signup fee to unlock your affiliate account and referral link.",
   },
   {
     icon: Share2,

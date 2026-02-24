@@ -98,7 +98,7 @@ function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
-          type: "signup",
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
           referralCode: formData.referralCode || undefined,
         }),
       });
@@ -115,7 +115,7 @@ function RegisterForm() {
       sessionStorage.setItem("ptx_signup_email", formData.email);
       sessionStorage.setItem("ptx_signup_pw", formData.password);
 
-      window.location.href = data.authorizationUrl;
+      window.location.href = data.paymentUrl;
     } catch {
       setError("Failed to initialize payment. Please try again.");
       setIsLoading(false);
@@ -377,7 +377,7 @@ function RegisterForm() {
 
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
                 <Shield className="h-3.5 w-3.5 flex-shrink-0" />
-                Secured by Paystack. Your payment information is encrypted.
+                Secured by Flutterwave. Your payment information is encrypted.
               </div>
 
               {error && (
@@ -392,7 +392,7 @@ function RegisterForm() {
                 size="lg"
                 isLoading={isLoading}
               >
-                Pay {formatCurrency(siteConfig.signupFee)} with Paystack
+                Pay {formatCurrency(siteConfig.signupFee)} with Flutterwave
                 <CreditCard className="h-4 w-4" />
               </Button>
 

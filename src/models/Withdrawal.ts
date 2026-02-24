@@ -10,7 +10,7 @@ export interface IWithdrawal extends Document {
   accountNumber: string;
   accountName: string;
   transferCode: string | null;
-  paystackReference: string | null;
+  transferReference: string | null;
   rejectionReason: string | null;
   processedAt: Date | null;
   processedBy: mongoose.Types.ObjectId | null;
@@ -38,7 +38,7 @@ const WithdrawalSchema = new Schema<IWithdrawal>(
     accountNumber: { type: String, required: true },
     accountName: { type: String, required: true },
     transferCode: { type: String, default: null },
-    paystackReference: { type: String, default: null },
+    transferReference: { type: String, default: null },
     rejectionReason: { type: String, default: null },
     processedAt: { type: Date, default: null },
     processedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },

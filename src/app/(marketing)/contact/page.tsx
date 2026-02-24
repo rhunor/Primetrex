@@ -239,13 +239,13 @@ export default function ContactPage() {
                 <ul className="space-y-3 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <span className="text-primary font-bold">Q:</span>
-                    <span>Is it free to join the affiliate program?</span>
+                    <span>How much does it cost to join the affiliate program?</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-secondary-dark font-bold">A:</span>
                     <span>
-                      Yes, creating an account and getting your referral link is
-                      completely free.
+                      There is a one-time ₦15,000 signup fee to activate your
+                      affiliate account and unlock your referral link.
                     </span>
                   </li>
                   <li className="flex items-start gap-2 pt-2 border-t border-border">

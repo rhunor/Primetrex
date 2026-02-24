@@ -10,57 +10,7 @@ import Plan from "@/models/Plan";
 import { verifyPayment } from "@/bot/services/flutterwave";
 import { generateInviteLink } from "@/bot/services/invite";
 
-// ── OpenAI vision: extract Flutterwave txRef from a screenshot ──────────────
-
-async function extractTxRefFromImage(imageUrl: string): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_tokens: 100,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: 'This is a Flutterwave payment confirmation screenshot. Extract ONLY the transaction reference ID (it starts with "PTRX-" or looks like "FLW-" or "TXN-"). Reply with just the reference ID, nothing else. If you cannot find a transaction reference, reply with "NOT_FOUND".',
-              },
-              {
-                type: "image_url",
-                image_url: { url: imageUrl, detail: "low" },
-              },
-            ],
-          },
-        ],
-      }),
-    });
-
-    const data = await response.json();
-    const content: string = data?.choices?.[0]?.message?.content?.trim() || "";
-
-    if (!content || content === "NOT_FOUND") return null;
-
-    // Extract anything that looks like a txRef
-    const match =
-      content.match(/PTRX-[\w-]+/i) ||
-      content.match(/FLW-[\w-]+/i) ||
-      content.match(/TXN-[\w-]+/i);
-    return match ? match[0] : null;
-  } catch {
-    return null;
-  }
-}
-
-// ── Core verification logic (shared by text and photo paths) ─────────────────
+// ── Core verification logic ───────────────────────────────────────────────────
 
 async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
   const userId = ctx.from!.id.toString();
@@ -181,10 +131,10 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
   }
 }
 
-// ── Handler registration ─────────────────────────────────────────────────────
+// ── Handler registration ──────────────────────────────────────────────────────
 
 export function registerPaymentHandlers(bot: Bot<BotContext>) {
-  // "I've Paid" callback
+  // "I've Paid" callback — ask user to type their reference directly
   bot.callbackQuery(CALLBACK.PAID, async (ctx) => {
     await ctx.answerCallbackQuery();
     await dbConnect();
@@ -204,71 +154,20 @@ export function registerPaymentHandlers(bot: Bot<BotContext>) {
       return;
     }
 
-    ctx.session.step = "awaiting_payment_proof";
+    ctx.session.step = "awaiting_payment_ref";
 
     await ctx.editMessageText(
       `${EMOJI.SUCCESS} <b>Verify Your Payment</b>\n\n` +
-        `Please send your <b>payment screenshot</b> or type your <b>transaction reference</b> (e.g. <code>PTRX-12345-...</code>).\n\n` +
+        `Please type or paste your <b>transaction reference</b>\n` +
+        `(e.g. <code>PTRX-12345-...</code>)\n\n` +
         `${EMOJI.TIP} <i>The transaction reference can be found in your Flutterwave payment confirmation.</i>`,
       { parse_mode: "HTML" }
     );
   });
 
-  // Handle photo proof of payment
-  bot.on("message:photo", async (ctx, next) => {
-    if (ctx.session.step !== "awaiting_payment_proof") return next();
-
-    ctx.session.step = undefined;
-
-    const statusMsg = await ctx.reply(
-      `${EMOJI.HOURGLASS} Analysing your payment screenshot...`
-    );
-
-    // Get the highest resolution photo
-    const photos = ctx.message.photo;
-    const photo = photos[photos.length - 1];
-
-    let txRef: string | null = null;
-
-    try {
-      const file = await ctx.api.getFile(photo.file_id);
-      const imageUrl = `https://api.telegram.org/file/bot${botConfig.token}/${file.file_path}`;
-      txRef = await extractTxRefFromImage(imageUrl);
-    } catch {
-      // OCR failed — fall through to ask for typed ref
-    }
-
-    // Delete the "analysing" status message
-    try {
-      await ctx.api.deleteMessage(ctx.chat.id, statusMsg.message_id);
-    } catch {
-      /* ignore */
-    }
-
-    if (txRef) {
-      await ctx.reply(
-        `${EMOJI.SUCCESS} Found reference: <code>${txRef}</code>\n\nVerifying...`,
-        { parse_mode: "HTML" }
-      );
-      await verifyAndActivate(ctx, txRef);
-    } else {
-      // Couldn't extract from image — ask user to type it
-      ctx.session.step = "awaiting_payment_ref";
-      await ctx.reply(
-        `${EMOJI.WARNING} <b>Couldn't Read Reference</b>\n\n` +
-          `We couldn't extract the transaction reference from your screenshot.\n\n` +
-          `Please <b>type or paste</b> your transaction reference (e.g. <code>PTRX-12345-...</code>):`,
-        { parse_mode: "HTML" }
-      );
-    }
-  });
-
   // Handle typed payment reference
   bot.on("message:text", async (ctx, next) => {
-    if (
-      ctx.session.step !== "awaiting_payment_ref" &&
-      ctx.session.step !== "awaiting_payment_proof"
-    ) {
+    if (ctx.session.step !== "awaiting_payment_ref") {
       return next();
     }
 

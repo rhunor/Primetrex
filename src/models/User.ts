@@ -17,7 +17,6 @@ export interface IUser extends Document {
   telegramId: string | null;
   telegramLinked: boolean;
   profileImage: string | null;
-  paystackRecipientCode: string | null;
   bankDetails: {
     bankName: string;
     bankCode: string;
@@ -56,7 +55,6 @@ const UserSchema = new Schema<IUser>(
     telegramId: { type: String, default: null },
     telegramLinked: { type: Boolean, default: false },
     profileImage: { type: String, default: null },
-    paystackRecipientCode: { type: String, default: null },
     bankDetails: {
       type: {
         bankName: String,
