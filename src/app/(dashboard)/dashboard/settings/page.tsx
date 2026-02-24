@@ -190,7 +190,8 @@ export default function SettingsPage() {
     }
   }
 
-  const telegramDeepLink = `https://t.me/primetrex_bot?start=link_${referralCode}`;
+  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "PrimetrexBot";
+  const telegramDeepLink = `https://t.me/${botUsername}?start=link_${referralCode}`;
 
   function handleCopyTelegramLink() {
     navigator.clipboard.writeText(telegramDeepLink);

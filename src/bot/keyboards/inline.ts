@@ -1,5 +1,6 @@
 import { InlineKeyboard } from "grammy";
 import { EMOJI, CALLBACK } from "@/bot/constants";
+import { botConfig } from "@/bot/config";
 
 export function mainMenuKeyboard(isAdmin: boolean): InlineKeyboard {
   const kb = new InlineKeyboard()
@@ -12,6 +13,8 @@ export function mainMenuKeyboard(isAdmin: boolean): InlineKeyboard {
     .text(`${EMOJI.HELP} Help`, CALLBACK.HELP)
     .row()
     .text(`${EMOJI.AFFILIATE} Get Affiliate Link`, CALLBACK.AFFILIATE)
+    .row()
+    .url(`\u{1F310} Affiliate Platform`, botConfig.appUrl)
     .row();
 
   if (isAdmin) {
