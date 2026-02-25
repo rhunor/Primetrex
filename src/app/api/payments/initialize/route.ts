@@ -45,7 +45,9 @@ export async function POST(req: NextRequest) {
 
     const txRef = generateWebTxRef();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const redirectUrl = `${appUrl}/register/verify?tx_ref=${txRef}`;
+    // No query params in redirect_url — Flutterwave always appends ?status=&tx_ref=&transaction_id=
+    // If we include ?tx_ref= here, Flutterwave appends a second ? making the URL malformed
+    const redirectUrl = `${appUrl}/register/verify`;
 
     const paymentUrl = await initializePayment({
       txRef,
