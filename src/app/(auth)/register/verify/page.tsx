@@ -72,8 +72,8 @@ function VerifyContent() {
 
           if (result?.ok) {
             setStatus("success");
-            // Redirect to dashboard after a brief success message
-            setTimeout(() => router.push("/dashboard"), 1500);
+            // Hard navigate so the browser sends a fresh request and picks up the new session JWT
+            setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
             return;
           }
         }

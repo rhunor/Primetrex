@@ -5,12 +5,14 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
-import { CreditCard, Shield } from "lucide-react";
+import { CreditCard, Shield, CheckCircle } from "lucide-react";
 
 export default function PendingPaymentPage() {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // When initialize returns 409, the account is already active — session JWT is just stale
+  const [alreadyActivated, setAlreadyActivated] = useState(false);
   const isPayingRef = useRef(false);
 
   async function handlePayment() {
@@ -31,6 +33,14 @@ export default function PendingPaymentPage() {
 
       const data = await res.json();
 
+      if (res.status === 409) {
+        // Account already activated — JWT is stale, user needs to sign in fresh
+        setAlreadyActivated(true);
+        setIsLoading(false);
+        isPayingRef.current = false;
+        return;
+      }
+
       if (!res.ok) {
         setError(data.error || "Payment initialization failed");
         isPayingRef.current = false;
@@ -44,6 +54,34 @@ export default function PendingPaymentPage() {
       isPayingRef.current = false;
       setIsLoading(false);
     }
+  }
+
+  // Already activated — account is active, session JWT is just stale
+  if (alreadyActivated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-6">
+        <div className="w-full max-w-md text-center space-y-6">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/20 text-secondary-dark mb-2">
+            <CheckCircle className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-heading text-foreground">
+              Your account is active!
+            </h1>
+            <p className="mt-2 text-muted-foreground text-sm max-w-sm mx-auto">
+              Your payment has already been completed. Sign in again to access your affiliate dashboard.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            className="w-full max-w-xs mx-auto"
+            onClick={() => { window.location.href = "/login"; }}
+          >
+            Sign In to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
