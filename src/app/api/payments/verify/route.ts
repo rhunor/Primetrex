@@ -77,10 +77,17 @@ export async function GET(req: NextRequest) {
     const { customer, amount } = verification.data;
     await dbConnect();
 
-    // Find the user by email — idempotent if already activated
-    const user = await User.findOne({ email: customer.email });
+    // Look up user by txRef stored during payment initialization — more reliable than
+    // customer.email because Flutterwave checkout allows customers to change their email.
+    let user = txRef ? await User.findOne({ signupPaymentRef: txRef }) : null;
+
+    // Fallback to customer.email for any records that predate the txRef approach
+    if (!user && customer.email) {
+      user = await User.findOne({ email: customer.email.toLowerCase() });
+    }
+
     if (!user) {
-      console.error("[verify] User not found for email:", customer.email);
+      console.error("[verify] User not found. txRef:", txRef, "customer.email:", customer.email);
       return NextResponse.json(
         { error: "User not found for this payment", verified: false },
         { status: 404 }

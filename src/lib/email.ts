@@ -7,13 +7,14 @@ const FROM_EMAIL = process.env.EMAIL_FROM || "Primetrex <onboarding@resend.dev>"
 
 function emailHeader(appUrl: string) {
   return `
-    <div style="text-align: center; padding: 28px 0 16px;">
+    <div style="text-align: center; padding: 28px 0 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
       <a href="${appUrl}" style="text-decoration: none; display: inline-block;">
         <img
           src="${appUrl}/logos/PNG/Dark%20Comb.png"
           alt="Primetrex"
           width="160"
-          style="height: auto; display: block; margin: 0 auto;"
+          height="auto"
+          style="display: block; margin: 0 auto; max-width: 160px;"
         />
       </a>
     </div>
@@ -62,7 +63,7 @@ export async function sendVerificationEmail(
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verifyUrl}"
-               style="background: linear-gradient(135deg, #8808CC, #39005E); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+               style="background: #8808CC; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Verify Email Address
             </a>
           </div>
@@ -94,7 +95,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
         ${emailHeader(appUrl)}
 
-        <div style="background: linear-gradient(135deg, #8808CC, #39005E); border-radius: 12px; padding: 30px; margin: 20px 0; text-align: center;">
+        <div style="background: #8808CC; border-radius: 12px; padding: 30px; margin: 20px 0; text-align: center;">
           <h2 style="color: #ffffff; margin: 0 0 8px; font-size: 24px;">Welcome aboard, ${firstName}! 🎉</h2>
           <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 15px;">Your affiliate account is now active and ready to earn.</p>
         </div>
@@ -133,7 +134,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
           <div style="text-align: center; margin: 24px 0 0;">
             <a href="${appUrl}/dashboard"
-               style="background: linear-gradient(135deg, #8808CC, #39005E); color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+               style="background: #8808CC; color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Go to Your Dashboard →
             </a>
           </div>

@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    // Check existing user
-    const existingUser = await User.findOne({ email: parsed.data.email });
+    // Check existing user — lowercase to match Mongoose's lowercase:true storage
+    const existingUser = await User.findOne({ email: parsed.data.email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
         { error: "An account with this email already exists" },

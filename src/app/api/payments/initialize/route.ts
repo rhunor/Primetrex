@@ -4,6 +4,8 @@ import {
   generateWebTxRef,
 } from "@/lib/flutterwave-web";
 import { siteConfig } from "@/config/site";
+import dbConnect from "@/lib/db";
+import User from "@/models/User";
 
 // Simple in-memory rate limiter (resets per serverless instance)
 const ipLimits = new Map<string, { count: number; resetAt: number }>();
@@ -43,17 +45,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
+    // Look up user and store txRef on their record before redirecting to Flutterwave.
+    // This allows verify to find the user by txRef — Flutterwave checkout lets customers
+    // change their email during payment, so customer.email in the verify response may not
+    // match the email stored in the database.
+    await dbConnect();
+    const lowerEmail = email.toLowerCase();
+    const user = await User.findOne({ email: lowerEmail });
+
+    if (!user) {
+      console.error("[initialize] User not found for email:", lowerEmail);
+      return NextResponse.json(
+        { error: "Account not found. Please complete registration first." },
+        { status: 404 }
+      );
+    }
+
+    if (user.hasPaidSignup) {
+      return NextResponse.json(
+        { error: "This account has already been activated. Please sign in." },
+        { status: 409 }
+      );
+    }
+
     const txRef = generateWebTxRef();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     // No query params in redirect_url — Flutterwave always appends ?status=&tx_ref=&transaction_id=
     // If we include ?tx_ref= here, Flutterwave appends a second ? making the URL malformed
     const redirectUrl = `${appUrl}/register/verify`;
 
+    // Store txRef on the user before they're redirected to Flutterwave
+    await User.updateOne({ _id: user._id }, { signupPaymentRef: txRef });
+
     const paymentUrl = await initializePayment({
       txRef,
       amount: siteConfig.signupFee,
-      email,
-      name: name || email,
+      email: lowerEmail,
+      name: name || lowerEmail,
       description: "Primetrex Affiliate Signup Fee",
       redirectUrl,
       meta: {
