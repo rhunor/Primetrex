@@ -8,9 +8,9 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      {/* Left: Form area */}
-      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-20">
-        <div className="mx-auto w-full max-w-md">
+      {/* Left: Form area — overflow-y-auto allows scrolling on small screens */}
+      <div className="flex flex-1 flex-col overflow-y-auto px-6 py-12 lg:px-20">
+        <div className="mx-auto w-full max-w-md my-auto">
           {/* Logo */}
           <Link href="/" className="flex items-center mb-10">
             <Image
