@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -75,7 +75,7 @@ export default function PendingPaymentPage() {
           <Button
             size="lg"
             className="w-full max-w-xs mx-auto"
-            onClick={() => { window.location.href = "/login"; }}
+            onClick={() => signOut({ callbackUrl: "/login" })}
           >
             Sign In to Dashboard
           </Button>
@@ -163,6 +163,19 @@ export default function PendingPaymentPage() {
         <p className="text-center text-xs text-muted-foreground">
           One-time fee · No recurring charges for affiliates
         </p>
+
+        {/* Escape hatch for users who already paid but have a stale session */}
+        <div className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-center text-sm text-muted-foreground">
+          Already paid?{" "}
+          <strong className="text-foreground">Sign out and sign back in</strong>{" "}
+          to refresh your account status and access your dashboard.{" "}
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-primary font-semibold underline underline-offset-2 hover:text-primary/80 transition-colors"
+          >
+            Sign out now →
+          </button>
+        </div>
       </div>
     </div>
   );
