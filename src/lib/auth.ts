@@ -36,15 +36,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!valid) return null;
 
-        // Only allow active (paid) users to sign in
-        if (!user.isActive) return null;
-
+        // Allow login regardless of activation — middleware handles unpaid redirect
         return {
           id: user._id.toString(),
           email: user.email,
           name: `${user.firstName} ${user.lastName}`,
           role: user.role,
           referralCode: user.referralCode,
+          isActive: user.isActive,
+          isEmailVerified: !!user.isEmailVerified,
         };
       },
     }),
@@ -52,9 +52,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const u = user as unknown as { role: string; referralCode: string };
+        const u = user as unknown as Record<string, unknown>;
         (token as Record<string, unknown>).role = u.role;
         (token as Record<string, unknown>).referralCode = u.referralCode;
+        (token as Record<string, unknown>).isActive = u.isActive;
+        (token as Record<string, unknown>).isEmailVerified = u.isEmailVerified;
       }
       return token;
     },
@@ -65,6 +67,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         s.id = tok.sub as string;
         s.role = tok.role as string;
         s.referralCode = tok.referralCode as string;
+        s.isActive = tok.isActive as boolean;
+        s.isEmailVerified = tok.isEmailVerified as boolean;
       }
       return session;
     },

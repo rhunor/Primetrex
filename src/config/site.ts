@@ -3,7 +3,7 @@ export const siteConfig = {
   tagline: "Let the Experts Trade, You Build the Business",
   description:
     "Earn money by referring others to Primetrex copy trading. Pay a one-time ₦15,000 signup fee, get your unique referral link, and earn 50% commissions every month.",
-  url: "https://primetrex.com",
+  url: "https://primetrexaffiliates.com",
   signupFee: 15_000,
   subscription: {
     price: 50_000,

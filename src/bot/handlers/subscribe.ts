@@ -154,7 +154,7 @@ async function handlePayFlutterwave(ctx: BotContext) {
     const paymentUrl = await generatePaymentLink({
       txRef,
       amount: price,
-      customerEmail: `user_${userId}@telegram.primetrex.com`,
+      customerEmail: `user_${userId}@telegram.primetrexaffiliates.com`,
       customerName: ctx.from!.first_name || "User",
       planName: plan.name,
     });

@@ -175,7 +175,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-foreground">Email</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      support@primetrex.com
+                      support@primetrexaffiliates.com
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       We reply within 24 hours

@@ -14,9 +14,17 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
-  // Protect dashboard routes
+  // Protect dashboard routes — unauthenticated users go to login
   if (isOnDashboard && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
+  }
+
+  // Logged-in but hasn't paid → redirect to pending payment page
+  if (isOnDashboard && isLoggedIn) {
+    const sessionUser = req.auth?.user as unknown as Record<string, unknown>;
+    if (sessionUser?.isActive === false) {
+      return NextResponse.redirect(new URL("/pending-payment", req.nextUrl));
+    }
   }
 
   // Protect admin routes

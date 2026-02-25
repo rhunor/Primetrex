@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense, useCallback } from "react";
+import { useState, useRef, Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   GoogleReCaptchaProvider,
@@ -39,6 +39,8 @@ function RegisterForm() {
     referralCode: referralCode,
   });
   const [error, setError] = useState("");
+  // Ref guard prevents duplicate API calls on rapid double-click (faster than React re-render)
+  const isPayingRef = useRef(false);
   const { executeRecaptcha } = useGoogleReCaptcha();
 
   const getCaptchaToken = useCallback(async () => {
@@ -89,6 +91,9 @@ function RegisterForm() {
   }
 
   async function handlePayment() {
+    // Synchronous ref check blocks second call before first setState re-render
+    if (isPayingRef.current) return;
+    isPayingRef.current = true;
     setIsLoading(true);
     setError("");
 
@@ -107,6 +112,7 @@ function RegisterForm() {
 
       if (!res.ok) {
         setError(data.error || "Payment initialization failed");
+        isPayingRef.current = false;
         setIsLoading(false);
         return;
       }
@@ -118,6 +124,7 @@ function RegisterForm() {
       window.location.href = data.paymentUrl;
     } catch {
       setError("Failed to initialize payment. Please try again.");
+      isPayingRef.current = false;
       setIsLoading(false);
     }
   }
@@ -346,16 +353,6 @@ function RegisterForm() {
             <p className="mt-2 text-muted-foreground">
               Pay the one-time signup fee to activate your affiliate account.
             </p>
-
-            {/* Email verification notice */}
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 px-4 py-3">
-              <Mail className="h-5 w-5 text-secondary-dark flex-shrink-0" />
-              <p className="text-sm text-foreground">
-                A verification email has been sent to{" "}
-                <span className="font-medium">{formData.email}</span>. Please
-                check your inbox and verify your email.
-              </p>
-            </div>
 
             <div className="mt-6 rounded-2xl border border-border bg-card p-6 space-y-6">
               <div className="space-y-4">

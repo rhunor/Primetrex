@@ -59,9 +59,9 @@ function VerifyEmailContent() {
             Email Verified!
           </h1>
           <p className="text-muted-foreground max-w-sm">{message}</p>
-          <Link href="/login">
+          <Link href="/dashboard">
             <Button size="lg" className="mt-4">
-              Continue to Login
+              Go to Dashboard
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
