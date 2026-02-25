@@ -15,6 +15,7 @@ function VerifyContent() {
   const router = useRouter();
   // Flutterwave redirect: ?status=successful&tx_ref=PTXW-SIGNUP-xxx&transaction_id=yyy
   const txRef = searchParams.get("tx_ref");
+  const transactionId = searchParams.get("transaction_id");
   const flwStatus = searchParams.get("status");
   const [status, setStatus] = useState<Status>("verifying");
   const [message, setMessage] = useState("");
@@ -31,7 +32,7 @@ function VerifyContent() {
       return;
     }
 
-    if (!txRef) {
+    if (!txRef && !transactionId) {
       setStatus("error");
       setMessage("No payment reference found.");
       return;
@@ -39,8 +40,11 @@ function VerifyContent() {
 
     async function verifyAndSignIn() {
       try {
-        // Step 1: Verify the payment
-        const res = await fetch(`/api/payments/verify?tx_ref=${txRef}`);
+        // Step 1: Verify the payment — pass both tx_ref and transaction_id
+        const params = new URLSearchParams();
+        if (txRef) params.set("tx_ref", txRef);
+        if (transactionId) params.set("transaction_id", transactionId);
+        const res = await fetch(`/api/payments/verify?${params.toString()}`);
         const data = await res.json();
 
         if (!res.ok || !data.verified) {
@@ -84,7 +88,7 @@ function VerifyContent() {
     }
 
     verifyAndSignIn();
-  }, [txRef, flwStatus, router]);
+  }, [txRef, transactionId, flwStatus, router]);
 
   return (
     <div className="text-center py-8">

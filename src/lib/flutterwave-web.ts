@@ -116,6 +116,10 @@ export async function verifyPaymentByRef(txRef: string): Promise<FlwVerifyRespon
   );
 }
 
+export async function verifyPaymentById(transactionId: string): Promise<FlwVerifyResponse> {
+  return flwFetch<FlwVerifyResponse>(`/transactions/${transactionId}/verify`);
+}
+
 // ── Banks ─────────────────────────────────────────────────────────────────────
 
 export async function listBanks(): Promise<FlwBank[]> {

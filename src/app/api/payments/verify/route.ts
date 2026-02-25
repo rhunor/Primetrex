@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyPaymentByRef } from "@/lib/flutterwave-web";
+import { verifyPaymentByRef, verifyPaymentById, FlwVerifyResponse } from "@/lib/flutterwave-web";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Referral from "@/models/Referral";
@@ -15,26 +15,60 @@ import { siteConfig } from "@/config/site";
 export async function GET(req: NextRequest) {
   try {
     const txRef = req.nextUrl.searchParams.get("tx_ref");
+    const transactionId = req.nextUrl.searchParams.get("transaction_id");
 
-    if (!txRef) {
+    if (!txRef && !transactionId) {
       return NextResponse.json(
         { error: "Payment reference is required" },
         { status: 400 }
       );
     }
 
-    // Verify with Flutterwave
-    const verification = await verifyPaymentByRef(txRef);
+    // Verify with Flutterwave — try transaction_id first (most reliable), then tx_ref
+    let verification: FlwVerifyResponse | null = null;
+    let verifyError: string | null = null;
+
+    if (transactionId) {
+      try {
+        verification = await verifyPaymentById(transactionId);
+      } catch (err) {
+        verifyError = err instanceof Error ? err.message : String(err);
+        console.error("[verify] verifyPaymentById failed:", verifyError);
+      }
+    }
+
+    // Fall back to tx_ref if ID verification failed or wasn't attempted
+    if (
+      txRef &&
+      (!verification || verification.status !== "success" || verification.data?.status !== "successful")
+    ) {
+      try {
+        verification = await verifyPaymentByRef(txRef);
+        verifyError = null; // clear previous error if this succeeds
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[verify] verifyPaymentByRef failed:", msg);
+        if (!verifyError) verifyError = msg;
+      }
+    }
 
     if (
+      !verification ||
       verification.status !== "success" ||
       verification.data?.status !== "successful"
     ) {
+      console.error("[verify] Final verification status:", {
+        txRef,
+        transactionId,
+        verifyStatus: verification?.status,
+        dataStatus: verification?.data?.status,
+        verifyError,
+      });
       return NextResponse.json(
         {
           error: "Payment verification failed",
           verified: false,
-          status: verification.data?.status,
+          status: verification?.data?.status,
         },
         { status: 400 }
       );
@@ -46,6 +80,7 @@ export async function GET(req: NextRequest) {
     // Find the user by email — idempotent if already activated
     const user = await User.findOne({ email: customer.email });
     if (!user) {
+      console.error("[verify] User not found for email:", customer.email);
       return NextResponse.json(
         { error: "User not found for this payment", verified: false },
         { status: 404 }
@@ -55,18 +90,19 @@ export async function GET(req: NextRequest) {
     if (!user.hasPaidSignup) {
       user.hasPaidSignup = true;
       user.isActive = true;
-      user.signupPaymentRef = txRef;
+      user.signupPaymentRef = txRef || transactionId;
       await user.save();
 
       // Record signup transaction if not already done
-      const existingTx = await Transaction.findOne({ paymentReference: txRef, type: "subscription" });
+      const ref = txRef || transactionId!;
+      const existingTx = await Transaction.findOne({ paymentReference: ref, type: "subscription" });
       if (!existingTx) {
         await Transaction.create({
           userId: user._id,
           type: "subscription",
           amount,
           status: "completed",
-          paymentReference: txRef,
+          paymentReference: ref,
           description: "Affiliate signup fee",
           metadata: { type: "signup" },
         });
@@ -81,7 +117,7 @@ export async function GET(req: NextRequest) {
 
         // Generate commissions (idempotent — skip if already recorded)
         const existingCommission = await Transaction.findOne({
-          paymentReference: txRef,
+          paymentReference: ref,
           type: "commission",
         });
 
@@ -94,7 +130,7 @@ export async function GET(req: NextRequest) {
             tier: 1,
             status: "completed",
             sourceUserId: user._id,
-            paymentReference: txRef,
+            paymentReference: ref,
             description: `Tier 1 commission from ${user.firstName} ${user.lastName} (signup)`,
           });
 
@@ -116,7 +152,7 @@ export async function GET(req: NextRequest) {
               tier: 2,
               status: "completed",
               sourceUserId: user._id,
-              paymentReference: `${txRef}-t2`,
+              paymentReference: `${ref}-t2`,
               description: `Tier 2 commission from ${user.firstName} ${user.lastName} (signup)`,
             });
 
@@ -146,7 +182,7 @@ export async function GET(req: NextRequest) {
       message: "Payment verified successfully. Your account is now active.",
     });
   } catch (error) {
-    console.error("Payment verification error:", error);
+    console.error("[verify] Unexpected error:", error);
     return NextResponse.json(
       { error: "Verification failed. Please contact support." },
       { status: 500 }
