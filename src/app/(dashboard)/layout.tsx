@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { Mail, CheckCircle, X } from "lucide-react";
 
 function EmailVerificationBanner() {
@@ -81,6 +82,7 @@ export default function DashboardLayout({
         </Suspense>
         <main className="p-6">{children}</main>
       </div>
+      <ScrollToTop />
     </div>
   );
 }
