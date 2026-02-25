@@ -100,20 +100,24 @@ export async function showSubscriptionSummary(
   }
 }
 
-async function handlePayFlutterwave(ctx: BotContext) {
+/**
+ * Creates the BotPayment record and shows the Flutterwave payment link.
+ * Called after the referral code step (for new subscriptions) or directly (for renewals).
+ */
+export async function createBotPaymentAndShowLink(ctx: BotContext) {
   await dbConnect();
   const userId = ctx.from!.id;
   const userIdStr = userId.toString();
 
   const planId = ctx.session.pendingPlanId;
   if (!planId) {
-    await ctx.editMessageText("Session expired. Please start over.");
+    await ctx.reply("Session expired. Please start over.");
     return;
   }
 
   const plan = await Plan.findById(planId);
   if (!plan) {
-    await ctx.editMessageText("Plan not found.");
+    await ctx.reply("Plan not found.");
     return;
   }
 
@@ -137,8 +141,12 @@ async function handlePayFlutterwave(ctx: BotContext) {
 
   price = Math.max(price, 0);
 
-  // Generate payment
   const txRef = generateTxRef(userId);
+  const referralCode = ctx.session.pendingReferralCode ?? null;
+
+  // Clear session referral fields after reading
+  ctx.session.pendingReferralCode = undefined;
+  ctx.session.pendingIsRenewal = undefined;
 
   // Create payment record
   await BotPayment.create({
@@ -148,6 +156,7 @@ async function handlePayFlutterwave(ctx: BotContext) {
     paymentRef: txRef,
     paymentType: isRenewal ? "renewal" : "new",
     status: "pending",
+    referralCode,
   });
 
   try {
@@ -165,16 +174,52 @@ async function handlePayFlutterwave(ctx: BotContext) {
       `Amount: <b>${formatNaira(price)}</b>\n\n` +
       `Click below to pay with Flutterwave.`;
 
-    await ctx.editMessageText(text, {
+    await ctx.reply(text, {
       parse_mode: "HTML",
       reply_markup: paymentReadyKeyboard(paymentUrl, formatNaira(price)),
     });
   } catch (error) {
     console.error("Flutterwave payment link error:", error);
-    await ctx.editMessageText(
+    await ctx.reply(
       `${EMOJI.CANCEL} Failed to generate payment link. Please try again later.`
     );
   }
+}
+
+async function handlePayFlutterwave(ctx: BotContext) {
+  await dbConnect();
+  const userId = ctx.from!.id.toString();
+
+  const planId = ctx.session.pendingPlanId;
+  if (!planId) {
+    await ctx.editMessageText("Session expired. Please start over.");
+    return;
+  }
+
+  // Determine if this is a renewal
+  const existing = await BotSubscriber.findOne({ userId });
+  const isRenewal = !!existing;
+  ctx.session.pendingIsRenewal = isRenewal;
+
+  if (isRenewal) {
+    // Renewals skip the referral code step
+    await ctx.editMessageText(
+      `${EMOJI.HOURGLASS} Preparing your payment link...`,
+      { parse_mode: "HTML" }
+    );
+    await createBotPaymentAndShowLink(ctx);
+    return;
+  }
+
+  // New subscription: ask for referral code first
+  ctx.session.step = "awaiting_referral_code";
+
+  await ctx.editMessageText(
+    `${EMOJI.AFFILIATE} <b>Referral Code</b>\n\n` +
+      `Were you referred by a Primetrex affiliate?\n\n` +
+      `Type their <b>referral code</b> to credit them, or type <code>skip</code> to continue without one.`,
+    { parse_mode: "HTML" }
+  );
 }
 
 export function registerSubscribeHandlers(bot: Bot<BotContext>) {

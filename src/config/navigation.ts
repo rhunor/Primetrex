@@ -27,6 +27,7 @@ export const dashboardNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Referrals", href: "/dashboard/referrals", icon: Users },
   { label: "Earnings", href: "/dashboard/earnings", icon: TrendingUp },
+  { label: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
   { label: "Withdrawals", href: "/dashboard/withdrawals", icon: Wallet },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

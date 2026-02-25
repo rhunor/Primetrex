@@ -7,8 +7,10 @@ import dbConnect from "@/lib/db";
 import BotSubscriber from "@/models/BotSubscriber";
 import BotPayment from "@/models/BotPayment";
 import Plan from "@/models/Plan";
+import User from "@/models/User";
 import { verifyPayment } from "@/bot/services/flutterwave";
 import { generateInviteLink } from "@/bot/services/invite";
+import { createBotPaymentAndShowLink } from "@/bot/handlers/subscribe";
 
 // ── Core verification logic ───────────────────────────────────────────────────
 
@@ -165,8 +167,39 @@ export function registerPaymentHandlers(bot: Bot<BotContext>) {
     );
   });
 
-  // Handle typed payment reference
+  // Handle typed messages — referral code step OR payment reference step
   bot.on("message:text", async (ctx, next) => {
+    // ── Referral code step ────────────────────────────────────────────────────
+    if (ctx.session.step === "awaiting_referral_code") {
+      const text = ctx.message.text.trim();
+
+      if (text.toLowerCase() === "skip") {
+        ctx.session.step = undefined;
+        ctx.session.pendingReferralCode = null;
+        await createBotPaymentAndShowLink(ctx);
+        return;
+      }
+
+      // Validate referral code
+      await dbConnect();
+      const referrer = await User.findOne({ referralCode: text.toUpperCase() });
+      if (!referrer) {
+        // Stay in step — prompt again
+        await ctx.reply(
+          `${EMOJI.CANCEL} <b>Invalid referral code.</b>\n\n` +
+            `Please check the code and try again, or type <code>skip</code> to continue without one.`,
+          { parse_mode: "HTML" }
+        );
+        return;
+      }
+
+      ctx.session.step = undefined;
+      ctx.session.pendingReferralCode = text.toUpperCase();
+      await createBotPaymentAndShowLink(ctx);
+      return;
+    }
+
+    // ── Payment reference step ────────────────────────────────────────────────
     if (ctx.session.step !== "awaiting_payment_ref") {
       return next();
     }

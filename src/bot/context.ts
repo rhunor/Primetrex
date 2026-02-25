@@ -11,6 +11,7 @@ export interface SessionData {
     | "awaiting_start_date"
     | "awaiting_expiry_date"
     | "awaiting_payment_ref"
+    | "awaiting_referral_code"
     | "awaiting_search_query"
     | "awaiting_broadcast_message"
     | "awaiting_broadcast_confirm"
@@ -30,6 +31,8 @@ export interface SessionData {
   // Temporary data during multi-step flows
   pendingUserId?: number;
   pendingPlanId?: string;
+  pendingReferralCode?: string | null;
+  pendingIsRenewal?: boolean;
   pendingStartDate?: string;
   pendingChannelId?: string;
   pendingPaymentRef?: string;

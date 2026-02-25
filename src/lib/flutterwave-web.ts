@@ -185,6 +185,12 @@ export function generateWebTxRef(): string {
   return `PTXW-SIGNUP-${Date.now()}-${random}`;
 }
 
+export function generateBotTxRef(type: "new" | "renewal"): string {
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const prefix = type === "new" ? "PTXW-BOT-NEW" : "PTXW-BOT-REN";
+  return `${prefix}-${Date.now()}-${random}`;
+}
+
 export function generateTransferRef(withdrawalId: string): string {
   return `WTH-${withdrawalId}-${Date.now()}`;
 }

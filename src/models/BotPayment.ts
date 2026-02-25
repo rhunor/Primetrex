@@ -9,6 +9,8 @@ export interface IBotPayment extends Document {
   flwRef: string | null;
   status: "pending" | "successful" | "failed";
   paymentType: "new" | "renewal";
+  referralCode: string | null;
+  webUserId: mongoose.Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +37,8 @@ const BotPaymentSchema = new Schema<IBotPayment>(
       enum: ["new", "renewal"],
       required: true,
     },
+    referralCode: { type: String, default: null },
+    webUserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 );

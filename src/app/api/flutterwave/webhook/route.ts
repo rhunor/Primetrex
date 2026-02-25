@@ -138,6 +138,78 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "ok" });
     }
 
+    // ── Web-initiated bot subscription (PTXW-BOT-NEW- or PTXW-BOT-REN-) ───────
+    if (txRef.startsWith("PTXW-BOT-")) {
+      const botPayment = await BotPayment.findOne({ paymentRef: txRef });
+
+      // Idempotency: skip if already processed
+      if (!botPayment || botPayment.status === "successful") {
+        return NextResponse.json({ status: "ok" });
+      }
+
+      // Store flwRef without touching status — activateSubscription handles that atomically
+      await BotPayment.updateOne({ paymentRef: txRef }, { flwRef: data.flw_ref });
+
+      // Activate subscription: sets payment.status="successful", creates BotSubscriber, sends invite DM
+      await activateSubscription(txRef);
+
+      // Generate commissions via the web user's referredBy chain
+      if (botPayment.webUserId) {
+        const paidAmount: number = botPayment.amount;
+        const webUser = await User.findById(botPayment.webUserId);
+
+        if (webUser?.referredBy) {
+          const existingComm = await Transaction.findOne({
+            paymentReference: txRef,
+            type: "commission",
+          });
+
+          if (!existingComm) {
+            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            await Transaction.create({
+              userId: webUser.referredBy,
+              type: "commission",
+              amount: tier1Amount,
+              tier: 1,
+              status: "completed",
+              sourceUserId: webUser._id,
+              paymentReference: txRef,
+              description: `Tier 1 commission from ${webUser.firstName} ${webUser.lastName} (bot sub via web)`,
+            });
+            notifyCommissionEarned(
+              webUser.referredBy,
+              tier1Amount,
+              1,
+              `${webUser.firstName} ${webUser.lastName}`
+            ).catch(() => {});
+
+            const tier1Referrer = await User.findById(webUser.referredBy);
+            if (tier1Referrer?.referredBy) {
+              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+              await Transaction.create({
+                userId: tier1Referrer.referredBy,
+                type: "commission",
+                amount: tier2Amount,
+                tier: 2,
+                status: "completed",
+                sourceUserId: webUser._id,
+                paymentReference: `${txRef}-t2`,
+                description: `Tier 2 commission from ${webUser.firstName} ${webUser.lastName} (bot sub via web)`,
+              });
+              notifyCommissionEarned(
+                tier1Referrer.referredBy,
+                tier2Amount,
+                2,
+                `${webUser.firstName} ${webUser.lastName}`
+              ).catch(() => {});
+            }
+          }
+        }
+      }
+
+      return NextResponse.json({ status: "ok" });
+    }
+
     // ── Bot subscription payment (PTRX-…) ─────────────────────────────────────
     if (txRef.startsWith("PTRX-")) {
       await BotPayment.updateMany(
@@ -153,12 +225,12 @@ export async function POST(req: NextRequest) {
         const paidAmount: number = botPayment.amount;
         const webUser = await User.findOne({ telegramId: botPayment.userId });
 
-        if (webUser?.referredBy) {
-          const existingComm = await Transaction.findOne({
-            paymentReference: txRef,
-            type: "commission",
-          });
+        const existingComm = await Transaction.findOne({
+          paymentReference: txRef,
+          type: "commission",
+        });
 
+        if (webUser?.referredBy) {
           if (!existingComm) {
             const tier1Amount =
               paidAmount * (siteConfig.commission.tier1Rate / 100);
@@ -209,6 +281,48 @@ export async function POST(req: NextRequest) {
                 tier2Amount,
                 2,
                 `${webUser.firstName} ${webUser.lastName}`
+              ).catch(() => {});
+            }
+          }
+        } else if (!webUser && botPayment.referralCode && !existingComm) {
+          // Referral code fallback: bot user not linked to a web account but typed a referral code
+          const referrer = await User.findOne({ referralCode: botPayment.referralCode });
+          if (referrer) {
+            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            await Transaction.create({
+              userId: referrer._id,
+              type: "commission",
+              amount: tier1Amount,
+              tier: 1,
+              status: "completed",
+              sourceUserId: null,
+              paymentReference: txRef,
+              description: `Tier 1 commission from Telegram subscriber (ref: ${botPayment.referralCode})`,
+            });
+            notifyCommissionEarned(
+              referrer._id,
+              tier1Amount,
+              1,
+              "a Telegram subscriber"
+            ).catch(() => {});
+
+            if (referrer.referredBy) {
+              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+              await Transaction.create({
+                userId: referrer.referredBy,
+                type: "commission",
+                amount: tier2Amount,
+                tier: 2,
+                status: "completed",
+                sourceUserId: null,
+                paymentReference: `${txRef}-t2`,
+                description: `Tier 2 commission from Telegram subscriber (ref: ${botPayment.referralCode})`,
+              });
+              notifyCommissionEarned(
+                referrer.referredBy,
+                tier2Amount,
+                2,
+                "a Telegram subscriber"
               ).catch(() => {});
             }
           }
