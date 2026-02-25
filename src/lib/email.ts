@@ -7,14 +7,32 @@ const FROM_EMAIL = process.env.EMAIL_FROM || "Primetrex <onboarding@resend.dev>"
 
 function emailHeader(appUrl: string) {
   return `
-    <div style="text-align: center; padding: 28px 0 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .ptx-logo-light { display: none !important; max-height: 0 !important; overflow: hidden !important; }
+        .ptx-logo-dark  { display: block !important; max-height: none !important; }
+        .ptx-divider    { border-color: #333 !important; }
+      }
+    </style>
+    <div style="text-align: center; padding: 28px 0 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;" class="ptx-divider">
       <a href="${appUrl}" style="text-decoration: none; display: inline-block;">
+        <!-- Shown in light mode (default) -->
         <img
+          class="ptx-logo-light"
           src="${appUrl}/logos/PNG/Dark%20Comb.png"
           alt="Primetrex"
           width="160"
           height="auto"
           style="display: block; margin: 0 auto; max-width: 160px;"
+        />
+        <!-- Shown in dark mode -->
+        <img
+          class="ptx-logo-dark"
+          src="${appUrl}/logos/PNG/Light%20Comb.png"
+          alt="Primetrex"
+          width="160"
+          height="auto"
+          style="display: none; margin: 0 auto; max-width: 160px;"
         />
       </a>
     </div>
