@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { Mail, CheckCircle, X } from "lucide-react";
 
@@ -92,8 +93,9 @@ export default function DashboardLayout({
         <Suspense>
           <EmailVerificationBanner />
         </Suspense>
-        <main className="p-6">{children}</main>
+        <main className="p-4 lg:p-6 pb-24 lg:pb-6">{children}</main>
       </div>
+      <BottomNav />
       <ScrollToTop />
     </div>
   );

@@ -66,6 +66,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Block concurrent withdrawal requests — prevents race condition where two
+    // simultaneous requests both see the same available balance before either is saved.
+    const alreadyPending = await Withdrawal.findOne({
+      userId,
+      status: { $in: ["pending", "processing"] },
+    });
+    if (alreadyPending) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have a withdrawal in progress. Please wait for it to complete before submitting another.",
+        },
+        { status: 409 }
+      );
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

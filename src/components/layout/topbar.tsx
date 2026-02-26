@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -154,15 +156,25 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       transition={{ duration: 0.3 }}
       className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 backdrop-blur-xl px-6"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Mobile: hamburger + logo */}
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           <Menu className="h-5 w-5" />
         </button>
+        <Link href="/dashboard" className="lg:hidden">
+          <Image
+            src="/logos/SVG/dark-comb.svg"
+            alt="Primetrex"
+            width={110}
+            height={28}
+          />
+        </Link>
 
-        <div className="hidden sm:flex items-center gap-2 rounded-xl bg-muted px-4 py-2 w-64">
+        {/* Desktop: search */}
+        <div className="hidden lg:flex items-center gap-2 rounded-xl bg-muted px-4 py-2 w-64">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
             type="text"
