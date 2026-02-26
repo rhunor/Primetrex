@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
+  const { update } = useSession();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -22,8 +24,10 @@ function VerifyEmailContent() {
 
     fetch(`/api/auth/verify-email?token=${token}`)
       .then((res) => res.json())
-      .then((data) => {
+      .then(async (data) => {
         if (data.success) {
+          // Refresh the JWT so the dashboard no longer shows the banner
+          await update();
           setStatus("success");
           setMessage("Your email has been verified successfully!");
         } else {
@@ -35,7 +39,7 @@ function VerifyEmailContent() {
         setStatus("error");
         setMessage("Something went wrong. Please try again.");
       });
-  }, [token]);
+  }, [token, update]);
 
   return (
     <motion.div

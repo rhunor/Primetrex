@@ -50,13 +50,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         const u = user as unknown as Record<string, unknown>;
         (token as Record<string, unknown>).role = u.role;
         (token as Record<string, unknown>).referralCode = u.referralCode;
         (token as Record<string, unknown>).isActive = u.isActive;
         (token as Record<string, unknown>).isEmailVerified = u.isEmailVerified;
+      }
+      // Refresh mutable fields from DB when session.update() is called client-side
+      if (trigger === "update") {
+        const { default: dbConnect } = await import("@/lib/db");
+        const { default: User } = await import("@/models/User");
+        await dbConnect();
+        const dbUser = await User.findById(token.sub).lean() as Record<string, unknown> | null;
+        if (dbUser) {
+          (token as Record<string, unknown>).isEmailVerified = !!dbUser.isEmailVerified;
+          (token as Record<string, unknown>).isActive = dbUser.isActive;
+        }
       }
       return token;
     },
