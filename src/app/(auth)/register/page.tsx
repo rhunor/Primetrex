@@ -39,7 +39,8 @@ function RegisterForm() {
     referralCode: referralCode,
   });
   const [error, setError] = useState("");
-  // Ref guard prevents duplicate API calls on rapid double-click (faster than React re-render)
+  // Ref guards prevent duplicate API calls on rapid double-click (faster than React re-render)
+  const isSubmittingRef = useRef(false);
   const isPayingRef = useRef(false);
   const { executeRecaptcha } = useGoogleReCaptcha();
 
@@ -54,14 +55,20 @@ function RegisterForm() {
 
   async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Synchronous ref check blocks duplicate calls before the first setState re-render
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
+      isSubmittingRef.current = false;
       return;
     }
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -79,15 +86,16 @@ function RegisterForm() {
 
       if (!res.ok) {
         setError(data.error || "Registration failed");
-        setIsLoading(false);
         return;
       }
 
       setStep("payment");
     } catch {
       setError("Something went wrong. Please try again.");
+    } finally {
+      isSubmittingRef.current = false;
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   async function handlePayment() {

@@ -5,10 +5,10 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { sendVerificationEmail } from "@/lib/email";
 
-export async function GET() {
+export async function POST() {
   const session = await auth();
   if (!session?.user?.email) {
-    return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -34,12 +34,9 @@ export async function GET() {
 
     await sendVerificationEmail(user.email, user.firstName, emailVerificationToken);
 
-    // Redirect back to dashboard with a success param
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(new URL("/dashboard?emailSent=1", appUrl));
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Resend verification error:", error);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(new URL("/dashboard?emailError=1", appUrl));
+    return NextResponse.json({ error: "Failed to send email. Please try again." }, { status: 500 });
   }
 }

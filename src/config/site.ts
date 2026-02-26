@@ -16,7 +16,7 @@ export const siteConfig = {
   minWithdrawal: 10_000,
   links: {
     telegram: "https://t.me/primetrex",
-    twitter: "https://twitter.com/primetrex",
-    instagram: "https://instagram.com/primetrex",
+    twitter: "https://x.com/_primetrex",
+    instagram: "https://www.instagram.com/_primetrex?igsh=Y2ZvMHhjbW5zcGs=",
   },
 } as const;

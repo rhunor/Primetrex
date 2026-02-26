@@ -4,9 +4,16 @@ import { EMOJI, CALLBACK } from "@/bot/constants";
 import { mainMenuKeyboard, helpKeyboard } from "@/bot/keyboards/inline";
 import { isAdmin } from "@/bot/middleware/auth";
 import { showSubscriptionSummary } from "@/bot/handlers/subscribe";
+import { activateSubscription } from "@/bot/services/subscription";
+import { verifyPayment } from "@/bot/services/flutterwave";
+import { generateInviteLink } from "@/bot/services/invite";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Plan from "@/models/Plan";
+import BotPayment from "@/models/BotPayment";
+import Transaction from "@/models/Transaction";
+import { notifyCommissionEarned } from "@/lib/notifications";
+import { siteConfig } from "@/config/site";
 
 const replyKeyboard = new Keyboard()
   .text("\u2261 Main Menu")
@@ -114,11 +121,179 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
 
     // Handle payment success deep link
     if (typeof payload === "string" && payload.startsWith("payment_success_")) {
+      const txRef = payload.replace("payment_success_", "");
+
       await ctx.reply(
-        `${EMOJI.SUCCESS} Payment received! Your subscription is being activated.\n\n` +
-          `You'll receive your invite link shortly.`,
+        `${EMOJI.HOURGLASS} <b>Verifying your payment...</b>`,
         { parse_mode: "HTML" }
       );
+
+      try {
+        await dbConnect();
+
+        const payment = await BotPayment.findOne({ paymentRef: txRef });
+
+        if (!payment) {
+          await ctx.reply(
+            `${EMOJI.WARNING} <b>Reference Not Found</b>\n\n` +
+              `We could not find this payment reference. Please use the ` +
+              `"I've Paid" button and enter your transaction reference manually.`,
+            { parse_mode: "HTML" }
+          );
+          return;
+        }
+
+        if (payment.status === "successful") {
+          // Already activated — send a fresh invite link
+          const plan = await Plan.findById(payment.planId);
+          if (plan) {
+            try {
+              const inviteLink = await generateInviteLink(plan.channelId);
+              await ctx.reply(
+                `${EMOJI.SUCCESS} <b>Subscription Active!</b>\n\n` +
+                  `Here is your access link to <b>${plan.channelName}</b>:\n` +
+                  `${inviteLink}\n\n` +
+                  `${EMOJI.WARNING} <i>This link expires in 24 hours and can only be used once. Join now!</i>`,
+                { parse_mode: "HTML" }
+              );
+            } catch {
+              await ctx.reply(
+                `${EMOJI.SUCCESS} <b>Your subscription is active!</b>\n\n` +
+                  `Please contact the admin to get your invite link.`,
+                { parse_mode: "HTML" }
+              );
+            }
+          }
+          return;
+        }
+
+        // Verify with Flutterwave
+        const result = await verifyPayment(txRef);
+
+        if (result.status !== "success" || result.data?.status !== "successful") {
+          await ctx.reply(
+            `${EMOJI.CANCEL} <b>Payment Not Confirmed Yet</b>\n\n` +
+              `Your payment may still be processing. Please wait a minute and ` +
+              `try again, or use the "I've Paid" button to verify manually.`,
+            { parse_mode: "HTML" }
+          );
+          return;
+        }
+
+        // Store the Flutterwave reference
+        await BotPayment.updateOne(
+          { paymentRef: txRef },
+          { flwRef: result.data.flw_ref }
+        );
+
+        // Activate: creates BotSubscriber + sends invite link DM
+        const activation = await activateSubscription(txRef);
+
+        if (!activation.success) {
+          await ctx.reply(
+            `${EMOJI.CANCEL} Activation issue: ${activation.message}\n\nPlease contact support.`,
+            { parse_mode: "HTML" }
+          );
+          return;
+        }
+
+        // Track commissions
+        const paidAmount = payment.amount;
+        const webUser = await User.findOne({ telegramId: payment.userId });
+
+        const existingComm = await Transaction.findOne({
+          paymentReference: txRef,
+          type: "commission",
+        });
+
+        if (webUser?.referredBy && !existingComm) {
+          const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+          await Transaction.create({
+            userId: webUser.referredBy,
+            type: "commission",
+            amount: tier1Amount,
+            tier: 1,
+            status: "completed",
+            sourceUserId: webUser._id,
+            paymentReference: txRef,
+            description: `Tier 1 commission from ${webUser.firstName} ${webUser.lastName} (subscription)`,
+          });
+          notifyCommissionEarned(
+            webUser.referredBy,
+            tier1Amount,
+            1,
+            `${webUser.firstName} ${webUser.lastName}`
+          ).catch(() => {});
+
+          const tier1Referrer = await User.findById(webUser.referredBy);
+          if (tier1Referrer?.referredBy) {
+            const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+            await Transaction.create({
+              userId: tier1Referrer.referredBy,
+              type: "commission",
+              amount: tier2Amount,
+              tier: 2,
+              status: "completed",
+              sourceUserId: webUser._id,
+              paymentReference: `${txRef}-t2`,
+              description: `Tier 2 commission from ${webUser.firstName} ${webUser.lastName} (subscription)`,
+            });
+            notifyCommissionEarned(
+              tier1Referrer.referredBy,
+              tier2Amount,
+              2,
+              `${webUser.firstName} ${webUser.lastName}`
+            ).catch(() => {});
+          }
+        } else if (!webUser && payment.referralCode && !existingComm) {
+          const referrer = await User.findOne({ referralCode: payment.referralCode });
+          if (referrer) {
+            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            await Transaction.create({
+              userId: referrer._id,
+              type: "commission",
+              amount: tier1Amount,
+              tier: 1,
+              status: "completed",
+              sourceUserId: null,
+              paymentReference: txRef,
+              description: `Tier 1 commission from Telegram subscriber (ref: ${payment.referralCode})`,
+            });
+            notifyCommissionEarned(
+              referrer._id,
+              tier1Amount,
+              1,
+              "a Telegram subscriber"
+            ).catch(() => {});
+
+            if (referrer.referredBy) {
+              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+              await Transaction.create({
+                userId: referrer.referredBy,
+                type: "commission",
+                amount: tier2Amount,
+                tier: 2,
+                status: "completed",
+                sourceUserId: null,
+                paymentReference: `${txRef}-t2`,
+                description: `Tier 2 commission from Telegram subscriber (ref: ${payment.referralCode})`,
+              });
+              notifyCommissionEarned(
+                referrer.referredBy,
+                tier2Amount,
+                2,
+                "a Telegram subscriber"
+              ).catch(() => {});
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Payment success handler error:", error);
+        await ctx.reply(
+          `${EMOJI.CANCEL} Something went wrong. Please use the "I've Paid" button to verify your payment.`,
+          { parse_mode: "HTML" }
+        );
+      }
       return;
     }
 

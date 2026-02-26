@@ -212,9 +212,16 @@ export async function POST(req: NextRequest) {
 
     // ── Bot subscription payment (PTRX-…) ─────────────────────────────────────
     if (txRef.startsWith("PTRX-")) {
+      const botPaymentCheck = await BotPayment.findOne({ paymentRef: txRef });
+      // Idempotent: skip if already processed
+      if (botPaymentCheck && botPaymentCheck.status === "successful") {
+        return NextResponse.json({ status: "ok" });
+      }
+
+      // Store flwRef without setting status — activateSubscription handles that atomically
       await BotPayment.updateMany(
         { paymentRef: txRef },
-        { status: "successful", flwRef: data.flw_ref }
+        { flwRef: data.flw_ref }
       );
 
       await activateSubscription(txRef);

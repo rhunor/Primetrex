@@ -69,7 +69,7 @@ export function Footer() {
               Telegram
             </Link>
             <Link href={siteConfig.links.twitter} className="text-white/40 hover:text-secondary transition-colors">
-              Twitter
+              X
             </Link>
             <Link href={siteConfig.links.instagram} className="text-white/40 hover:text-secondary transition-colors">
               Instagram
