@@ -51,7 +51,7 @@ export async function POST() {
 
     const txRef = generateBotTxRef(isRenewal ? "renewal" : "new");
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const redirectUrl = `${appUrl}/dashboard/subscription?bot_paid=success`;
+    const redirectUrl = `${appUrl}/dashboard/subscription?bot_paid=success&tx_ref=${txRef}`;
 
     // Create BotPayment record in pending state before redirecting
     await BotPayment.create({

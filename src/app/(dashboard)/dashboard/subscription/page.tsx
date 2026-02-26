@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
@@ -37,25 +37,47 @@ function SubscriptionContent() {
   const router = useRouter();
   const [data, setData] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  useEffect(() => {
-    if (searchParams.get("bot_paid") === "success") {
-      setShowSuccess(true);
-      // Remove query param from URL
-      router.replace("/dashboard/subscription");
-    }
-  }, [searchParams, router]);
-
-  useEffect(() => {
-    fetch("/api/bot-subscription/status")
+  const fetchStatus = useCallback(() => {
+    setLoading(true);
+    return fetch("/api/bot-subscription/status")
       .then((res) => (res.ok ? res.json() : null))
       .then((d) => setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
+
+  // After Flutterwave redirect: confirm payment then re-fetch status
+  useEffect(() => {
+    const botPaid = searchParams.get("bot_paid");
+    const txRef = searchParams.get("tx_ref");
+
+    if (botPaid === "success") {
+      setShowSuccess(true);
+      router.replace("/dashboard/subscription");
+
+      if (txRef) {
+        setConfirming(true);
+        fetch("/api/bot-subscription/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txRef }),
+        })
+          .then(() => fetchStatus())
+          .catch(() => {})
+          .finally(() => setConfirming(false));
+      }
+    }
+  }, [searchParams, router, fetchStatus]);
 
   async function handlePay() {
     setError(null);
@@ -77,10 +99,13 @@ function SubscriptionContent() {
     }
   }
 
-  if (loading) {
+  if (loading || confirming) {
     return (
-      <div className="flex items-center justify-center py-32">
+      <div className="flex flex-col items-center justify-center py-32 gap-3">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        {confirming && (
+          <p className="text-sm text-muted-foreground">Activating your subscription...</p>
+        )}
       </div>
     );
   }
@@ -167,14 +192,7 @@ function SubscriptionContent() {
           <Button
             variant="outline"
             className="w-full gap-2"
-            onClick={() => {
-              setLoading(true);
-              fetch("/api/bot-subscription/status")
-                .then((res) => (res.ok ? res.json() : null))
-                .then((d) => setData(d))
-                .catch(() => {})
-                .finally(() => setLoading(false));
-            }}
+            onClick={fetchStatus}
           >
             <RefreshCw className="h-4 w-4" />
             I&apos;ve linked my account — refresh
