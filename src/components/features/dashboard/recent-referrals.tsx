@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { Users } from "lucide-react";
 
@@ -57,27 +56,27 @@ export function RecentReferrals({ referrals }: RecentReferralsProps) {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: 0.8 + index * 0.05 }}
-              className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-3 px-6 py-4 hover:bg-muted/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                  {referral.name.split(" ").map((n) => n[0]).join("")}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{referral.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(referral.date)}</p>
-                </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold flex-shrink-0">
+                {referral.name.split(" ").map((n) => n[0]).join("")}
               </div>
-              <div className="flex items-center gap-3">
-                <Badge variant={referral.tier === 1 ? "info" : "success"}>
-                  Tier {referral.tier}
-                </Badge>
-                <Badge variant={referral.status === "active" ? "success" : "warning"}>
-                  {referral.status}
-                </Badge>
-                <span className="text-sm font-medium text-foreground min-w-[80px] text-right">
-                  {referral.earnings > 0 ? formatCurrency(referral.earnings) : "—"}
-                </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{referral.name}</p>
+                  <span className="text-sm font-medium text-foreground flex-shrink-0">
+                    {referral.earnings > 0 ? formatCurrency(referral.earnings) : "—"}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{formatDate(referral.date)}</p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${referral.tier === 1 ? "bg-primary/10 text-primary" : "bg-secondary/20 text-secondary-dark"}`}>
+                    T{referral.tier}
+                  </span>
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${referral.status === "active" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
+                    {referral.status}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ))}
