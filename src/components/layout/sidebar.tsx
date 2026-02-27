@@ -18,9 +18,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const sidebarContent = (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col relative overflow-hidden">
+      {/* Decorative depth — radial glow at bottom */}
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-primary/20 blur-[80px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute top-1/2 right-0 h-32 w-32 rounded-full bg-secondary/5 blur-2xl" />
+
       {/* Logo */}
-      <div className="flex items-center justify-between px-6 py-6">
+      <div className="relative flex items-center justify-between px-6 py-6">
         <Link href="/dashboard" className="flex items-center">
           <Image
             src="/logos/SVG/light-comb.svg"
@@ -31,9 +35,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden text-white/40 hover:text-white transition-colors"
+          aria-label="Close navigation"
+          className="lg:hidden text-white/40 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-lg p-1"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -55,7 +60,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   : "text-white/50 hover:bg-sidebar-hover hover:text-white"
               )}
             >
-              {Icon && <Icon className="h-5 w-5 flex-shrink-0" />}
+              {Icon && <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />}
               <span>{item.label}</span>
               {isActive && (
                 <motion.div
@@ -75,7 +80,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white/50 hover:bg-sidebar-hover hover:text-white transition-all duration-200"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-5 w-5" aria-hidden="true" />
           <span>Sign Out</span>
         </button>
       </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "motion/react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
@@ -33,17 +32,6 @@ interface Bank {
   code: string;
   slug: string;
 }
-
-const statusVariant: Record<
-  string,
-  "success" | "warning" | "danger" | "info"
-> = {
-  completed: "success",
-  pending: "warning",
-  processing: "info",
-  rejected: "danger",
-  failed: "danger",
-};
 
 export default function WithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalItem[]>([]);
@@ -416,32 +404,46 @@ export default function WithdrawalsPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.03 }}
-                className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 px-6 py-4 hover:bg-muted/50 transition-colors"
               >
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {w.bankName} — {w.accountNumber}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(w.date).toLocaleDateString("en-NG", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                  {w.rejectionReason && (
-                    <p className="text-xs text-danger mt-0.5">
-                      {w.rejectionReason}
-                    </p>
-                  )}
+                <div className={`flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 ${
+                  w.status === "completed" ? "bg-success/10 text-success" :
+                  w.status === "rejected" || w.status === "failed" ? "bg-danger/10 text-danger" :
+                  "bg-warning/10 text-warning"
+                }`}>
+                  {w.status === "completed" ? <CheckCircle className="h-4 w-4" /> :
+                   w.status === "rejected" || w.status === "failed" ? <Banknote className="h-4 w-4" /> :
+                   <Clock className="h-4 w-4" />}
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant={statusVariant[w.status] || "default"}>
-                    {w.status}
-                  </Badge>
-                  <span className="text-sm font-bold text-foreground">
-                    {formatCurrency(w.amount)}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {w.bankName} · {w.accountNumber}
+                    </p>
+                    <span className="text-sm font-bold text-foreground flex-shrink-0">
+                      {formatCurrency(w.amount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(w.date).toLocaleDateString("en-NG", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                      w.status === "completed" ? "bg-success/10 text-success" :
+                      w.status === "rejected" || w.status === "failed" ? "bg-danger/10 text-danger" :
+                      w.status === "processing" ? "bg-primary/10 text-primary" :
+                      "bg-warning/10 text-warning"
+                    }`}>
+                      {w.status}
+                    </span>
+                  </div>
+                  {w.rejectionReason && (
+                    <p className="text-xs text-danger mt-0.5">{w.rejectionReason}</p>
+                  )}
                 </div>
               </motion.div>
             ))}

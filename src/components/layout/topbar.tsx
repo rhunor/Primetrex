@@ -105,7 +105,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -115,8 +115,15 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const markAllRead = async () => {
@@ -160,9 +167,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         {/* Mobile: hamburger + logo */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Open navigation menu"
+          className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
         <Link href="/dashboard" className="lg:hidden">
           <Image
@@ -175,11 +183,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
         {/* Desktop: search */}
         <div className="hidden lg:flex items-center gap-2 rounded-xl bg-muted px-4 py-2 w-64">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <input
             type="text"
-            placeholder="Search..."
-            className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-full"
+            placeholder="Search…"
+            aria-label="Search dashboard"
+            className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-full focus-visible:outline-none"
           />
         </div>
       </div>
@@ -192,9 +201,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               setIsOpen(!isOpen);
               if (!isOpen) fetchNotifications();
             }}
-            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label={unreadCount > 0 ? `Notifications — ${unreadCount} unread` : "Notifications"}
+            aria-expanded={isOpen}
+            aria-haspopup="true"
+            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5 w-5" aria-hidden="true" />
             {unreadCount > 0 && (
               <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
@@ -231,9 +243,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     )}
                     <button
                       onClick={() => setIsOpen(false)}
-                      className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors sm:hidden"
+                      aria-label="Close notifications"
+                      className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -262,9 +275,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                           }`}
                         >
                           <div
-                            className={`flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0 mt-0.5 ${colorClass}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl shrink-0 mt-0.5 ${colorClass}`}
                           >
-                            <IconComp className="h-4 w-4" />
+                            <IconComp className="h-4 w-4" aria-hidden="true" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

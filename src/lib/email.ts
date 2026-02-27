@@ -102,6 +102,56 @@ export async function sendVerificationEmail(
   });
 }
 
+export async function sendPasswordResetEmail(
+  email: string,
+  firstName: string,
+  token: string
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const resetUrl = `${appUrl}/reset-password?token=${token}`;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[DEV] Password reset URL for ${email}:`, resetUrl);
+  }
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: "Reset your Primetrex password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <h2 style="color: #333; margin-top: 0;">Password Reset Request</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Hi ${firstName}, we received a request to reset your Primetrex account password.
+            Click the button below to set a new password:
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}"
+               style="background: #8808CC; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+              Reset My Password
+            </a>
+          </div>
+
+          <p style="color: #888; font-size: 13px;">
+            If the button doesn't work, copy and paste this link into your browser:<br/>
+            <a href="${resetUrl}" style="color: #8808CC; word-break: break-all;">${resetUrl}</a>
+          </p>
+
+          <p style="color: #888; font-size: 13px;">
+            This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email — your password won't change.
+          </p>
+        </div>
+
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
 export async function sendWelcomeEmail(email: string, firstName: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 

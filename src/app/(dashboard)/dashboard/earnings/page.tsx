@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { EarningsChart } from "@/components/features/dashboard/earnings-chart";
 import { TrendingUp, Wallet, ArrowUpRight, Layers, Loader2 } from "lucide-react";
@@ -57,23 +56,25 @@ export default function EarningsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[
-          { label: "Total Earned", value: formatCurrency(stats.total), icon: Wallet },
-          { label: "Tier 1", value: formatCurrency(stats.tier1), icon: ArrowUpRight },
-          { label: "Tier 2", value: formatCurrency(stats.tier2), icon: Layers },
-          { label: "Available", value: formatCurrency(stats.available), icon: TrendingUp },
+          { label: "Total Earned", value: formatCurrency(stats.total), icon: Wallet, color: "bg-primary/10 text-primary" },
+          { label: "Tier 1", value: formatCurrency(stats.tier1), icon: ArrowUpRight, color: "bg-secondary/20 text-secondary-dark" },
+          { label: "Tier 2", value: formatCurrency(stats.tier2), icon: Layers, color: "bg-warning/10 text-warning" },
+          { label: "Available", value: formatCurrency(stats.available), icon: TrendingUp, color: "bg-success/10 text-success" },
         ].map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="rounded-xl border border-border bg-card p-4"
+            transition={{ delay: i * 0.08 }}
+            className="rounded-2xl border border-border bg-card p-4 lg:p-5 shadow-sm"
           >
-            <s.icon className="h-5 w-5 text-primary mb-2" />
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl mb-3 ${s.color}`}>
+              <s.icon className="h-4 w-4" />
+            </div>
             <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className="text-xl font-bold font-heading text-foreground mt-1">{s.value}</p>
+            <p className="text-lg lg:text-xl font-bold font-heading text-foreground mt-1">{s.value}</p>
           </motion.div>
         ))}
       </div>
@@ -95,27 +96,32 @@ export default function EarningsPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.03 }}
-                className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 px-6 py-4 hover:bg-muted/50 transition-colors"
               >
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.description}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {new Date(item.date).toLocaleDateString("en-NG", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-secondary/10 flex-shrink-0">
+                  <ArrowUpRight className="h-4 w-4 text-secondary-dark" />
                 </div>
-                <div className="flex items-center gap-3">
-                  {item.tier && (
-                    <Badge variant={item.tier === 1 ? "info" : "success"}>
-                      Tier {item.tier}
-                    </Badge>
-                  )}
-                  <span className="text-sm font-bold text-secondary-dark">
-                    +{formatCurrency(item.amount)}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground truncate">{item.description}</p>
+                    <span className="text-sm font-bold text-secondary-dark flex-shrink-0">
+                      +{formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(item.date).toLocaleDateString("en-NG", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                    {item.tier && (
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${item.tier === 1 ? "bg-primary/10 text-primary" : "bg-secondary/20 text-secondary-dark"}`}>
+                        T{item.tier}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}

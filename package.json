@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",
+    "@emailjs/browser": "^4.4.1",
     "@grammyjs/conversations": "^2.1.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

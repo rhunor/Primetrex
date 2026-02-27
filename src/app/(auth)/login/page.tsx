@@ -61,8 +61,10 @@ export default function LoginPage() {
           label="Email"
           type="email"
           placeholder="you@example.com"
-          icon={<Mail className="h-4 w-4" />}
+          icon={<Mail className="h-4 w-4" aria-hidden="true" />}
           required
+          autoComplete="email"
+          spellCheck={false}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -70,8 +72,9 @@ export default function LoginPage() {
           label="Password"
           type="password"
           placeholder="Enter your password"
-          icon={<Lock className="h-4 w-4" />}
+          icon={<Lock className="h-4 w-4" aria-hidden="true" />}
           required
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

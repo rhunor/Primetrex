@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,17 +15,34 @@ import {
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
+const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
+const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!;
+const PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
+
 export default function ContactPage() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!formRef.current) return;
+
     setIsSubmitting(true);
-    // TODO: Integrate with email service / Server Action
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsSubmitting(false);
-    setSubmitted(true);
+    setError("");
+
+    try {
+      await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, {
+        publicKey: PUBLIC_KEY,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      console.error("EmailJS error:", err);
+      setError("Failed to send your message. Please try again or email us directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,27 +115,30 @@ export default function ContactPage() {
                   <Button
                     variant="outline"
                     className="mt-6"
-                    onClick={() => setSubmitted(false)}
+                    onClick={() => { setSubmitted(false); formRef.current?.reset(); }}
                   >
                     Send Another Message
                   </Button>
                 </motion.div>
               ) : (
-                <form onSubmit={onSubmit} className="space-y-5">
+                <form ref={formRef} onSubmit={onSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label="First Name"
+                      name="first_name"
                       placeholder="John"
                       required
                     />
                     <Input
                       label="Last Name"
+                      name="last_name"
                       placeholder="Doe"
                       required
                     />
                   </div>
                   <Input
                     label="Email"
+                    name="reply_to"
                     type="email"
                     placeholder="you@example.com"
                     icon={<Mail className="h-4 w-4" />}
@@ -125,6 +146,7 @@ export default function ContactPage() {
                   />
                   <Input
                     label="Subject"
+                    name="subject"
                     placeholder="How can we help?"
                     icon={<MessageSquare className="h-4 w-4" />}
                     required
@@ -134,12 +156,20 @@ export default function ContactPage() {
                       Message
                     </label>
                     <textarea
+                      name="message"
                       rows={5}
                       placeholder="Tell us more about your question..."
                       required
                       className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 resize-none"
                     />
                   </div>
+
+                  {error && (
+                    <p className="text-sm text-danger bg-danger/10 px-4 py-2.5 rounded-xl">
+                      {error}
+                    </p>
+                  )}
+
                   <Button
                     type="submit"
                     size="lg"

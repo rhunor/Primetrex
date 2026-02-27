@@ -13,6 +13,8 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   emailVerificationToken: string | null;
   emailVerificationExpires: Date | null;
+  resetPasswordToken: string | null;
+  resetPasswordExpires: Date | null;
   isActive: boolean;
   telegramId: string | null;
   telegramLinked: boolean;
@@ -51,6 +53,8 @@ const UserSchema = new Schema<IUser>(
     isEmailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, default: null },
     emailVerificationExpires: { type: Date, default: null },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
     isActive: { type: Boolean, default: false }, // Inactive until payment
     telegramId: { type: String, default: null },
     telegramLinked: { type: Boolean, default: false },

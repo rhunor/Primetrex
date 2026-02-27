@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { forwardRef, useState } from "react";
+import { forwardRef, useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -11,14 +11,16 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, icon, type, ...props }, ref) => {
+  ({ className, label, error, icon, type, id: idProp, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
+    const generatedId = useId();
+    const id = idProp ?? generatedId;
 
     return (
       <div className="w-full space-y-1.5">
         {label && (
-          <label className="block text-sm font-medium text-foreground">
+          <label htmlFor={id} className="block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
@@ -30,6 +32,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
+            id={id}
             type={isPassword && showPassword ? "text" : type}
             className={cn(
               "w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground",
@@ -47,9 +50,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none"
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
             </button>
           )}
         </div>
