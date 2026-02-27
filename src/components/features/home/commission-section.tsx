@@ -159,7 +159,7 @@ export function CommissionSection() {
             <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
               One-Time Signup Fee
             </p>
-            <p className="text-4xl font-bold font-heading gradient-text mt-3">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold font-heading gradient-text mt-3">
               {formatCurrency(siteConfig.signupFee)}
             </p>
             <p className="text-sm text-muted-foreground mt-3">
@@ -186,7 +186,7 @@ export function CommissionSection() {
             <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
               Tier 1 Commission
             </p>
-            <p className="text-5xl font-bold font-heading gradient-text mt-3">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading gradient-text mt-3">
               50%
             </p>
             <p className="text-sm text-muted-foreground mt-3">
@@ -208,7 +208,7 @@ export function CommissionSection() {
             <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
               Tier 2 Commission
             </p>
-            <p className="text-4xl font-bold font-heading text-secondary-dark mt-3">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold font-heading text-secondary-dark mt-3">
               10%
             </p>
             <p className="text-sm text-muted-foreground mt-3">

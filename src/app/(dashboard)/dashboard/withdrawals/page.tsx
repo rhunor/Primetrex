@@ -192,7 +192,7 @@ export default function WithdrawalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-heading text-foreground">
             Withdrawals
@@ -205,6 +205,7 @@ export default function WithdrawalsPage() {
           <Button
             onClick={() => setShowForm(true)}
             disabled={availableBalance < siteConfig.minWithdrawal}
+            className="self-start sm:self-auto"
           >
             <Banknote className="h-4 w-4" />
             Request Withdrawal
@@ -404,9 +405,9 @@ export default function WithdrawalsPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.03 }}
-                className="flex items-center gap-3 px-6 py-4 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors"
               >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 ${
+                <div className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
                   w.status === "completed" ? "bg-success/10 text-success" :
                   w.status === "rejected" || w.status === "failed" ? "bg-danger/10 text-danger" :
                   "bg-warning/10 text-warning"
@@ -420,7 +421,7 @@ export default function WithdrawalsPage() {
                     <p className="text-sm font-medium text-foreground truncate">
                       {w.bankName} · {w.accountNumber}
                     </p>
-                    <span className="text-sm font-bold text-foreground flex-shrink-0">
+                    <span className="text-sm font-bold text-foreground shrink-0">
                       {formatCurrency(w.amount)}
                     </span>
                   </div>

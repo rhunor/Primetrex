@@ -53,7 +53,7 @@ export default function ContactPage() {
         <motion.div
           animate={{ y: [0, -20, 0], opacity: [0.2, 0.35, 0.2] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/3 left-1/3 h-64 w-64 rounded-full bg-primary/20 blur-[100px]"
+          className="absolute top-1/3 left-1/3 h-40 w-40 sm:h-56 sm:w-56 md:h-64 md:w-64 rounded-full bg-primary/20 blur-[60px] sm:blur-[80px] md:blur-[100px]"
         />
         <div className="relative mx-auto max-w-7xl px-6">
           <motion.div
@@ -79,7 +79,7 @@ export default function ContactPage() {
       {/* Content */}
       <section className="py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16">
             {/* Contact Form */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -199,7 +199,7 @@ export default function ContactPage() {
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
@@ -214,7 +214,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <MessageSquare className="h-5 w-5" />
                   </div>
                   <div>
@@ -234,7 +234,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <Phone className="h-5 w-5" />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div>

@@ -101,7 +101,7 @@ export default function HowItWorksPage() {
         <motion.div
           animate={{ y: [0, -25, 0], opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 left-1/4 h-72 w-72 rounded-full bg-secondary-dark/20 blur-[100px]"
+          className="absolute bottom-1/4 left-1/4 h-40 w-40 sm:h-56 sm:w-56 md:h-72 md:w-72 rounded-full bg-secondary-dark/20 blur-[60px] sm:blur-[80px] md:blur-[100px]"
         />
         <div className="relative mx-auto max-w-7xl px-6">
           <motion.div
@@ -140,8 +140,8 @@ export default function HowItWorksPage() {
               >
                 <div className="shrink-0">
                   <div className="relative">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl gradient-primary text-white shadow-lg shadow-primary/25">
-                      <step.icon className="h-9 w-9" />
+                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl gradient-primary text-white shadow-lg shadow-primary/25">
+                      <step.icon className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
                     </div>
                     <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-primary-dark">
                       {step.step}
@@ -213,7 +213,7 @@ export default function HowItWorksPage() {
               <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
                 Tier 1 — Direct Referrals
               </p>
-              <p className="text-6xl font-bold font-heading gradient-text mt-3">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-bold font-heading gradient-text mt-3">
                 50%
               </p>
               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
@@ -238,7 +238,7 @@ export default function HowItWorksPage() {
               <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
                 Tier 2 — Sub-Referrals
               </p>
-              <p className="text-6xl font-bold font-heading text-secondary-dark mt-3">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-bold font-heading text-secondary-dark mt-3">
                 10%
               </p>
               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">

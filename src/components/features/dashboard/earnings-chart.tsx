@@ -53,7 +53,7 @@ export function EarningsChart({ data }: EarningsChartProps) {
       </div>
 
       {hasData ? (
-        <div className="h-[300px] w-full">
+        <div className="h-50 sm:h-62.5 md:h-75 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
@@ -80,7 +80,7 @@ export function EarningsChart({ data }: EarningsChartProps) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+        <div className="flex items-center justify-center h-50 sm:h-62.5 md:h-75 text-muted-foreground text-sm">
           No earnings data yet. Start referring to see your chart!
         </div>
       )}

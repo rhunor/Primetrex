@@ -54,7 +54,7 @@ export default function AboutPage() {
         <motion.div
           animate={{ y: [0, -20, 0], opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/3 right-1/4 h-80 w-80 rounded-full bg-primary/20 blur-[120px]"
+          className="absolute top-1/3 right-1/4 h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 rounded-full bg-primary/20 blur-[70px] sm:blur-[95px] md:blur-[120px]"
         />
         <div className="relative mx-auto max-w-7xl px-6">
           <motion.div
@@ -82,7 +82,7 @@ export default function AboutPage() {
       {/* Mission & Vision */}
       <section className="py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-20">
             {/* Mission */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -199,7 +199,7 @@ export default function AboutPage() {
                 transition={{ delay: index * 0.1 }}
                 className="flex items-start gap-4 p-6 rounded-2xl border border-border bg-card"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/20 text-secondary-dark flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/20 text-secondary-dark shrink-0">
                   <Heart className="h-5 w-5" />
                 </div>
                 <div>

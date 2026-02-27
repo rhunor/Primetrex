@@ -74,7 +74,7 @@ export function HowItWorksSection() {
               className="group relative rounded-2xl border border-border bg-card p-6 overflow-hidden transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20"
             >
               {/* Watermark step number */}
-              <span className="absolute -right-1 -top-3 text-8xl font-bold font-heading text-foreground/[0.035] select-none pointer-events-none leading-none">
+              <span className="absolute -right-1 -top-3 text-6xl sm:text-7xl lg:text-8xl font-bold font-heading text-foreground/[0.035] select-none pointer-events-none leading-none">
                 {step.step}
               </span>
 

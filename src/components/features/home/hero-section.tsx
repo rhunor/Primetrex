@@ -49,13 +49,13 @@ export function HeroSection() {
         animate={{ y: [0, -24, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         style={{ opacity: 0.3, willChange: "transform" }}
-        className="absolute top-1/4 left-[15%] h-72 w-72 rounded-full bg-primary/30 blur-[70px] pointer-events-none"
+        className="absolute top-1/4 left-[15%] h-40 w-40 sm:h-56 sm:w-56 md:h-72 md:w-72 rounded-full bg-primary/30 blur-[40px] sm:blur-[55px] md:blur-[70px] pointer-events-none"
       />
       <motion.div
         animate={{ y: [0, 20, 0] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
         style={{ opacity: 0.18, willChange: "transform" }}
-        className="absolute bottom-1/4 right-[10%] h-80 w-80 rounded-full bg-secondary-dark/25 blur-[90px] pointer-events-none"
+        className="absolute bottom-1/4 right-[10%] h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 rounded-full bg-secondary-dark/25 blur-[50px] sm:blur-[70px] md:blur-[90px] pointer-events-none"
       />
 
       {/* Ticker bar */}

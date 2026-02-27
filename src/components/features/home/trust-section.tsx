@@ -113,7 +113,7 @@ export function TrustSection() {
 
               {/* Tag */}
               <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-secondary flex-shrink-0" />
+                <span className="h-1.5 w-1.5 rounded-full bg-secondary shrink-0" />
                 {feature.tag}
               </div>
             </motion.div>
@@ -180,7 +180,7 @@ export function TrustSection() {
                 { value: "< 24h", label: "Avg. Withdrawal", color: "text-secondary-dark" },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col items-center justify-center p-6 text-center">
-                  <p className={`text-2xl font-bold font-heading ${stat.color}`}>
+                  <p className={`text-xl sm:text-2xl font-bold font-heading ${stat.color}`}>
                     {stat.value}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>

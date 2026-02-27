@@ -29,7 +29,7 @@ export function CTASection() {
       <motion.div
         animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-primary/25 blur-[150px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-[260px] sm:h-[380px] sm:w-[380px] lg:h-[500px] lg:w-[500px] rounded-full bg-primary/25 blur-[80px] sm:blur-[120px] lg:blur-[150px] pointer-events-none"
       />
 
       <div className="relative mx-auto max-w-5xl px-6">
@@ -39,7 +39,7 @@ export function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-3 gap-4 mb-14 max-w-lg mx-auto"
+          className="grid grid-cols-3 gap-2 sm:gap-4 mb-14 max-w-lg mx-auto"
         >
           {stats.map((stat, i) => (
             <motion.div
