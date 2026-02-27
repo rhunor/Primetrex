@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import emailjs from "@emailjs/browser";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -14,36 +14,58 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
+import {
+  GoogleReCaptchaProvider,
+  useGoogleReCaptcha,
+} from "react-google-recaptcha-v3";
 
 const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
 const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!;
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
-export default function ContactPage() {
+function ContactPageContent() {
   const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!formRef.current) return;
+  const onSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!formRef.current) return;
 
-    setIsSubmitting(true);
-    setError("");
+      if (!executeRecaptcha) {
+        setError("reCAPTCHA is not ready. Please refresh the page.");
+        return;
+      }
 
-    try {
-      await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, {
-        publicKey: PUBLIC_KEY,
-      });
-      setSubmitted(true);
-    } catch (err) {
-      console.error("EmailJS error:", err);
-      setError("Failed to send your message. Please try again or email us directly.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+      setIsSubmitting(true);
+      setError("");
+
+      try {
+        const token = await executeRecaptcha("contact_form");
+        if (!token) {
+          setError("reCAPTCHA verification failed. Please try again.");
+          return;
+        }
+
+        await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, {
+          publicKey: PUBLIC_KEY,
+        });
+        setSubmitted(true);
+      } catch (err) {
+        console.error("EmailJS error:", err);
+        setError(
+          "Failed to send your message. Please try again or email us directly."
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [executeRecaptcha]
+  );
 
   return (
     <div>
@@ -115,13 +137,26 @@ export default function ContactPage() {
                   <Button
                     variant="outline"
                     className="mt-6"
-                    onClick={() => { setSubmitted(false); formRef.current?.reset(); }}
+                    onClick={() => {
+                      setSubmitted(false);
+                      formRef.current?.reset();
+                    }}
                   >
                     Send Another Message
                   </Button>
                 </motion.div>
               ) : (
                 <form ref={formRef} onSubmit={onSubmit} className="space-y-5">
+                  {/* Honeypot — hidden from real users, bots fill it in */}
+                  <input
+                    type="text"
+                    name="_honeypot"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="hidden"
+                    autoComplete="off"
+                  />
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label="First Name"
@@ -170,15 +205,38 @@ export default function ContactPage() {
                     </p>
                   )}
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full sm:w-auto"
-                    isLoading={isSubmitting}
-                  >
-                    Send Message
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      isLoading={isSubmitting}
+                    >
+                      Send Message
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground">
+                      Protected by reCAPTCHA.{" "}
+                      <a
+                        href="https://policies.google.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-foreground"
+                      >
+                        Privacy
+                      </a>{" "}
+                      &{" "}
+                      <a
+                        href="https://policies.google.com/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-foreground"
+                      >
+                        Terms
+                      </a>{" "}
+                      apply.
+                    </p>
+                  </div>
                 </form>
               )}
             </motion.div>
@@ -284,9 +342,7 @@ export default function ContactPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-secondary-dark font-bold">A:</span>
-                    <span>
-                      The minimum withdrawal amount is ₦10,000.
-                    </span>
+                    <span>The minimum withdrawal amount is ₦10,000.</span>
                   </li>
                 </ul>
               </div>
@@ -295,5 +351,13 @@ export default function ContactPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
+      <ContactPageContent />
+    </GoogleReCaptchaProvider>
   );
 }
