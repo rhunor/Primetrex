@@ -4,10 +4,6 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
-import {
-  initiateTransfer,
-  generateTransferRef,
-} from "@/lib/flutterwave-web";
 import { siteConfig } from "@/config/site";
 
 export async function POST(req: NextRequest) {
@@ -91,7 +87,7 @@ export async function POST(req: NextRequest) {
     user.bankDetails = { bankName, bankCode, accountNumber, accountName };
     await user.save();
 
-    // Create withdrawal record
+    // Create withdrawal record — admin manually processes payouts
     const withdrawal = await Withdrawal.create({
       userId,
       amount: numAmount,
@@ -99,37 +95,8 @@ export async function POST(req: NextRequest) {
       bankCode,
       accountNumber,
       accountName,
-      status: "processing",
+      status: "pending",
     });
-
-    const transferRef = generateTransferRef(withdrawal._id.toString());
-
-    try {
-      const transferResult = await initiateTransfer({
-        accountBank: bankCode,
-        accountNumber,
-        amount: numAmount,
-        narration: `Primetrex affiliate withdrawal`,
-        reference: transferRef,
-        beneficiaryName: accountName,
-      });
-
-      withdrawal.transferReference = transferRef;
-      withdrawal.transferCode = transferResult.data?.id?.toString() ?? null;
-      await withdrawal.save();
-    } catch (transferError) {
-      withdrawal.status = "failed";
-      withdrawal.rejectionReason =
-        transferError instanceof Error
-          ? transferError.message
-          : "Transfer initiation failed";
-      await withdrawal.save();
-
-      return NextResponse.json(
-        { error: "Failed to process withdrawal. Please try again later." },
-        { status: 500 }
-      );
-    }
 
     return NextResponse.json({
       success: true,
