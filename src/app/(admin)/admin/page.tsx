@@ -228,19 +228,19 @@ export default function AdminDashboard() {
             {recentTransactions.map((tx) => (
               <div
                 key={tx._id}
-                className="flex items-center justify-between px-6 py-3"
+                className="flex items-center gap-3 px-4 sm:px-6 py-3"
               >
-                <div>
-                  <p className="text-sm font-medium text-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {tx.userId
                       ? `${tx.userId.firstName} ${tx.userId.lastName}`
                       : "Unknown"}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                  <p className="text-xs text-muted-foreground truncate">
                     {tx.description}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <Badge variant={txTypeVariant[tx.type] || "default"}>
                     {tx.type}
                   </Badge>
