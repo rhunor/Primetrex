@@ -3,11 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { dashboardNav } from "@/config/navigation";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, ShieldCheck } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +16,8 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
 
   const sidebarContent = (
     <div className="flex h-full flex-col relative overflow-hidden">
@@ -44,6 +46,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
+        {/* Admin Panel link — only visible to admin users */}
+        {isAdmin && (
+          <>
+            <Link
+              href="/admin"
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                pathname.startsWith("/admin")
+                  ? "bg-sidebar-active text-white shadow-lg shadow-primary/20"
+                  : "text-secondary/80 hover:bg-sidebar-hover hover:text-secondary"
+              )}
+            >
+              <ShieldCheck className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>Admin Panel</span>
+              {pathname.startsWith("/admin") && (
+                <motion.div
+                  layoutId="sidebar-indicator"
+                  className="ml-auto h-1.5 w-1.5 rounded-full bg-secondary"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </Link>
+            <div className="my-2 border-t border-white/10" />
+          </>
+        )}
+
         {dashboardNav.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

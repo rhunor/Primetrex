@@ -12,6 +12,7 @@ interface ReferralLinkCardProps {
 
 export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
   const referralLink = `${appUrl}/register?ref=${referralCode}`;
@@ -20,6 +21,28 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join Primetrex — Earn 50% Commission",
+          text: "I earn recurring commissions with Primetrex copy trading. Join using my referral link and start earning too!",
+          url: referralLink,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {
+        // User cancelled (AbortError) — do nothing. Any other error: fall back to copy.
+        if ((err as Error).name !== "AbortError") {
+          handleCopy();
+        }
+      }
+    } else {
+      // Browser doesn't support Web Share API — copy to clipboard instead
+      handleCopy();
+    }
   }
 
   function handleDownloadQR() {
@@ -139,18 +162,34 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
             {showQR ? "Hide QR" : "QR Code"}
           </Button>
           <Button
-            variant="outline"
+            variant={shared ? "secondary" : "outline"}
             size="sm"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: "Join Primetrex", text: "Start earning 50% commissions with Primetrex!", url: referralLink });
-              } else {
-                handleCopy();
-              }
-            }}
+            onClick={handleShare}
+            aria-label="Share referral link"
           >
-            <Share2 className="h-4 w-4" aria-hidden="true" />
-            Share Link
+            <AnimatePresence mode="wait">
+              {shared ? (
+                <motion.span
+                  key="shared"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="flex items-center gap-1"
+                >
+                  <Check className="h-4 w-4" aria-hidden="true" /> Shared!
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="share"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="flex items-center gap-1"
+                >
+                  <Share2 className="h-4 w-4" aria-hidden="true" /> Share Link
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Button>
         </div>
       </div>

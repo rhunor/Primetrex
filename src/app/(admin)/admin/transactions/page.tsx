@@ -129,7 +129,54 @@ export default function AdminTransactionsPage() {
           </div>
         ) : transactions.length > 0 ? (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card list (< md) */}
+            <div className="divide-y divide-border md:hidden">
+              {transactions.map((tx, i) => (
+                <motion.div
+                  key={tx._id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="px-4 py-4 hover:bg-muted/30 transition-colors"
+                >
+                  {/* Row 1: name + amount */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {tx.userId
+                          ? `${tx.userId.firstName} ${tx.userId.lastName}`
+                          : "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {tx.description}
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold text-foreground shrink-0">
+                      {formatCurrency(tx.amount)}
+                    </span>
+                  </div>
+                  {/* Row 2: badges + date */}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge variant={typeVariant[tx.type] || "default"}>
+                      {tx.type}{tx.tier ? ` T${tx.tier}` : ""}
+                    </Badge>
+                    <Badge variant={statusVariant[tx.status] || "default"}>
+                      {tx.status}
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground ml-auto shrink-0">
+                      {new Date(tx.createdAt).toLocaleDateString("en-NG", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Desktop table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
@@ -179,7 +226,7 @@ export default function AdminTransactionsPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-4">
-                        <p className="text-sm text-foreground truncate max-w-[240px]">
+                        <p className="text-sm text-foreground truncate max-w-60">
                           {tx.description}
                         </p>
                         {tx.paymentReference && (
@@ -194,9 +241,7 @@ export default function AdminTransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <Badge
-                          variant={statusVariant[tx.status] || "default"}
-                        >
+                        <Badge variant={statusVariant[tx.status] || "default"}>
                           {tx.status}
                         </Badge>
                       </td>
