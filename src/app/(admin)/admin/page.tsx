@@ -275,7 +275,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <YAxis tickFormatter={formatAxisCurrency} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number | undefined) => formatCurrency(value ?? 0)}
                   contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ fontWeight: 600 }}
                 />
