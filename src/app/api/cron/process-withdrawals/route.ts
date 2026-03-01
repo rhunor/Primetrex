@@ -18,7 +18,7 @@ import dbConnect from "@/lib/db";
 import Withdrawal from "@/models/Withdrawal";
 import Transaction from "@/models/Transaction";
 import User from "@/models/User";
-import { initiateTransfer, generateTransferRef } from "@/lib/flutterwave-web";
+import { initiateTransfer } from "@/lib/flutterwave-web";
 import { notifyWithdrawalUpdate } from "@/lib/notifications";
 import { sendMessage } from "@/lib/telegram";
 
@@ -29,7 +29,7 @@ interface ProcessResult {
   details: Array<{ id: string; status: "processed" | "failed" | "skipped"; reason?: string }>;
 }
 
-async function getUserAvailableBalance(userId: string): Promise<number> {
+async function getUserAvailableBalance(userId: string, excludeWithdrawalId: string): Promise<number> {
   const commissions = await Transaction.find({
     userId,
     type: "commission",
@@ -41,9 +41,10 @@ async function getUserAvailableBalance(userId: string): Promise<number> {
   const totalWithdrawn = withdrawals
     .filter((w) => w.status === "completed")
     .reduce((sum, w) => sum + w.amount, 0);
-  // Exclude the current batch — only count already-processing/pending from previous cycles
+  // Exclude the current withdrawal being validated — it was just set to "processing"
+  // so we must not double-count it against the available balance
   const otherPending = withdrawals
-    .filter((w) => w.status === "processing")
+    .filter((w) => w.status === "processing" && w._id.toString() !== excludeWithdrawalId)
     .reduce((sum, w) => sum + w.amount, 0);
 
   return totalEarned - totalWithdrawn - otherPending;
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Re-validate available balance ─────────────────────────────────────────
-    const available = await getUserAvailableBalance(w.userId.toString());
+    const available = await getUserAvailableBalance(w.userId.toString(), wId);
     if (w.amount > available) {
       // Revert to pending so admin can review, or user can re-submit
       await Withdrawal.updateOne({ _id: w._id }, { $set: { status: "failed", rejectionReason: "Insufficient balance at processing time" } });

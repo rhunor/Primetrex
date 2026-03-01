@@ -78,7 +78,7 @@ export async function PATCH(
 
       notifyWithdrawalUpdate(
         withdrawal.userId,
-        "failed",
+        "rejected",
         withdrawal.amount,
         rejectionReason.trim()
       ).catch(() => {});
