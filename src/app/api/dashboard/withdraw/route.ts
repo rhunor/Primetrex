@@ -6,11 +6,42 @@ import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { siteConfig } from "@/config/site";
 
+// Compute next Friday date (WAT = UTC+1)
+function nextFridayWAT(): Date {
+  const now = new Date(Date.now() + 60 * 60 * 1000); // shift to WAT
+  const day = now.getUTCDay(); // 0=Sun … 5=Fri … 6=Sat
+  const daysUntilFriday = day <= 5 ? 5 - day : 6; // days until next Friday
+  const next = new Date(now);
+  next.setUTCDate(now.getUTCDate() + daysUntilFriday);
+  next.setUTCHours(0, 0, 0, 0);
+  return new Date(next.getTime() - 60 * 60 * 1000); // back to UTC
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ── Friday-only gate (WAT = UTC+1) ───────────────────────────────────────
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    const dayWAT = nowWAT.getUTCDay(); // 5 = Friday
+    if (dayWAT !== 5) {
+      const next = nextFridayWAT();
+      const label = next.toLocaleDateString("en-NG", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Africa/Lagos",
+      });
+      return NextResponse.json(
+        {
+          error: `Withdrawals can only be requested on Fridays. Next withdrawal window: ${label}.`,
+          nextFriday: next.toISOString(),
+        },
+        { status: 403 }
+      );
     }
 
     const userId = (session.user as unknown as Record<string, unknown>)

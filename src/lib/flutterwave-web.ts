@@ -1,5 +1,18 @@
+import type { ProxyAgent as ProxyAgentType } from "undici";
+
 const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY!;
 const FLW_BASE_URL = "https://api.flutterwave.com/v3";
+
+// Lazy-initialised proxy agent — only created when FIXIE_URL is set.
+// Scoped to the Transfers endpoint only (IP whitelisting requirement).
+let _proxyAgent: ProxyAgentType | null = null;
+async function getProxyAgent(): Promise<ProxyAgentType | null> {
+  if (!process.env.FIXIE_URL) return null;
+  if (_proxyAgent) return _proxyAgent;
+  const { ProxyAgent } = await import("undici");
+  _proxyAgent = new ProxyAgent(process.env.FIXIE_URL);
+  return _proxyAgent;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -154,6 +167,9 @@ export async function resolveAccount(
 }
 
 // ── Transfers ─────────────────────────────────────────────────────────────────
+// Flutterwave's Transfer API enforces IP whitelisting.
+// On Vercel (dynamic IPs) we route this call through a Fixie static-egress
+// proxy — set FIXIE_URL in env vars and whitelist the Fixie IP in Flutterwave.
 
 export async function initiateTransfer(params: {
   accountBank: string;
@@ -163,19 +179,49 @@ export async function initiateTransfer(params: {
   reference: string;
   beneficiaryName: string;
 }): Promise<FlwTransferResponse> {
-  return flwFetch<FlwTransferResponse>("/transfers", {
-    method: "POST",
-    body: JSON.stringify({
-      account_bank: params.accountBank,
-      account_number: params.accountNumber,
-      amount: params.amount,
-      narration: params.narration,
-      currency: "NGN",
-      reference: params.reference,
-      debit_currency: "NGN",
-      beneficiary_name: params.beneficiaryName,
-    }),
+  const body = JSON.stringify({
+    account_bank: params.accountBank,
+    account_number: params.accountNumber,
+    amount: params.amount,
+    narration: params.narration,
+    currency: "NGN",
+    reference: params.reference,
+    debit_currency: "NGN",
+    beneficiary_name: params.beneficiaryName,
   });
+
+  const headers = {
+    Authorization: `Bearer ${FLW_SECRET_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  const proxyAgent = await getProxyAgent();
+
+  let res: Response;
+  if (proxyAgent) {
+    // Use undici fetch with Fixie proxy for static egress IP
+    const { fetch: undiciFetch } = await import("undici");
+    res = (await undiciFetch(`${FLW_BASE_URL}/transfers`, {
+      method: "POST",
+      body,
+      headers,
+      dispatcher: proxyAgent,
+    })) as unknown as Response;
+  } else {
+    res = await fetch(`${FLW_BASE_URL}/transfers`, {
+      method: "POST",
+      body,
+      headers,
+    });
+  }
+
+  const data = (await res.json()) as FlwTransferResponse;
+  if (!res.ok) {
+    throw new Error(
+      `Flutterwave API error: ${res.status} — ${(data as unknown as { message?: string }).message || JSON.stringify(data)}`
+    );
+  }
+  return data;
 }
 
 // ── References ────────────────────────────────────────────────────────────────

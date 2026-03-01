@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,20 @@ import {
   Clock,
   CheckCircle,
   Search,
+  CalendarClock,
+  Info,
 } from "lucide-react";
+
+// Returns next Friday date in WAT (UTC+1)
+function getNextFriday(): Date {
+  const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+  const day = nowWAT.getUTCDay();
+  const daysUntil = day <= 5 ? 5 - day : 6;
+  const next = new Date(nowWAT);
+  next.setUTCDate(nowWAT.getUTCDate() + daysUntil);
+  next.setUTCHours(0, 0, 0, 0);
+  return new Date(next.getTime() - 60 * 60 * 1000); // back to UTC
+}
 
 interface WithdrawalItem {
   id: string;
@@ -39,6 +52,22 @@ export default function WithdrawalsPage() {
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  // Friday window check (client-side, WAT = UTC+1)
+  const isFriday = useMemo(() => {
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    return nowWAT.getUTCDay() === 5;
+  }, []);
+
+  const nextFriday = useMemo(() => {
+    const d = getNextFriday();
+    return d.toLocaleDateString("en-NG", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "Africa/Lagos",
+    });
+  }, []);
   const [formData, setFormData] = useState({
     amount: "",
     bankCode: "",
@@ -204,13 +233,45 @@ export default function WithdrawalsPage() {
         {!showForm && (
           <Button
             onClick={() => setShowForm(true)}
-            disabled={availableBalance < siteConfig.minWithdrawal}
+            disabled={availableBalance < siteConfig.minWithdrawal || !isFriday}
             className="self-start sm:self-auto"
           >
             <Banknote className="h-4 w-4" />
             Request Withdrawal
           </Button>
         )}
+      </div>
+
+      {/* Withdrawal schedule banner */}
+      <div className={`flex items-start gap-3 rounded-xl px-4 py-3 text-sm ${isFriday ? "bg-success/10 border border-success/30" : "bg-muted border border-border"}`}>
+        <CalendarClock className={`h-5 w-5 shrink-0 mt-0.5 ${isFriday ? "text-success" : "text-muted-foreground"}`} />
+        <div>
+          {isFriday ? (
+            <>
+              <p className="font-semibold text-success">Today is withdrawal day!</p>
+              <p className="text-muted-foreground mt-0.5">
+                Submit your request now — payments are processed tomorrow (Saturday) and sent directly to your bank.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground">Withdrawals are processed every Saturday</p>
+              <p className="text-muted-foreground mt-0.5">
+                Requests can only be submitted on <span className="font-medium text-foreground">Fridays</span>.
+                {" "}Next window: <span className="font-medium text-foreground">{nextFriday}</span>.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* How it works note */}
+      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <span>
+          Submit your request on any Friday before midnight. Funds are transferred to your bank account every Saturday morning.
+          You will receive an in-app notification and Telegram message when your transfer is completed.
+        </span>
       </div>
 
       {/* Balance cards */}
