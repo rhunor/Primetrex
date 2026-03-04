@@ -1,3 +1,4 @@
+import { InlineKeyboard } from "grammy";
 import type { Bot } from "grammy";
 import type { BotContext } from "@/bot/context";
 import { EMOJI, CALLBACK } from "@/bot/constants";
@@ -15,6 +16,7 @@ import {
   generatePaymentLink,
   generateTxRef,
 } from "@/bot/services/flutterwave";
+import { botConfig } from "@/bot/config";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -211,14 +213,20 @@ async function handlePayFlutterwave(ctx: BotContext) {
     return;
   }
 
-  // New subscription: ask for referral code first
-  ctx.session.step = "awaiting_referral_code";
-
+  // New subscription: redirect to website for first payment
+  const websiteUrl = `${botConfig.appUrl}/dashboard/bot-subscribe`;
   await ctx.editMessageText(
-    `${EMOJI.AFFILIATE} <b>Referral Code</b>\n\n` +
-      `Were you referred by a Primetrex affiliate?\n\n` +
-      `Type their <b>referral code</b> to credit them, or type <code>skip</code> to continue without one.`,
-    { parse_mode: "HTML" }
+    `${EMOJI.SUBSCRIBE} <b>First Subscription Payment</b>\n\n` +
+      `To complete your first payment, please visit the Primetrex website.\n\n` +
+      `After payment, your channel invite link will be sent to you here on Telegram automatically.\n\n` +
+      `${EMOJI.POINT_DOWN} Tap the button below to pay:`,
+    {
+      parse_mode: "HTML",
+      reply_markup: new InlineKeyboard()
+        .url(`${EMOJI.LINK} Pay on Website`, websiteUrl)
+        .row()
+        .text(`${EMOJI.CANCEL} Cancel`, CALLBACK.PAY_CANCEL),
+    }
   );
 }
 

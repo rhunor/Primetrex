@@ -13,8 +13,9 @@ import {
   Check,
   Search,
   MessageCircle,
-  ExternalLink,
   Copy,
+  LinkIcon,
+  Unlink,
 } from "lucide-react";
 
 interface Bank {
@@ -53,6 +54,7 @@ export default function SettingsPage() {
   const [telegramLinked, setTelegramLinked] = useState(false);
   const [referralCode, setReferralCode] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -199,6 +201,30 @@ export default function SettingsPage() {
     setTimeout(() => setLinkCopied(false), 2000);
   }
 
+  async function handleUnlinkTelegram() {
+    setUnlinking(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/dashboard/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unlinkTelegram: true }),
+      });
+      if (res.ok) {
+        setTelegramLinked(false);
+        setSuccess("Telegram account unlinked. You can now link a different account.");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to unlink Telegram");
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setUnlinking(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -281,23 +307,42 @@ export default function SettingsPage() {
         </div>
 
         {telegramLinked ? (
-          <div className="flex items-center gap-3 rounded-xl bg-success/10 px-4 py-3">
-            <Check className="h-5 w-5 text-success" />
-            <div>
-              <p className="text-sm font-medium text-success">
-                Telegram linked
-              </p>
-              <p className="text-xs text-success/70">
-                You will receive notifications about commissions, withdrawals,
-                and subscriptions via Telegram.
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-xl bg-success/10 px-4 py-3">
+              <Check className="h-5 w-5 text-success shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-success">
+                  Telegram linked
+                </p>
+                <p className="text-xs text-success/70">
+                  You will receive notifications about commissions, withdrawals,
+                  and subscriptions via Telegram.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border px-4 py-3">
+              <Unlink className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">Want to link a different account?</p>
+                <p className="text-xs text-muted-foreground">Unlinking will remove the connection. You can re-link any Telegram account afterwards.</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUnlinkTelegram}
+                isLoading={unlinking}
+                className="shrink-0 text-danger border-danger/30 hover:bg-danger/10"
+              >
+                {!unlinking && <Unlink className="h-4 w-4" />}
+                Unlink
+              </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Link your Telegram account to receive notifications and pay your
-              monthly subscription directly from Telegram.
+              Link your Telegram account to receive notifications and manage
+              your subscription via Telegram.
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-xl bg-muted px-4 py-3 font-mono text-xs text-foreground truncate">
@@ -321,13 +366,12 @@ export default function SettingsPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl gradient-primary px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
-              <ExternalLink className="h-4 w-4" />
-              Open in Telegram
+              <LinkIcon className="h-4 w-4" />
+              Link Telegram Account
             </a>
             <p className="text-xs text-muted-foreground">
-              Click the link above or search for{" "}
-              <span className="font-medium">@primetrex_bot</span> on Telegram
-              and click Start.
+              Tap the link above or open Telegram and search{" "}
+              <span className="font-medium">@{botUsername}</span>, then tap Start.
             </p>
           </div>
         )}

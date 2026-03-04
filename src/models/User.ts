@@ -25,6 +25,10 @@ export interface IUser extends Document {
     accountNumber: string;
     accountName: string;
   } | null;
+  // 2FA fields
+  knownIPs: string[];
+  twoFAOTP: string | null;
+  twoFAOTPExpires: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +72,10 @@ const UserSchema = new Schema<IUser>(
       },
       default: null,
     },
+    // 2FA: list of trusted IPs — new IPs trigger OTP verification
+    knownIPs: { type: [String], default: [] },
+    twoFAOTP: { type: String, default: null },
+    twoFAOTPExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );

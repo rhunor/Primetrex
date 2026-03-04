@@ -34,6 +34,14 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true, message: "Bank details updated" });
     }
 
+    // Unlink Telegram
+    if (body.unlinkTelegram) {
+      user.telegramId = null;
+      user.telegramLinked = false;
+      await user.save();
+      return NextResponse.json({ success: true, message: "Telegram unlinked" });
+    }
+
     // Change password
     if (body.password) {
       const { currentPassword, newPassword } = body.password;

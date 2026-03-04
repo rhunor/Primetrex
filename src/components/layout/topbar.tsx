@@ -225,7 +225,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-12 w-[calc(100vw-2rem)] sm:w-80 lg:w-96 rounded-2xl border border-border bg-card shadow-xl overflow-hidden z-50"
+                className="fixed sm:absolute inset-x-2 sm:inset-x-auto right-0 sm:right-0 top-18 sm:top-12 sm:w-80 lg:w-96 rounded-2xl border border-border bg-card shadow-xl overflow-hidden z-50 max-h-[80vh] flex flex-col"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -252,7 +252,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                 </div>
 
                 {/* Notification list */}
-                <div className="max-h-80 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto min-h-0 max-h-80">
                   {loading && notifications.length === 0 ? (
                     <div className="flex items-center justify-center py-10">
                       <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -271,7 +271,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                             if (!notif.isRead) markOneRead(notif._id);
                           }}
                           className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 ${
-                            !notif.isRead ? "bg-primary/[0.03]" : ""
+                            !notif.isRead ? "bg-primary/3" : ""
                           }`}
                         >
                           <div
@@ -285,7 +285,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                                 {notif.title}
                               </p>
                               {!notif.isRead && (
-                                <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                                <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">

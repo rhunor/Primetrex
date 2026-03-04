@@ -178,10 +178,17 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-                  <span style="color: #8808CC; font-weight: bold;">Tier 1</span>
-                  <span style="color: #555; font-size: 13px;"> — Direct referrals</span>
+                  <span style="color: #8808CC; font-weight: bold;">Affiliate Join</span>
+                  <span style="color: #555; font-size: 13px;"> — When referral joins as affiliate</span>
                 </td>
                 <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #8808CC; font-size: 18px;">50%</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+                  <span style="color: #8808CC; font-weight: bold;">Tier 1</span>
+                  <span style="color: #555; font-size: 13px;"> — Subscription payments from direct referrals</span>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #8808CC; font-size: 18px;">40%</td>
               </tr>
               <tr>
                 <td style="padding: 10px 0;">
@@ -206,6 +213,172 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
               Go to Your Dashboard →
             </a>
           </div>
+        </div>
+
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
+// ─── Order ID generator ───────────────────────────────────────────────────────
+export function generateOrderId(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `PTX-${timestamp}-${random}`;
+}
+
+// ─── Order receipt email sent to the buyer ────────────────────────────────────
+export async function sendOrderReceiptEmail(params: {
+  email: string;
+  firstName: string;
+  orderId: string;
+  amount: number;
+  description: string;
+  paymentReference: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { email, firstName, orderId, amount, description, paymentReference } = params;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Order Receipt — ${orderId} | Primetrex`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <h2 style="color: #333; margin-top: 0;">Payment Receipt</h2>
+          <p style="color: #555; line-height: 1.6;">Hi ${firstName}, thank you for your payment.</p>
+
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Order ID</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; font-family: monospace; color: #8808CC; font-size: 14px;">${orderId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Description</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #333; font-size: 13px;">${description}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Reference</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; color: #555; font-size: 12px;">${paymentReference}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #333; font-weight: bold;">Amount Paid</td>
+                <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #8808CC; font-size: 20px;">&#8358;${amount.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+          <p style="color: #888; font-size: 13px; margin: 0;">
+            Keep your Order ID <strong>${orderId}</strong> safe. You may need it when contacting support.
+          </p>
+        </div>
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
+// ─── Affiliate commission notification email ──────────────────────────────────
+export async function sendAffiliateCommissionEmail(params: {
+  affiliateEmail: string;
+  affiliateFirstName: string;
+  buyerName: string;
+  commissionAmount: number;
+  orderId: string;
+  tier: number;
+  paymentReference: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { affiliateEmail, affiliateFirstName, buyerName, commissionAmount, orderId, tier, paymentReference } = params;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: affiliateEmail,
+    subject: `Commission Earned — Order ${orderId} | Primetrex`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #8808CC; border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
+          <h2 style="color: #ffffff; margin: 0 0 6px; font-size: 22px;">Commission Earned!</h2>
+          <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 15px;">Tier ${tier} commission credited</p>
+        </div>
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <p style="color: #555; line-height: 1.6; margin-top: 0;">
+            Hi ${affiliateFirstName}, you earned a commission from a transaction by one of your referrals.
+          </p>
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Order ID</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; font-family: monospace; color: #8808CC; font-size: 14px;">${orderId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Buyer</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #333; font-size: 13px;">${buyerName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Commission Tier</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #555;">Tier ${tier}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Reference</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; color: #555; font-size: 12px;">${paymentReference}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #333; font-weight: bold;">Your Commission</td>
+                <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #8808CC; font-size: 20px;">&#8358;${commissionAmount.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+          <p style="color: #888; font-size: 13px;">
+            If this commission does not appear in your dashboard, contact support with Order ID <strong>${orderId}</strong>.
+          </p>
+          <div style="text-align: center; margin: 20px 0 0;">
+            <a href="${appUrl}/dashboard/earnings"
+               style="background: #8808CC; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+              View Earnings &#8594;
+            </a>
+          </div>
+        </div>
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
+// ─── OTP email for 2FA login verification ────────────────────────────────────
+export async function sendOTPEmail(email: string, firstName: string, otp: string) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: "Your Primetrex Login Verification Code",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <h2 style="color: #333; margin-top: 0;">Login Verification</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Hi ${firstName}, we detected a login from a new device. Enter the code below to verify your identity.
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="display: inline-block; background: #8808CC; border-radius: 12px; padding: 20px 40px;">
+              <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin: 0 0 8px; letter-spacing: 0.1em; text-transform: uppercase;">Verification Code</p>
+              <p style="color: white; font-size: 36px; font-weight: bold; letter-spacing: 0.3em; margin: 0; font-family: monospace;">${otp}</p>
+            </div>
+          </div>
+
+          <p style="color: #888; font-size: 13px; text-align: center;">This code expires in <strong>10 minutes</strong>.</p>
+          <p style="color: #888; font-size: 13px; text-align: center;">If you did not attempt to log in, please change your password immediately.</p>
         </div>
 
         ${emailFooter()}

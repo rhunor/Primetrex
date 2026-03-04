@@ -10,6 +10,7 @@ export interface ITransaction extends Document {
   referralId: mongoose.Types.ObjectId | null;
   sourceUserId: mongoose.Types.ObjectId | null;
   paymentReference: string | null;
+  orderId: string | null;
   description: string;
   metadata: Record<string, unknown>;
   createdAt: Date;
@@ -48,6 +49,7 @@ const TransactionSchema = new Schema<ITransaction>(
       default: null,
     },
     paymentReference: { type: String, default: null },
+    orderId: { type: String, default: null, index: true },
     description: { type: String, required: true },
     metadata: { type: Schema.Types.Mixed, default: {} },
   },

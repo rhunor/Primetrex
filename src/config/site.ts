@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "Primetrex",
   tagline: "Let the Experts Trade, You Build the Business",
   description:
-    "Earn money by referring others to Primetrex copy trading. Pay a one-time ₦15,000 signup fee, get your unique referral link, and earn 50% commissions every month.",
+    "Earn money by referring others to Primetrex copy trading. Pay a one-time ₦15,000 signup fee, get your unique referral link, and earn 40% commissions every month.",
   url: "https://primetrexaffiliates.com",
   signupFee: 15_000,
   subscription: {
@@ -10,7 +10,10 @@ export const siteConfig = {
     currency: "NGN",
   },
   commission: {
+    // Earned when a referred person joins as an affiliate (pays the signup fee)
     tier1Rate: 50,
+    // Earned on bot subscription payments (initial 50K and 35K renewals)
+    subscriptionRate: 40,
     tier2Rate: 10,
   },
   minWithdrawal: 10_000,

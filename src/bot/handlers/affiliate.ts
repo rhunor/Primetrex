@@ -35,7 +35,8 @@ export function registerAffiliateHandlers(bot: Bot<BotContext>) {
       `Share this link to earn commissions when people sign up:\n\n` +
       `<code>${affiliateLink}</code>\n\n` +
       `${EMOJI.TIP} <i>Tap the link above to copy it!</i>\n\n` +
-      `${EMOJI.MONEY} <b>Earn up to 50%</b> commission on direct referrals\n` +
+      `${EMOJI.MONEY} <b>Earn 50%</b> when your referral joins as an affiliate\n` +
+      `${EMOJI.MONEY} <b>Earn 40%</b> on their subscription payments\n` +
       `${EMOJI.CHART} <b>Earn 10%</b> from your referrals' referrals`;
 
     await ctx.editMessageText(text, {

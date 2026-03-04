@@ -1,4 +1,5 @@
-import { Keyboard } from "grammy";
+import { Keyboard, InlineKeyboard } from "grammy";
+import { botConfig } from "@/bot/config";
 import type { BotContext } from "@/bot/context";
 import { EMOJI, CALLBACK } from "@/bot/constants";
 import { mainMenuKeyboard, helpKeyboard } from "@/bot/keyboards/inline";
@@ -99,13 +100,17 @@ async function handleStartLink(ctx: BotContext, referralCode: string) {
   user.telegramLinked = true;
   await user.save();
 
+  const subscribeUrl = `${botConfig.appUrl}/dashboard/bot-subscribe`;
   await ctx.reply(
     `<b>Account Linked Successfully!</b>\n\n` +
       `Name: ${user.firstName} ${user.lastName}\n` +
       `Email: ${user.email}\n\n` +
-      `Use /subscribe to pay your monthly copy trading subscription.\n` +
-      `Use /status to check your account status.`,
-    { parse_mode: "HTML" }
+      `${EMOJI.POINT_DOWN} Tap below to complete your first subscription payment. Your channel invite link will be sent here once payment is confirmed.`,
+    {
+      parse_mode: "HTML",
+      reply_markup: new InlineKeyboard()
+        .url(`${EMOJI.LINK} Subscribe on Website`, subscribeUrl),
+    }
   );
 }
 
@@ -207,7 +212,7 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
         });
 
         if (webUser?.referredBy && !existingComm) {
-          const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+          const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
           await Transaction.create({
             userId: webUser.referredBy,
             type: "commission",
@@ -248,7 +253,7 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
         } else if (!webUser && payment.referralCode && !existingComm) {
           const referrer = await User.findOne({ referralCode: payment.referralCode });
           if (referrer) {
-            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: referrer._id,
               type: "commission",

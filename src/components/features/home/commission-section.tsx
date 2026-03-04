@@ -10,29 +10,29 @@ import { siteConfig } from "@/config/site";
 
 const earningExamples = [
   {
-    label: "You refer Mary",
-    payment: formatCurrency(50_000),
-    you: formatCurrency(25_000),
-    type: "Tier 1 (50%)",
+    label: "You refer Mary (she joins as affiliate)",
+    payment: formatCurrency(15_000),
+    you: formatCurrency(7_500),
+    type: "Affiliate Join (50%)",
   },
   {
-    label: "Mary refers David",
+    label: "Mary pays her subscription",
+    payment: formatCurrency(50_000),
+    you: formatCurrency(20_000),
+    type: "Tier 1 (40%)",
+  },
+  {
+    label: "Mary refers David (his subscription)",
     payment: formatCurrency(50_000),
     you: formatCurrency(5_000),
     type: "Tier 2 (10%)",
-  },
-  {
-    label: "Both renew next month",
-    payment: formatCurrency(100_000),
-    you: formatCurrency(30_000),
-    type: "Recurring",
   },
 ];
 
 function EarningsCalculator() {
   const [referrals, setReferrals] = useState(5);
   const subPrice = siteConfig.subscription.price;
-  const tier1 = referrals * subPrice * (siteConfig.commission.tier1Rate / 100);
+  const tier1 = referrals * subPrice * (siteConfig.commission.subscriptionRate / 100);
   const tier2 = Math.floor(referrals * 0.5) * subPrice * (siteConfig.commission.tier2Rate / 100);
   const total = tier1 + tier2;
 
@@ -82,7 +82,7 @@ function EarningsCalculator() {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-primary" />
             <span className="text-sm text-muted-foreground">
-              Tier 1 ({referrals} referrals × ₦{(subPrice / 1000).toFixed(0)}K × 50%)
+              Tier 1 ({referrals} referrals × ₦{(subPrice / 1000).toFixed(0)}K × 40%)
             </span>
           </div>
           <span className="text-sm font-semibold text-foreground">
@@ -135,7 +135,7 @@ export function CommissionSection() {
           </span>
           <h2 className="mt-3 text-3xl font-bold font-heading text-foreground md:text-4xl lg:text-5xl">
             Earn Up to{" "}
-            <span className="gradient-text">50% Commission</span>
+            <span className="gradient-text">40% Commission</span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
             Simple, generous, and recurring. Earn from your referrals and their
@@ -187,10 +187,10 @@ export function CommissionSection() {
               Tier 1 Commission
             </p>
             <p className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading gradient-text mt-3">
-              50%
+              40%
             </p>
             <p className="text-sm text-muted-foreground mt-3">
-              On every payment from people you directly refer.
+              On every subscription payment from people you directly refer.
             </p>
           </motion.div>
 

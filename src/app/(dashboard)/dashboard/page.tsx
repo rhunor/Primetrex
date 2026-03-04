@@ -6,7 +6,6 @@ import { StatsCards } from "@/components/features/dashboard/stats-cards";
 import { ReferralLinkCard } from "@/components/features/dashboard/referral-link-card";
 import { EarningsChart } from "@/components/features/dashboard/earnings-chart";
 import { CommissionInfo } from "@/components/features/dashboard/tier-progress";
-import { RecentReferrals } from "@/components/features/dashboard/recent-referrals";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2, TrendingUp } from "lucide-react";
 
@@ -25,15 +24,6 @@ interface DashboardData {
     activeReferrals: number;
   };
   chartData: { month: string; tier1: number; tier2: number }[];
-  recentReferrals: {
-    id: string;
-    name: string;
-    email: string;
-    tier: number;
-    status: string;
-    earnings: number;
-    date: string;
-  }[];
 }
 
 export default function DashboardPage() {
@@ -75,11 +65,9 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
         className="relative overflow-hidden rounded-2xl bg-sidebar px-6 py-7 lg:px-8"
       >
-        {/* Decorative orbs — depth layer */}
         <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-primary/30 blur-[70px]" />
         <div aria-hidden="true" className="pointer-events-none absolute right-40 -bottom-6 h-36 w-36 rounded-full bg-secondary/20 blur-[50px]" />
         <div aria-hidden="true" className="pointer-events-none absolute left-1/3 top-0 h-24 w-24 rounded-full bg-primary-dark/50 blur-[35px]" />
-        {/* Subtle dot grid overlay */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-[0.035]"
@@ -97,7 +85,7 @@ export default function DashboardPage() {
             </p>
           </div>
           {data.stats.totalEarnings > 0 && (
-            <div className="hidden sm:flex flex-col items-end flex-shrink-0 gap-1">
+            <div className="hidden sm:flex flex-col items-end shrink-0 gap-1">
               <div className="flex items-center gap-1.5 text-white/30">
                 <TrendingUp className="h-3 w-3" aria-hidden="true" />
                 <p className="text-[10px] uppercase tracking-wider">All-time earnings</p>
@@ -129,8 +117,6 @@ export default function DashboardPage() {
           <CommissionInfo />
         </div>
       </div>
-
-      <RecentReferrals referrals={data.recentReferrals} />
     </div>
   );
 }

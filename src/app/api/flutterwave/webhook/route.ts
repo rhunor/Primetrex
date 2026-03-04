@@ -6,7 +6,12 @@ import Referral from "@/models/Referral";
 import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { activateSubscription } from "@/bot/services/subscription";
-import { sendWelcomeEmail } from "@/lib/email";
+import {
+  sendWelcomeEmail,
+  sendOrderReceiptEmail,
+  sendAffiliateCommissionEmail,
+  generateOrderId,
+} from "@/lib/email";
 import { sendMessage } from "@/lib/telegram";
 import {
   notifyWelcome,
@@ -49,6 +54,8 @@ export async function POST(req: NextRequest) {
       user.signupPaymentRef = txRef;
       await user.save();
 
+      const orderId = generateOrderId();
+
       const existingTx = await Transaction.findOne({
         paymentReference: txRef,
         type: "subscription",
@@ -60,10 +67,21 @@ export async function POST(req: NextRequest) {
           amount,
           status: "completed",
           paymentReference: txRef,
+          orderId,
           description: "Affiliate signup fee",
           metadata: { type: "signup" },
         });
       }
+
+      // Send order receipt to buyer
+      sendOrderReceiptEmail({
+        email: user.email,
+        firstName: user.firstName,
+        orderId,
+        amount,
+        description: "Primetrex Affiliate Signup Fee",
+        paymentReference: txRef,
+      }).catch(() => {});
 
       if (user.referredBy) {
         await Referral.updateMany(
@@ -86,6 +104,7 @@ export async function POST(req: NextRequest) {
             status: "completed",
             sourceUserId: user._id,
             paymentReference: txRef,
+            orderId,
             description: `Tier 1 commission from ${user.firstName} ${user.lastName} (signup)`,
           });
 
@@ -96,7 +115,20 @@ export async function POST(req: NextRequest) {
             `${user.firstName} ${user.lastName}`
           ).catch(() => {});
 
+          // Send commission email to tier 1 affiliate
           const tier1Referrer = await User.findById(user.referredBy);
+          if (tier1Referrer) {
+            sendAffiliateCommissionEmail({
+              affiliateEmail: tier1Referrer.email,
+              affiliateFirstName: tier1Referrer.firstName,
+              buyerName: `${user.firstName} ${user.lastName}`,
+              commissionAmount: tier1Amount,
+              orderId,
+              tier: 1,
+              paymentReference: txRef,
+            }).catch(() => {});
+          }
+
           if (tier1Referrer?.referredBy) {
             const tier2Amount = amount * (siteConfig.commission.tier2Rate / 100);
             await Transaction.create({
@@ -107,6 +139,7 @@ export async function POST(req: NextRequest) {
               status: "completed",
               sourceUserId: user._id,
               paymentReference: `${txRef}-t2`,
+              orderId,
               description: `Tier 2 commission from ${user.firstName} ${user.lastName} (signup)`,
             });
 
@@ -116,6 +149,20 @@ export async function POST(req: NextRequest) {
               2,
               `${user.firstName} ${user.lastName}`
             ).catch(() => {});
+
+            // Send commission email to tier 2 affiliate
+            const tier2Referrer = await User.findById(tier1Referrer.referredBy);
+            if (tier2Referrer) {
+              sendAffiliateCommissionEmail({
+                affiliateEmail: tier2Referrer.email,
+                affiliateFirstName: tier2Referrer.firstName,
+                buyerName: `${user.firstName} ${user.lastName}`,
+                commissionAmount: tier2Amount,
+                orderId,
+                tier: 2,
+                paymentReference: `${txRef}-t2`,
+              }).catch(() => {});
+            }
           }
         }
 
@@ -157,6 +204,7 @@ export async function POST(req: NextRequest) {
       if (botPayment.webUserId) {
         const paidAmount: number = botPayment.amount;
         const webUser = await User.findById(botPayment.webUserId);
+        const subOrderId = generateOrderId();
 
         if (webUser?.referredBy) {
           const existingComm = await Transaction.findOne({
@@ -165,7 +213,7 @@ export async function POST(req: NextRequest) {
           });
 
           if (!existingComm) {
-            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: webUser.referredBy,
               type: "commission",
@@ -174,6 +222,7 @@ export async function POST(req: NextRequest) {
               status: "completed",
               sourceUserId: webUser._id,
               paymentReference: txRef,
+              orderId: subOrderId,
               description: `Tier 1 commission from ${webUser.firstName} ${webUser.lastName} (bot sub via web)`,
             });
             notifyCommissionEarned(
@@ -184,6 +233,17 @@ export async function POST(req: NextRequest) {
             ).catch(() => {});
 
             const tier1Referrer = await User.findById(webUser.referredBy);
+            if (tier1Referrer) {
+              sendAffiliateCommissionEmail({
+                affiliateEmail: tier1Referrer.email,
+                affiliateFirstName: tier1Referrer.firstName,
+                buyerName: `${webUser.firstName} ${webUser.lastName}`,
+                commissionAmount: tier1Amount,
+                orderId: subOrderId,
+                tier: 1,
+                paymentReference: txRef,
+              }).catch(() => {});
+            }
             if (tier1Referrer?.referredBy) {
               const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
               await Transaction.create({
@@ -194,6 +254,7 @@ export async function POST(req: NextRequest) {
                 status: "completed",
                 sourceUserId: webUser._id,
                 paymentReference: `${txRef}-t2`,
+                orderId: subOrderId,
                 description: `Tier 2 commission from ${webUser.firstName} ${webUser.lastName} (bot sub via web)`,
               });
               notifyCommissionEarned(
@@ -202,6 +263,19 @@ export async function POST(req: NextRequest) {
                 2,
                 `${webUser.firstName} ${webUser.lastName}`
               ).catch(() => {});
+
+              const tier2Referrer = await User.findById(tier1Referrer.referredBy);
+              if (tier2Referrer) {
+                sendAffiliateCommissionEmail({
+                  affiliateEmail: tier2Referrer.email,
+                  affiliateFirstName: tier2Referrer.firstName,
+                  buyerName: `${webUser.firstName} ${webUser.lastName}`,
+                  commissionAmount: tier2Amount,
+                  orderId: subOrderId,
+                  tier: 2,
+                  paymentReference: `${txRef}-t2`,
+                }).catch(() => {});
+              }
             }
           }
         }
@@ -240,7 +314,7 @@ export async function POST(req: NextRequest) {
         if (webUser?.referredBy) {
           if (!existingComm) {
             const tier1Amount =
-              paidAmount * (siteConfig.commission.tier1Rate / 100);
+              paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: webUser.referredBy,
               type: "commission",
@@ -295,7 +369,7 @@ export async function POST(req: NextRequest) {
           // Referral code fallback: bot user not linked to a web account but typed a referral code
           const referrer = await User.findOne({ referralCode: botPayment.referralCode });
           if (referrer) {
-            const tier1Amount = paidAmount * (siteConfig.commission.tier1Rate / 100);
+            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: referrer._id,
               type: "commission",

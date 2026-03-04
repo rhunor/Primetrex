@@ -27,7 +27,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join Primetrex — Earn 50% Commission",
+          title: "Join Primetrex — Earn Up to 40% Commission",
           text: "I earn recurring commissions with Primetrex copy trading. Join using my referral link and start earning too!",
           url: referralLink,
         });
@@ -74,16 +74,13 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
       transition={{ duration: 0.4, delay: 0.4 }}
       className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden"
     >
-      {/* Gradient header — code displayed prominently */}
-      <div className="relative overflow-hidden gradient-primary px-5 py-5">
+      {/* Gradient header */}
+      <div className="relative overflow-hidden gradient-primary px-5 py-4">
         <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-[20px]" />
         <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -bottom-4 h-16 w-16 rounded-full bg-secondary/20 blur-[20px]" />
         <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Your referral code</p>
-          <p className="mt-1 text-2xl font-bold font-mono tracking-widest text-white" style={{ fontVariantNumeric: "tabular-nums" }}>
-            {referralCode}
-          </p>
-          <p className="mt-1 text-[10px] text-white/30 truncate">{referralLink}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Your referral link</p>
+          <p className="mt-1 text-[11px] text-white/60 truncate">{referralLink}</p>
         </div>
       </div>
 
@@ -98,7 +95,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
             size="sm"
             onClick={handleCopy}
             aria-label={copied ? "Copied to clipboard" : "Copy referral link"}
-            className="flex-shrink-0"
+            className="shrink-0"
           >
             <AnimatePresence mode="wait">
               {copied ? (

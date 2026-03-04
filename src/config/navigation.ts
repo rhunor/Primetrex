@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   CreditCard,
   ArrowDownUp,
+  PackageSearch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,5 +37,6 @@ export const adminNav: NavItem[] = [
   { label: "Overview", href: "/admin", icon: ShieldCheck },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Transactions", href: "/admin/transactions", icon: CreditCard },
+  { label: "Orders", href: "/admin/orders", icon: PackageSearch },
   { label: "Withdrawals", href: "/admin/withdrawals", icon: ArrowDownUp },
 ];
