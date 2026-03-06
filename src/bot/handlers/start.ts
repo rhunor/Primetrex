@@ -12,6 +12,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Plan from "@/models/Plan";
 import BotPayment from "@/models/BotPayment";
+import BotSubscriber from "@/models/BotSubscriber";
 import Transaction from "@/models/Transaction";
 import { notifyCommissionEarned } from "@/lib/notifications";
 import { siteConfig } from "@/config/site";
@@ -319,9 +320,8 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
   // /status command
   bot.command("status", async (ctx) => {
     await dbConnect();
-    const user = await User.findOne({
-      telegramId: ctx.from!.id.toString(),
-    });
+    const telegramUserId = ctx.from!.id.toString();
+    const user = await User.findOne({ telegramId: telegramUserId });
 
     if (!user) {
       await ctx.reply(
@@ -332,12 +332,38 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
     }
 
     const statusText = user.isActive ? "Active" : "Inactive";
+
+    // Retention streak
+    const sub = await BotSubscriber.findOne({ userId: telegramUserId }).sort({
+      startDate: 1,
+    });
+
+    let streakLine = "";
+    if (sub) {
+      const now = new Date();
+      const msPerDay = 1000 * 60 * 60 * 24;
+      if (sub.status === "active") {
+        const days = Math.floor(
+          (now.getTime() - new Date(sub.startDate).getTime()) / msPerDay
+        );
+        streakLine = `\n${EMOJI.STREAK} Active streak: <b>${days} day${days === 1 ? "" : "s"}</b>`;
+      } else {
+        const days = Math.floor(
+          (new Date(sub.expiryDate).getTime() -
+            new Date(sub.startDate).getTime()) /
+            msPerDay
+        );
+        streakLine = `\n${EMOJI.STREAK} Last streak: <b>${days} day${days === 1 ? "" : "s"}</b> (expired)`;
+      }
+    }
+
     await ctx.reply(
       `<b>Account Status</b>\n\n` +
         `Name: ${user.firstName} ${user.lastName}\n` +
         `Email: ${user.email}\n` +
         `Status: ${statusText}\n` +
-        `Referral Code: <code>${user.referralCode}</code>`,
+        `Referral Code: <code>${user.referralCode}</code>` +
+        streakLine,
       { parse_mode: "HTML" }
     );
   });

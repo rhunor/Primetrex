@@ -53,6 +53,8 @@ export function adminPanelKeyboard(): InlineKeyboard {
     .row()
     .text(`${EMOJI.BROADCAST} Broadcast`, CALLBACK.ADMIN_BROADCAST)
     .row()
+    .text(`${EMOJI.REPORT} Retention Report`, CALLBACK.ADMIN_RETENTION)
+    .row()
     .text(`${EMOJI.HOME} Exit to Main Menu`, CALLBACK.ADMIN_EXIT);
 }
 
@@ -128,6 +130,17 @@ export function couponMenuKeyboard(): InlineKeyboard {
     .text(`${EMOJI.ADD_SUBSCRIBER} Create Coupon`, CALLBACK.COUPON_CREATE)
     .row()
     .text(`${EMOJI.BACK} Back to Panel`, CALLBACK.COUPON_BACK);
+}
+
+export function broadcastTargetKeyboard(): InlineKeyboard {
+  return new InlineKeyboard()
+    .text(`${EMOJI.SUBSCRIBERS} All Subscribers`, CALLBACK.BROADCAST_TARGET_ALL)
+    .row()
+    .text(`${EMOJI.CHANNEL_MSG} Send to Channel/Group`, CALLBACK.BROADCAST_TARGET_CHANNEL)
+    .row()
+    .text(`${EMOJI.DM} DM Specific User`, CALLBACK.BROADCAST_TARGET_DM)
+    .row()
+    .text(`${EMOJI.BACK} Back`, CALLBACK.ADMIN_PANEL);
 }
 
 export function broadcastConfirmKeyboard(): InlineKeyboard {

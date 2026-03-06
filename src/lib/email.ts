@@ -352,6 +352,134 @@ export async function sendAffiliateCommissionEmail(params: {
   });
 }
 
+// ─── Withdrawal request email ─────────────────────────────────────────────────
+export async function sendWithdrawalRequestEmail(params: {
+  email: string;
+  firstName: string;
+  amount: number;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  withdrawalId: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { email, firstName, amount, bankName, accountNumber, accountName, withdrawalId } = params;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Withdrawal Request Received — ₦${amount.toLocaleString()} | Primetrex`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <h2 style="color: #333; margin-top: 0;">Withdrawal Request Received</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Hi ${firstName}, we received your withdrawal request. It will be processed on the next Saturday.
+          </p>
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Amount</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #8808CC; font-size: 18px;">&#8358;${amount.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Bank</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #333; font-size: 13px;">${bankName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Account Number</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; color: #333; font-size: 13px;">${accountNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #888; font-size: 13px;">Account Name</td>
+                <td style="padding: 10px 0; text-align: right; color: #333; font-size: 13px;">${accountName}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 14px; margin: 16px 0;">
+            <p style="color: #856404; font-size: 13px; margin: 0;">
+              <strong>&#9888; If you did not request this withdrawal</strong>, cancel it immediately from your dashboard or contact support.
+            </p>
+          </div>
+          <div style="text-align: center; margin: 20px 0 0;">
+            <a href="${appUrl}/dashboard/withdrawals"
+               style="background: #8808CC; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+              View / Cancel Withdrawal &#8594;
+            </a>
+          </div>
+          <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 12px;">Reference: ${withdrawalId}</p>
+        </div>
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
+// ─── Bank details changed security alert ──────────────────────────────────────
+export async function sendBankDetailsChangedEmail(params: {
+  email: string;
+  firstName: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { email, firstName, bankName, accountNumber, accountName } = params;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: "Security Alert: Bank Details Updated | Primetrex",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+          <p style="font-size: 28px; margin: 0;">&#9888;&#65039;</p>
+          <h2 style="color: #856404; margin: 8px 0 0;">Security Alert</h2>
+          <p style="color: #856404; margin: 4px 0 0; font-size: 14px;">Your bank account details were changed</p>
+        </div>
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <p style="color: #555; line-height: 1.6; margin-top: 0;">
+            Hi ${firstName}, your withdrawal bank details on Primetrex were just updated to the following:
+          </p>
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 16px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Bank</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #333; font-size: 13px;">${bankName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Account Number</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; color: #333; font-size: 13px;">${accountNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #888; font-size: 13px;">Account Name</td>
+                <td style="padding: 10px 0; text-align: right; color: #333; font-size: 13px;">${accountName}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 14px; margin: 16px 0;">
+            <p style="color: #721c24; font-size: 13px; margin: 0;">
+              <strong>If you did not make this change</strong>, your account may be compromised. Change your password immediately and contact support.
+            </p>
+          </div>
+          <div style="text-align: center; margin: 20px 0 0;">
+            <a href="${appUrl}/dashboard/settings"
+               style="background: #dc3545; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+              Secure My Account &#8594;
+            </a>
+          </div>
+        </div>
+        ${emailFooter()}
+      </div>
+    `,
+  });
+}
+
 // ─── OTP email for 2FA login verification ────────────────────────────────────
 export async function sendOTPEmail(email: string, firstName: string, otp: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

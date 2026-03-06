@@ -15,6 +15,8 @@ export interface SessionData {
     | "awaiting_search_query"
     | "awaiting_broadcast_message"
     | "awaiting_broadcast_confirm"
+    | "awaiting_broadcast_dm_user_id"
+    | "awaiting_broadcast_dm_message"
     | "awaiting_coupon_code"
     | "awaiting_coupon_type"
     | "awaiting_coupon_value"
@@ -42,6 +44,8 @@ export interface SessionData {
   pendingCouponMaxUses?: number | null;
   pendingBroadcastMessage?: string;
   pendingBroadcastMessageId?: number;
+  broadcastTarget?: "all" | "channel" | "dm";
+  broadcastDMTargetId?: string;
 
   // Pagination
   subscriberPage?: number;

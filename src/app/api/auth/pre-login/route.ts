@@ -4,6 +4,8 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { sendOTPEmail } from "@/lib/email";
 
+const DEVICE_TRUST_DAYS = 30;
+
 function getClientIP(req: NextRequest): string {
   return (
     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
     await dbConnect();
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    // Intentionally vague error to prevent user enumeration
+    // Intentionally vague — prevents user enumeration
     if (!user) {
       return NextResponse.json({ needsOTP: false }, { status: 200 });
     }
@@ -38,13 +40,22 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIP(req);
+    const cutoff = new Date(Date.now() - DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000);
 
-    // Known IP — no OTP needed
-    if (ip !== "unknown" && user.knownIPs?.includes(ip)) {
+    const knownDevice = ip !== "unknown"
+      ? user.knownDevices?.find((d: { ip: string; lastSeen: Date }) => d.ip === ip)
+      : null;
+
+    // Known device seen within the last 30 days — no OTP, just refresh lastSeen
+    if (knownDevice && new Date(knownDevice.lastSeen) > cutoff) {
+      await User.updateOne(
+        { _id: user._id, "knownDevices.ip": ip },
+        { $set: { "knownDevices.$.lastSeen": new Date() } }
+      );
       return NextResponse.json({ needsOTP: false });
     }
 
-    // New IP — generate and send OTP
+    // Unknown device or device not seen in 30 days — send OTP
     const otp = generateOTP();
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 

@@ -46,6 +46,10 @@ export const EMOJI = {
   CHART: "\u{1F4C8}",
   MEGAPHONE: "\u{1F4E3}",
   AFFILIATE: "\u{1F91D}",
+  STREAK: "\u{1F525}",
+  REPORT: "\u{1F4CB}",
+  DM: "\u{1F4AC}",
+  CHANNEL_MSG: "\u{1F4E1}",
 } as const;
 
 export const CALLBACK = {
@@ -97,6 +101,12 @@ export const CALLBACK = {
   // Broadcast
   BROADCAST_SEND: "broadcast_send",
   BROADCAST_CANCEL: "broadcast_cancel",
+  BROADCAST_TARGET_ALL: "broadcast_target_all",
+  BROADCAST_TARGET_CHANNEL: "broadcast_target_channel",
+  BROADCAST_TARGET_DM: "broadcast_target_dm",
+
+  // Retention
+  ADMIN_RETENTION: "admin_retention",
 
   // Payment
   PAY_FLUTTERWAVE: "pay_flutterwave",

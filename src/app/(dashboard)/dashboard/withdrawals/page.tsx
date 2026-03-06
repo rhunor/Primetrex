@@ -78,6 +78,7 @@ export default function WithdrawalsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Bank-related state
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -159,7 +160,7 @@ export default function WithdrawalsPage() {
       )
     : banks;
 
-  async function handleWithdraw(e: React.FormEvent) {
+  async function handleWithdraw(e: { preventDefault(): void }) {
     e.preventDefault();
     setFormError("");
     setFormSuccess("");
@@ -208,6 +209,32 @@ export default function WithdrawalsPage() {
       setFormError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleCancelWithdrawal(id: string) {
+    setCancellingId(id);
+    setFormSuccess("");
+    try {
+      const res = await fetch("/api/dashboard/withdraw/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ withdrawalId: id }),
+      });
+      if (res.ok) {
+        setWithdrawals((prev) =>
+          prev.map((w) =>
+            w.id === id
+              ? { ...w, status: "rejected", rejectionReason: "Cancelled by user" }
+              : w
+          )
+        );
+        setFormSuccess("Withdrawal cancelled successfully.");
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -507,6 +534,19 @@ export default function WithdrawalsPage() {
                     <p className="text-xs text-danger mt-0.5">{w.rejectionReason}</p>
                   )}
                 </div>
+                {w.status === "pending" && (
+                  <button
+                    onClick={() => handleCancelWithdrawal(w.id)}
+                    disabled={cancellingId === w.id}
+                    className="shrink-0 text-xs font-medium text-danger border border-danger/30 rounded-lg px-3 py-1.5 hover:bg-danger/10 transition-colors disabled:opacity-50"
+                  >
+                    {cancellingId === w.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Cancel"
+                    )}
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>

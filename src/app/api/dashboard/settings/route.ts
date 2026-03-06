@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import { sendBankDetailsChangedEmail } from "@/lib/email";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -31,6 +32,14 @@ export async function PUT(req: NextRequest) {
       }
       user.bankDetails = { bankName, bankCode: bankCode || "", accountNumber, accountName };
       await user.save();
+      // Security alert email (fire-and-forget)
+      sendBankDetailsChangedEmail({
+        email: user.email,
+        firstName: user.firstName,
+        bankName,
+        accountNumber,
+        accountName,
+      }).catch(() => {});
       return NextResponse.json({ success: true, message: "Bank details updated" });
     }
 

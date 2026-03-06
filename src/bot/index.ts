@@ -22,6 +22,7 @@ import { registerSpecialUserHandlers } from "@/bot/handlers/specialUsers";
 import { registerCouponHandlers } from "@/bot/handlers/coupons";
 import { registerAnalyticsHandlers } from "@/bot/handlers/analytics";
 import { registerBroadcastHandlers } from "@/bot/handlers/broadcast";
+import { registerRetentionHandlers } from "@/bot/handlers/retention";
 import { registerPaymentHandlers } from "@/bot/handlers/payment";
 import { registerAffiliateHandlers } from "@/bot/handlers/affiliate";
 
@@ -34,6 +35,7 @@ registerSpecialUserHandlers(bot);
 registerCouponHandlers(bot);
 registerAnalyticsHandlers(bot);
 registerBroadcastHandlers(bot);
+registerRetentionHandlers(bot);
 registerPaymentHandlers(bot);
 registerAffiliateHandlers(bot);
 

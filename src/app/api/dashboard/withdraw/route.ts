@@ -5,6 +5,7 @@ import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { siteConfig } from "@/config/site";
+import { sendWithdrawalRequestEmail } from "@/lib/email";
 
 // Compute next Friday date (WAT = UTC+1)
 function nextFridayWAT(): Date {
@@ -128,6 +129,17 @@ export async function POST(req: NextRequest) {
       accountName,
       status: "pending",
     });
+
+    // Send security notification email (fire-and-forget)
+    sendWithdrawalRequestEmail({
+      email: user.email,
+      firstName: user.firstName,
+      amount: numAmount,
+      bankName,
+      accountNumber,
+      accountName,
+      withdrawalId: withdrawal._id.toString(),
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

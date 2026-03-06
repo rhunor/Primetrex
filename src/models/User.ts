@@ -26,7 +26,7 @@ export interface IUser extends Document {
     accountName: string;
   } | null;
   // 2FA fields
-  knownIPs: string[];
+  knownDevices: { ip: string; lastSeen: Date }[];
   twoFAOTP: string | null;
   twoFAOTPExpires: Date | null;
   createdAt: Date;
@@ -72,8 +72,11 @@ const UserSchema = new Schema<IUser>(
       },
       default: null,
     },
-    // 2FA: list of trusted IPs — new IPs trigger OTP verification
-    knownIPs: { type: [String], default: [] },
+    // 2FA: trusted devices (IP + last seen). OTP required if IP unknown or not seen in 30 days.
+    knownDevices: {
+      type: [{ ip: String, lastSeen: Date }],
+      default: [],
+    },
     twoFAOTP: { type: String, default: null },
     twoFAOTPExpires: { type: Date, default: null },
   },

@@ -36,13 +36,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Incorrect code. Please try again." }, { status: 400 });
     }
 
-    // OTP verified — add IP to known IPs and clear OTP
+    // OTP verified — upsert IP into knownDevices with current timestamp
     const ip = getClientIP(req);
-    if (ip !== "unknown" && !user.knownIPs.includes(ip)) {
-      user.knownIPs.push(ip);
-    }
     user.twoFAOTP = null;
     user.twoFAOTPExpires = null;
+
+    if (ip !== "unknown") {
+      const devices: { ip: string; lastSeen: Date }[] = user.knownDevices ?? [];
+      const idx = devices.findIndex((d) => d.ip === ip);
+      if (idx >= 0) {
+        devices[idx].lastSeen = new Date();
+      } else {
+        devices.push({ ip, lastSeen: new Date() });
+      }
+      user.knownDevices = devices;
+    }
+
     await user.save();
 
     return NextResponse.json({ success: true });
