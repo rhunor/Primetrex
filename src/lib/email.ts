@@ -81,7 +81,7 @@ export async function sendVerificationEmail(
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verifyUrl}"
-               style="background: #8808CC; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Verify Email Address
             </a>
           </div>
@@ -131,7 +131,7 @@ export async function sendPasswordResetEmail(
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetUrl}"
-               style="background: #8808CC; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Reset My Password
             </a>
           </div>
@@ -163,7 +163,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
         ${emailHeader(appUrl)}
 
-        <div style="background: #8808CC; border-radius: 12px; padding: 30px; margin: 20px 0; text-align: center;">
+        <div style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); border-radius: 12px; padding: 30px; margin: 20px 0; text-align: center;">
           <h2 style="color: #ffffff; margin: 0 0 8px; font-size: 24px;">Welcome aboard, ${firstName}! 🎉</h2>
           <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 15px;">Your affiliate account is now active and ready to earn.</p>
         </div>
@@ -209,7 +209,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
           <div style="text-align: center; margin: 24px 0 0;">
             <a href="${appUrl}/dashboard"
-               style="background: #8808CC; color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Go to Your Dashboard →
             </a>
           </div>
@@ -311,7 +311,7 @@ export async function sendAffiliateCommissionEmail(params: {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
         ${emailHeader(appUrl)}
 
-        <div style="background: #8808CC; border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
+        <div style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
           <h2 style="color: #ffffff; margin: 0 0 6px; font-size: 22px;">Commission Earned!</h2>
           <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 15px;">Tier ${tier} commission credited</p>
         </div>
@@ -349,7 +349,7 @@ export async function sendAffiliateCommissionEmail(params: {
           </p>
           <div style="text-align: center; margin: 20px 0 0;">
             <a href="${appUrl}/dashboard/earnings"
-               style="background: #8808CC; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
               View Earnings &#8594;
             </a>
           </div>
@@ -413,7 +413,7 @@ export async function sendWithdrawalRequestEmail(params: {
           </div>
           <div style="text-align: center; margin: 20px 0 0;">
             <a href="${appUrl}/dashboard/withdrawals"
-               style="background: #8808CC; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
               View / Cancel Withdrawal &#8594;
             </a>
           </div>
@@ -507,7 +507,7 @@ export async function sendOTPEmail(email: string, firstName: string, otp: string
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
-            <div style="display: inline-block; background: #8808CC; border-radius: 12px; padding: 20px 40px;">
+            <div style="display: inline-block; background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); border-radius: 12px; padding: 20px 40px;">
               <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin: 0 0 8px; letter-spacing: 0.1em; text-transform: uppercase;">Verification Code</p>
               <p style="color: white; font-size: 36px; font-weight: bold; letter-spacing: 0.3em; margin: 0; font-family: monospace;">${otp}</p>
             </div>

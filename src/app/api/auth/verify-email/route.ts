@@ -15,21 +15,31 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
-    const user = await User.findOne({
-      emailVerificationToken: token,
-      emailVerificationExpires: { $gt: new Date() },
-    });
+    // Look up by token only — check expiry separately so we can give better errors
+    const user = await User.findOne({ emailVerificationToken: token });
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid or expired verification link" },
+        { error: "Invalid verification link. The link may have expired — please request a new one." },
+        { status: 400 }
+      );
+    }
+
+    // Already verified — idempotent success (covers the "second click" case)
+    if (user.isEmailVerified) {
+      return NextResponse.json({ success: true, message: "Email already verified" });
+    }
+
+    // Token expired
+    if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+      return NextResponse.json(
+        { error: "This verification link has expired. Please request a new verification email." },
         { status: 400 }
       );
     }
 
     user.isEmailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpires = null;
+    // Keep the token so repeat clicks still return success (token expires naturally)
     await user.save();
 
     return NextResponse.json({ success: true, message: "Email verified successfully" });

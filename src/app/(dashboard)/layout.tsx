@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -10,13 +10,23 @@ import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { Mail, CheckCircle, X } from "lucide-react";
 
 function EmailVerificationBanner() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [dismissed, setDismissed] = useState(false);
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const searchParams = useSearchParams();
+  const hasRefreshed = useRef(false);
 
   const isEmailVerified = (session?.user as unknown as Record<string, unknown>)?.isEmailVerified as boolean;
   const emailSent = searchParams.get("emailSent") === "1";
+
+  // When session shows unverified, do a one-time refresh from DB in case the JWT is stale
+  // (e.g. user verified on another tab or the session cookie didn't update in time)
+  useEffect(() => {
+    if (session && !isEmailVerified && !hasRefreshed.current) {
+      hasRefreshed.current = true;
+      update();
+    }
+  }, [session, isEmailVerified, update]);
 
   if (isEmailVerified || dismissed || !session) return null;
 
