@@ -12,22 +12,20 @@ import {
 } from "lucide-react";
 
 const tickerItems = [
-  "₦25,000 commission credited",
-  "New referral joined",
-  "Withdrawal processed in 2hrs",
+  
+  "Withdrawal processed in <24hrs",
   "Join 1,200+ affiliates",
-  "₦47,000 monthly recurring",
-  "Tier 2 bonus unlocked",
-  "50% commission — every month",
+  
+  "40% commission — every month",
   "No trading knowledge needed",
 ];
 
 const chartData = [30, 48, 38, 65, 50, 72, 58, 84, 70, 100];
 
 const recentComms = [
-  { initials: "MA", name: "Mary A.", amount: "+₦25,000", type: "Tier 1 · 2h ago" },
+  { initials: "MA", name: "Mary A.", amount: "+₦20,000", type: "Tier 1 · 2h ago" },
   { initials: "DK", name: "David K.", amount: "+₦5,000", type: "Tier 2 · 5h ago" },
-  { initials: "FO", name: "Femi O.", amount: "+₦25,000", type: "Tier 1 · 1d ago" },
+  { initials: "FO", name: "Femi O.", amount: "+₦20,000", type: "Tier 1 · 1d ago" },
 ];
 
 export function HeroSection() {
@@ -44,7 +42,7 @@ export function HeroSection() {
         }}
       />
 
-      {/* Orbs — translate-only (GPU compositor, no repaint) */}
+      {/* Orbs */}
       <motion.div
         animate={{ y: [0, -24, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
@@ -83,10 +81,8 @@ export function HeroSection() {
               transition={{ duration: 0.65 }}
               className="mt-6 text-5xl font-bold leading-[1.08] tracking-tight text-white font-heading sm:text-6xl md:text-7xl"
             >
-              If Wealth Is Not{" "}
-              <br className="hidden sm:block" />
-              A Curse,{" "}
-              <span className="text-secondary">Build It Here</span>
+              1,200+ Nigerians Are Already Earning.{" "}
+              <span className="text-secondary">Why Aren&apos;t You?</span>
             </motion.h1>
 
             {/* Subtext */}
@@ -96,9 +92,11 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 text-lg text-white/55 leading-relaxed"
             >
-              Refer others to Primetrex copy trading and earn{" "}
-              <span className="text-white/80 font-medium">up to 50% recurring commission</span>{" "}
-              — every single month, automatically.
+              Join Primetrex Affiliates and earn{" "}
+              <span className="text-white/80 font-medium">40% commission</span>{" "}
+              by introducing people to a platform that helps them profit from trading — without becoming traders themselves. Earn reoccurring commission every month from the same customers, plus get{" "}
+              <span className="text-white/80 font-medium">10%</span>{" "}
+              from people they refer. Build income that grows even when you&apos;re not working.
             </motion.p>
 
             {/* Checklist */}
@@ -110,7 +108,7 @@ export function HeroSection() {
             >
               {[
                 "No trading experience required",
-                "₦7,500–₦25,000 per referral per month",
+                "₦5,000–₦20,000 per referral per month",
                 "Withdraw directly to your bank account",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2.5">
@@ -129,7 +127,7 @@ export function HeroSection() {
             >
               <Link href="/register" className="w-full sm:w-auto">
                 <Button size="lg" variant="secondary" className="w-full">
-                  Get Started — ₦15,000
+                  Get Started
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -185,13 +183,13 @@ export function HeroSection() {
                 <div>
                   <p className="text-white/30 text-xs">Total Commissions Earned</p>
                   <p className="text-white text-3xl font-bold font-heading mt-0.5 tracking-tight">
-                    ₦247,500
+                    ₦1,345,000
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full bg-secondary/10 border border-secondary/20 px-2.5 py-1.5">
                   <ArrowUpRight className="h-3 w-3 text-secondary flex-shrink-0" />
                   <span className="text-secondary text-[11px] font-semibold whitespace-nowrap">
-                    +₦72,000 this month
+                    +₦282,000 this month
                   </span>
                 </div>
               </div>
@@ -262,7 +260,7 @@ export function HeroSection() {
                 </div>
                 <div>
                   <p className="text-[10px] text-white/35">Commission paid</p>
-                  <p className="text-xs font-bold text-white">+₦25,000</p>
+                  <p className="text-xs font-bold text-white">+₦20,000</p>
                 </div>
               </motion.div>
             </motion.div>

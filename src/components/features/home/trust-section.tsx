@@ -145,7 +145,7 @@ export function TrustSection() {
                   ))}
                 </div>
                 <blockquote className="text-sm font-medium text-foreground leading-relaxed">
-                  "I referred 12 people my first month and earned over ₦300,000 recurring. This is the most reliable income stream I've found."
+                  "I sold to 12 people my first month and earned over ₦300,000 recurring. This is the most reliable income stream I've found."
                 </blockquote>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Adebayo O. — Lagos, Nigeria
@@ -175,8 +175,8 @@ export function TrustSection() {
             <div className="grid grid-cols-2 divide-x divide-y divide-border">
               {[
                 { value: "1,200+", label: "Active Affiliates", color: "gradient-text" },
-                { value: "₦500M+", label: "Commissions Paid", color: "text-secondary-dark" },
-                { value: "50%", label: "Top Tier Commission", color: "gradient-text" },
+                { value: "₦50M+", label: "Commissions Paid", color: "text-secondary-dark" },
+                { value: "40%", label: "Top Tier Commission", color: "gradient-text" },
                 { value: "< 24h", label: "Avg. Withdrawal", color: "text-secondary-dark" },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col items-center justify-center p-6 text-center">

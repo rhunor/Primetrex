@@ -21,7 +21,7 @@ const sections = [
   },
   {
     title: "4. Affiliate Commissions",
-    body: `Approved affiliates earn commissions as follows:\n\n• Tier 1 (Direct Referrals): ${siteConfig.commission.tier1Rate}% of the subscription fee paid by every person who signs up using your referral link and subscribes to the Primetrex copy trading service.\n\n• Tier 2 (Sub-Referrals): ${siteConfig.commission.tier2Rate}% of the subscription fee paid by people referred by your direct referrals.\n\nCommissions are credited to your account balance after successful payment confirmation. Primetrex reserves the right to adjust commission rates with 30 days' written notice to existing affiliates.`,
+    body: `Approved affiliates earn commissions as follows:\n\n• Tier 1 (Direct Referrals): ${siteConfig.commission.tier1Rate}% of the subscription fee paid by every person who signs up using your affiliate link and subscribes to the Primetrex copy trading service.\n\n• Tier 2 (Sub-Referrals): ${siteConfig.commission.tier2Rate}% of the subscription fee paid by people referred by your direct referrals.\n\nCommissions are credited to your account balance after successful payment confirmation. Primetrex reserves the right to adjust commission rates with 30 days' written notice to existing affiliates.`,
   },
   {
     title: "5. Withdrawals",

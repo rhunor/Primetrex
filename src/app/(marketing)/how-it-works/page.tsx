@@ -24,7 +24,7 @@ const steps = [
     step: "01",
     icon: UserPlus,
     title: "Sign Up & Pay the Signup Fee",
-    description: `Create your account and pay the one-time ${formatCurrency(siteConfig.signupFee)} signup fee. This activates your affiliate dashboard and unique referral link. No recurring fees — pay once, earn forever.`,
+    description: `Create your account and pay the one-time ${formatCurrency(siteConfig.signupFee)} signup fee. This activates your affiliate dashboard and unique affiliate link. No recurring fees — pay once, earn forever.`,
     details: [
       "Quick registration form",
       `One-time ${formatCurrency(siteConfig.signupFee)} activation fee`,
@@ -36,7 +36,7 @@ const steps = [
     icon: Share2,
     title: "Share Your Referral Link",
     description:
-      "Copy your unique referral link from the dashboard and share it anywhere — WhatsApp, Twitter, Instagram, Telegram, or in person. Every click is tracked to your account.",
+      "Copy your unique affiliate link from the dashboard and share it anywhere — WhatsApp, Twitter, Instagram, Telegram, or in person. Every click is tracked to your account.",
     details: [
       "One-click copy from dashboard",
       "Works on any platform",
@@ -332,7 +332,7 @@ export default function HowItWorksPage() {
               { icon: TrendingUp, label: "Real-time analytics dashboard" },
               { icon: Wallet, label: "Bank withdrawal system (min ₦10,000)" },
               { icon: MessageSquare, label: "Telegram bot for renewals" },
-              { icon: Share2, label: "Unique referral links & QR codes" },
+              { icon: Share2, label: "Unique affiliate links & QR codes" },
               { icon: Repeat, label: "Recurring monthly commissions" },
             ].map((item, index) => (
               <motion.div

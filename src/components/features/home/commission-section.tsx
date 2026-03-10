@@ -10,12 +10,6 @@ import { siteConfig } from "@/config/site";
 
 const earningExamples = [
   {
-    label: "You refer Mary (she joins as affiliate)",
-    payment: formatCurrency(15_000),
-    you: formatCurrency(7_500),
-    type: "Affiliate Join (50%)",
-  },
-  {
     label: "Mary pays her subscription",
     payment: formatCurrency(50_000),
     you: formatCurrency(20_000),

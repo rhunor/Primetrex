@@ -9,8 +9,6 @@ import {
   Mail,
   MessageSquare,
   Send,
-  MapPin,
-  Phone,
   ArrowRight,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
@@ -290,33 +288,6 @@ function ContactPageContent() {
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-                    <Phone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">Phone</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      +234 XXX XXX XXXX
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Mon–Fri, 9am–5pm WAT
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">Office</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Lagos, Nigeria
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* FAQ teaser */}
@@ -332,8 +303,8 @@ function ContactPageContent() {
                   <li className="flex items-start gap-2">
                     <span className="text-secondary-dark font-bold">A:</span>
                     <span>
-                      There is a one-time ₦15,000 signup fee to activate your
-                      affiliate account and unlock your referral link.
+                      There is a one-time ₦10,000 signup fee to activate your
+                      affiliate account and unlock your affiliate link.
                     </span>
                   </li>
                   <li className="flex items-start gap-2 pt-2 border-t border-border">

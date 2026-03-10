@@ -28,7 +28,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
       try {
         await navigator.share({
           title: "Join Primetrex — Earn Up to 40% Commission",
-          text: "I earn recurring commissions with Primetrex copy trading. Join using my referral link and start earning too!",
+          text: "I earn recurring commissions with Primetrex copy trading. Join using my affiliate link and start earning too!",
           url: referralLink,
         });
         setShared(true);
@@ -59,7 +59,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
       canvas.height = img.height;
       ctx?.drawImage(img, 0, 0);
       const link = document.createElement("a");
-      link.download = `primetrex-referral-${referralCode}.png`;
+      link.download = `primetrex-affiliate-${referralCode}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
@@ -79,7 +79,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
         <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-[20px]" />
         <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -bottom-4 h-16 w-16 rounded-full bg-secondary/20 blur-[20px]" />
         <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Your referral link</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Your affiliate link</p>
           <p className="mt-1 text-[11px] text-white/60 truncate">{referralLink}</p>
         </div>
       </div>
@@ -94,7 +94,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
             variant={copied ? "secondary" : "primary"}
             size="sm"
             onClick={handleCopy}
-            aria-label={copied ? "Copied to clipboard" : "Copy referral link"}
+            aria-label={copied ? "Copied to clipboard" : "Copy affiliate link"}
             className="shrink-0"
           >
             <AnimatePresence mode="wait">
@@ -162,7 +162,7 @@ export function ReferralLinkCard({ referralCode }: ReferralLinkCardProps) {
             variant={shared ? "secondary" : "outline"}
             size="sm"
             onClick={handleShare}
-            aria-label="Share referral link"
+            aria-label="Share affiliate link"
           >
             <AnimatePresence mode="wait">
               {shared ? (

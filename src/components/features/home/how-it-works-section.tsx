@@ -9,14 +9,14 @@ const steps = [
     step: "01",
     title: "Pay Once & Sign Up",
     description:
-      "Pay a one-time ₦15,000 signup fee to unlock your affiliate account and referral link.",
+      "Pay a one-time ₦10,000 signup fee to unlock your affiliate account and affiliate link.",
   },
   {
     icon: Share2,
     step: "02",
     title: "Share Your Link",
     description:
-      "Get your unique referral link and share it with friends, family, and your entire network.",
+      "Get your unique affiliate link and share it with friends, family, and your entire network.",
   },
   {
     icon: CreditCard,

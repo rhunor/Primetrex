@@ -7,7 +7,7 @@ import { ReferralLinkCard } from "@/components/features/dashboard/referral-link-
 import { EarningsChart } from "@/components/features/dashboard/earnings-chart";
 import { CommissionInfo } from "@/components/features/dashboard/tier-progress";
 import { formatCurrency } from "@/lib/utils";
-import { Loader2, TrendingUp } from "lucide-react";
+import { Loader2, TrendingUp, ExternalLink } from "lucide-react";
 
 function getGreeting(firstName: string) {
   const hour = new Date().getHours();
@@ -107,6 +107,28 @@ export default function DashboardPage() {
         tier1Earnings={data.stats.tier1Earnings}
         tier2Earnings={data.stats.tier2Earnings}
       />
+
+      {/* Affiliate Community Banner */}
+      <motion.a
+        href="https://t.me/Primetrexaffiliates"
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="flex items-center justify-between gap-4 rounded-2xl border border-[#229ED9]/30 bg-[#229ED9]/8 px-6 py-4 hover:bg-[#229ED9]/15 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#229ED9]/20 text-[#229ED9] shrink-0">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.07 9.763c-.155.695-.567.865-1.148.539l-3.17-2.335-1.53 1.473c-.17.17-.312.312-.637.312l.226-3.218 5.85-5.284c.254-.226-.055-.352-.394-.126L7.29 14.37l-3.11-.973c-.676-.21-.69-.676.141-.999l12.165-4.692c.563-.204 1.056.137.876.542z"/></svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Join the Affiliate Community</p>
+            <p className="text-xs text-muted-foreground">Connect with other affiliates, get tips &amp; updates on Telegram</p>
+          </div>
+        </div>
+        <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+      </motion.a>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

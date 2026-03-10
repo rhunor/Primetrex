@@ -7,7 +7,7 @@ import { ArrowRight, Users, TrendingUp, Wallet } from "lucide-react";
 
 const stats = [
   { icon: Users, value: "1,200+", label: "Active Affiliates" },
-  { icon: TrendingUp, value: "50%", label: "Tier 1 Commission" },
+  { icon: TrendingUp, value: "40%", label: "Tier 1 Commission" },
   { icon: Wallet, value: "₦10K", label: "Min Withdrawal" },
 ];
 
@@ -72,14 +72,14 @@ export function CTASection() {
             <span className="text-secondary">Building Wealth?</span>
           </h2>
           <p className="mt-5 text-lg text-white/55 leading-relaxed max-w-xl mx-auto">
-            Join today for a one-time ₦15,000 signup fee. Get your referral link,
+            Join today for a one-time ₦10,000 signup fee. Get your affiliate link,
             start sharing, and earn recurring commissions every month.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/register" className="w-full sm:w-auto">
               <Button size="lg" variant="secondary" className="w-full">
-                Join for ₦15,000
+                Join Now
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>

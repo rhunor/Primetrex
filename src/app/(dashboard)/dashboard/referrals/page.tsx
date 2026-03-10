@@ -116,7 +116,7 @@ export default function ReferralsPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <p className="text-muted-foreground font-medium">No referrals yet</p>
-                <p className="text-sm text-muted-foreground mt-1">Share your referral link to start earning</p>
+                <p className="text-sm text-muted-foreground mt-1">Share your affiliate link to start earning</p>
               </div>
             )}
           </div>

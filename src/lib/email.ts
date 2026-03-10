@@ -170,7 +170,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
         <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
           <p style="color: #555; line-height: 1.6; margin-top: 0;">
-            You can start earning commissions immediately by sharing your unique referral link. Every time someone subscribes through your link, you earn — every month.
+            You can start earning commissions immediately by sharing your unique affiliate link. Every time someone subscribes through your link, you earn — every month.
           </p>
 
           <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
@@ -181,7 +181,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
                   <span style="color: #8808CC; font-weight: bold;">Affiliate Join</span>
                   <span style="color: #555; font-size: 13px;"> — When referral joins as affiliate</span>
                 </td>
-                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #8808CC; font-size: 18px;">50%</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #8808CC; font-size: 18px;">40%</td>
               </tr>
               <tr>
                 <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
@@ -202,7 +202,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
           <ul style="color: #555; line-height: 2; padding-left: 20px; margin: 0 0 24px;">
             <li>Personal affiliate dashboard with live stats</li>
-            <li>Unique referral link &amp; QR code</li>
+            <li>Unique affiliate link &amp; QR code</li>
             <li>Direct bank withdrawals (min ₦10,000)</li>
             <li>Real-time commission notifications</li>
           </ul>
@@ -211,6 +211,14 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
             <a href="${appUrl}/dashboard"
                style="background: #8808CC; color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
               Go to Your Dashboard →
+            </a>
+          </div>
+
+          <div style="text-align: center; margin: 20px 0 0;">
+            <p style="color: #555; font-size: 14px; margin: 0 0 10px;">Join the Primetrex Affiliates community on Telegram:</p>
+            <a href="https://t.me/Primetrexaffiliates"
+               style="background: #229ED9; color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
+              Join Telegram Community →
             </a>
           </div>
         </div>
