@@ -90,7 +90,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-3 text-sm text-white/55 leading-relaxed md:text-base"
+              className="mt-5 text-sm text-white/55 leading-relaxed md:text-base"
             >
               Join Primetrex Affiliates and earn{" "}
               <span className="text-white/80 font-medium">40% commission</span>{" "}
@@ -123,7 +123,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.38 }}
-              className="mt-5 flex flex-col sm:flex-row gap-3"
+              className="mt-4 flex flex-col sm:flex-row gap-3"
             >
               <Link href="/register" className="w-full sm:w-auto">
                 <Button size="lg" variant="secondary" className="w-full">
@@ -146,7 +146,7 @@ export function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.75 }}
-              className="mt-3 text-xs text-white/25"
+              className="mt-2 text-xs text-white/25"
             >
               Powered by Flutterwave · Payments 100% secured
             </motion.p>
