@@ -34,7 +34,7 @@ const steps = [
   {
     step: "02",
     icon: Share2,
-    title: "Share Your Referral Link",
+    title: "Share Your Affiliate Link",
     description:
       "Copy your unique affiliate link from the dashboard and share it anywhere — WhatsApp, Twitter, Instagram, Telegram, or in person. Every sale is tracked to your account.",
     details: [
@@ -375,7 +375,7 @@ export default function HowItWorksPage() {
             <div className="mt-10">
               <Link href="/register">
                 <Button size="lg" variant="secondary">
-                  Get Your Referral Link
+                  Get Your Affiliate Link
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>

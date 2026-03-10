@@ -92,7 +92,7 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-5 text-sm text-white/55 leading-relaxed md:text-base"
             >
-              Join Primetrex Affiliates and earn{" "}
+              Join Primetrex affiliates and earn{" "}
               <span className="text-white/80 font-medium">40% commission</span>{" "}
               by introducing people to a platform that helps them profit from trading — without becoming traders themselves. Earn reoccurring commission every month from the same customers, plus get{" "}
               <span className="text-white/80 font-medium">10%</span>{" "}
@@ -154,13 +154,16 @@ export function HeroSection() {
 
           {/* Right: Custom animated dashboard mockup */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, delay: 0.25 }}
-            className="relative hidden lg:block"
+            className="relative"
           >
             {/* Glow */}
             <div className="absolute -inset-6 bg-primary/10 rounded-3xl blur-3xl pointer-events-none" />
+
+            {/* Constrain card width on mobile so it doesn't stretch full width */}
+            <div className="max-w-sm sm:max-w-md mx-auto lg:max-w-none">
 
             {/* Dashboard card */}
             <div className="relative rounded-2xl border border-white/[0.12] bg-[#0d0819]/90 backdrop-blur-xl p-5 shadow-[0_0_60px_rgba(136,8,204,0.12)]">
@@ -243,12 +246,14 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Floating: commission notification */}
+            </div>{/* end max-w constraining wrapper */}
+
+            {/* Floating: commission notification — only on lg (side-by-side layout) */}
             <motion.div
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.2, duration: 0.5 }}
-              className="absolute -left-6 top-1/3 rounded-xl border border-white/[0.12] bg-[#0d0819]/95 backdrop-blur-md p-3 shadow-xl hidden sm:block"
+              className="absolute -left-6 top-1/3 rounded-xl border border-white/[0.12] bg-[#0d0819]/95 backdrop-blur-md p-3 shadow-xl hidden lg:block"
             >
               <motion.div
                 animate={{ y: [0, -6, 0] }}
@@ -265,12 +270,12 @@ export function HeroSection() {
               </motion.div>
             </motion.div>
 
-            {/* Floating: referrals card */}
+            {/* Floating: referrals card — only on lg (side-by-side layout) */}
             <motion.div
               initial={{ opacity: 0, x: 16 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.35, duration: 0.5 }}
-              className="absolute -right-4 bottom-6 rounded-xl border border-white/[0.12] bg-[#0d0819]/95 backdrop-blur-md p-3 shadow-xl hidden sm:block"
+              className="absolute -right-4 bottom-6 rounded-xl border border-white/[0.12] bg-[#0d0819]/95 backdrop-blur-md p-3 shadow-xl hidden lg:block"
             >
               <motion.div
                 animate={{ y: [0, 7, 0] }}
