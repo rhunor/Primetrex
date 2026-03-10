@@ -7,7 +7,7 @@ import { Star, Quote } from "lucide-react";
 const testimonials = [
   {
     name: "Adebayo M.",
-    role: "Affiliate since 2024",
+    role: "Affiliate since 2026",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face&q=90",
     content:
@@ -16,7 +16,7 @@ const testimonials = [
   },
   {
     name: "Chioma A.",
-    role: "Affiliate since 2024",
+    role: "Affiliate since 2026",
     image:
       "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop&crop=face&q=90",
     content:
@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     name: "Emmanuel O.",
-    role: "Affiliate since 2025",
+    role: "Affiliate since 2026",
     image:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face&q=90",
     content:

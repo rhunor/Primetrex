@@ -107,8 +107,8 @@ export function HeroSection() {
               className="mt-3 space-y-1.5"
             >
               {[
-                "No trading experience required",
-                "₦5,000–₦20,000 per referral per month",
+                
+                "Earn up to ₦25,000 commission per sale ",
                 "Withdraw directly to your bank account",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2.5">

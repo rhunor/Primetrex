@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | Primetrex",
   },
   description:
-    "Earn money by referring others to Primetrex copy trading. Get your unique referral link, share it, and earn commissions every month.",
+    "Earn money by affiliate Primetrex copy trading. Get your unique referral link, share it, and earn commissions every month.",
   keywords: [
     "affiliate marketing",
     "copy trading",

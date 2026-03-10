@@ -89,7 +89,7 @@ function ContactPageContent() {
               Get In <span className="text-secondary">Touch</span>
             </h1>
             <p className="mt-6 text-lg text-white/60 leading-relaxed">
-              Have questions about the affiliate program? Need help getting
+              Have questions about the Affiliate program? Need help getting
               started? We&apos;re here to help.
             </p>
           </motion.div>
@@ -269,7 +269,7 @@ function ContactPageContent() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
+                {/* <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <MessageSquare className="h-5 w-5" />
                   </div>
@@ -287,7 +287,7 @@ function ContactPageContent() {
                       Fastest way to get support
                     </p>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* FAQ teaser */}

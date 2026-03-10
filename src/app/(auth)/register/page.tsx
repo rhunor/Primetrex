@@ -187,7 +187,7 @@ function RegisterForm() {
             <p className="mt-2 text-muted-foreground">
               Join Primetrex and start earning{" "}
               <span className="font-semibold text-primary">
-                50% commissions
+                40% commissions
               </span>{" "}
               on every referral.
             </p>
@@ -416,7 +416,7 @@ function RegisterForm() {
               {[
                 "Personal affiliate dashboard",
                 "Unique referral link",
-                "50% commission on all direct referrals",
+                "40% commission on all direct referrals",
                 "10% commission on sub-referrals (Tier 2)",
                 "Real-time earnings tracking",
                 "Bank withdrawal support",

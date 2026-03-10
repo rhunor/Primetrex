@@ -65,9 +65,9 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Primetrex. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link href={siteConfig.links.telegram} className="text-white/40 hover:text-secondary transition-colors">
+            {/* <Link href={siteConfig.links.telegram} className="text-white/40 hover:text-secondary transition-colors">
               Telegram
-            </Link>
+            </Link> */}
             <Link href={siteConfig.links.twitter} className="text-white/40 hover:text-secondary transition-colors">
               X
             </Link>

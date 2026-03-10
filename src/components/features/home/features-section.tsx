@@ -42,7 +42,7 @@ const features = [
     icon: Repeat,
     title: "Recurring Income",
     description:
-      "Earn commission every single month your referrals stay subscribed. True passive income.",
+      "Earn commission on every single sale your referrals make. True passive income.",
   },
   {
     icon: Bell,
@@ -56,12 +56,7 @@ const features = [
     description:
       "Bank-level security with encrypted data, secure sessions, and protected transactions.",
   },
-  {
-    icon: MessageCircle,
-    title: "24/7 AI Support",
-    description:
-      "Our AI chatbot answers your questions instantly, any time of day. Human support also available.",
-  },
+  
 ];
 
 const containerVariants = {
@@ -103,7 +98,7 @@ export function FeaturesSection() {
             <span className="gradient-text">Earn More</span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Our platform is packed with tools to help you maximize your referral
+            Our platform is packed with tools to help you maximize your Affiliate
             earnings and grow your network.
           </p>
         </motion.div>

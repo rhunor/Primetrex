@@ -36,21 +36,21 @@ const steps = [
     icon: Share2,
     title: "Share Your Referral Link",
     description:
-      "Copy your unique affiliate link from the dashboard and share it anywhere — WhatsApp, Twitter, Instagram, Telegram, or in person. Every click is tracked to your account.",
+      "Copy your unique affiliate link from the dashboard and share it anywhere — WhatsApp, Twitter, Instagram, Telegram, or in person. Every sale is tracked to your account.",
     details: [
       "One-click copy from dashboard",
       "Works on any platform",
-      "Track every click in real-time",
+      "Track every sale in real-time",
     ],
   },
   {
     step: "03",
     icon: CreditCard,
     title: "Your Referrals Subscribe",
-    description: `When someone clicks your link and subscribes to Primetrex copy trading (${formatCurrency(siteConfig.subscription.price)}/month), the system automatically credits 50% to your account.`,
+    description: `When someone clicks your link and subscribes to Primetrex copy trading (${formatCurrency(siteConfig.subscription.price)}/month), the system automatically credits 40% to your account.`,
     details: [
       "Automatic commission tracking",
-      "50% credited instantly",
+      "40% credited instantly",
       "Email notification on every sale",
     ],
   },
@@ -59,7 +59,7 @@ const steps = [
     icon: TrendingUp,
     title: "Earn Every Single Month",
     description:
-      "As long as your referrals stay subscribed, you earn 50% on every renewal. Plus, earn 10% from people your referrals bring in (Tier 2). True passive income.",
+      "As long as your referrals stay subscribed, you earn 40% on every renewal. Plus, earn 10% from people your referrals bring in (Tier 2). True passive income.",
     details: [
       "Recurring monthly commissions",
       "10% Tier 2 from sub-referrals",
@@ -72,8 +72,8 @@ const earningExamples = [
   {
     scenario: "You refer Mary",
     payment: formatCurrency(50_000) + "/month",
-    yourEarning: formatCurrency(25_000) + "/month",
-    tier: "Tier 1 — 50% direct commission",
+    yourEarning: formatCurrency(20_000) + "/month",
+    tier: "Tier 1 — 40% direct commission",
     icon: Users,
   },
   {
@@ -86,8 +86,8 @@ const earningExamples = [
   {
     scenario: "You refer 10 people",
     payment: formatCurrency(50_000) + " × 10",
-    yourEarning: formatCurrency(250_000) + "/month",
-    tier: "Tier 1 — 50% on all 10 referrals",
+    yourEarning: formatCurrency(200_000) + "/month",
+    tier: "Tier 1 — 40% on all 10 referrals",
     icon: TrendingUp,
   },
 ];
@@ -119,7 +119,7 @@ export default function HowItWorksPage() {
             </h1>
             <p className="mt-6 text-lg text-white/60 leading-relaxed">
               Pay a one-time {formatCurrency(siteConfig.signupFee)} signup fee,
-              share your link, and earn 50% recurring commissions.
+              share your link, and earn 40% recurring commissions.
             </p>
           </motion.div>
         </div>
@@ -193,7 +193,7 @@ export default function HowItWorksPage() {
               <span className="gradient-text">Generous</span>
             </h2>
             <p className="mt-4 text-muted-foreground text-lg">
-              No confusing tiers. A flat 50% on direct referrals and 10% on
+              No confusing tiers. A flat 40% on direct referrals and 10% on
               sub-referrals. Every affiliate earns the same rate.
             </p>
           </motion.div>
@@ -214,12 +214,12 @@ export default function HowItWorksPage() {
                 Tier 1 — Direct Referrals
               </p>
               <p className="text-4xl sm:text-5xl lg:text-6xl font-bold font-heading gradient-text mt-3">
-                50%
+                40%
               </p>
               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-                You earn 50% of every {formatCurrency(siteConfig.subscription.price)} monthly payment
+                You earn 40% of every {formatCurrency(siteConfig.subscription.price)} monthly payment
                 from people you directly refer. That&apos;s{" "}
-                <strong className="text-foreground">{formatCurrency(25_000)}/month per referral</strong>.
+                <strong className="text-foreground">{formatCurrency(20_000)}/month per referral</strong>.
               </p>
             </motion.div>
 
@@ -328,7 +328,7 @@ export default function HowItWorksPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Users, label: "2-tier commission tracking (50% + 10%)" },
+              { icon: Users, label: "2-tier commission tracking (40% + 10%)" },
               { icon: TrendingUp, label: "Real-time analytics dashboard" },
               { icon: Wallet, label: "Bank withdrawal system (min ₦10,000)" },
               { icon: MessageSquare, label: "Telegram bot for renewals" },
@@ -370,7 +370,7 @@ export default function HowItWorksPage() {
             </h2>
             <p className="mt-6 text-lg text-white/60">
               Pay {formatCurrency(siteConfig.signupFee)} once, get your link,
-              and earn 50% commissions every month.
+              and earn 40% commissions every month.
             </p>
             <div className="mt-10">
               <Link href="/register">

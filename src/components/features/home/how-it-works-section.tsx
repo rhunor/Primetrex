@@ -58,7 +58,7 @@ export function HowItWorksSection() {
             <span className="gradient-text">4 Simple Steps</span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            No trading knowledge required — just share your link and earn every month.
+            Four simple process to become an affiliate and earn passive income monthly from Primetrex affiliate system.
           </p>
         </motion.div>
 

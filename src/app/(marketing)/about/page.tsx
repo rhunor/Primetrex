@@ -61,16 +61,18 @@ export default function AboutPage() {
             className="max-w-2xl"
           >
             <span className="text-sm font-semibold uppercase tracking-wider text-secondary">
-              About Primetrex
+              About The Primetrex Affilate System
             </span>
             <h1 className="mt-4 text-4xl font-bold font-heading text-white md:text-5xl lg:text-6xl">
               Helping People Build a Business in{" "}
               <span className="text-secondary">Finance</span>
             </h1>
             <p className="mt-6 text-lg text-white/60 leading-relaxed">
-              Primetrex is here to help traders learn, grow, and trade with
-              confidence. Our platform gives you simple tools, expert advice, and
-              easy-to-follow signals to guide your trading decisions.
+Primetrex is designed for people who want to benefit from the financial markets without needing to become traders themselves.
+
+Our platform provides a structured way for individuals to participate in market opportunities while focusing on managing their capital responsibly and growing it over time.
+
+With Primetrex, you can approach the financial markets with a business mindset — without needing years of technical trading experience.
             </p>
           </motion.div>
         </div>
@@ -94,10 +96,7 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-                To help people build a business in finance without becoming a
-                trader. We do 80% of the work for them and the remaining 20% is
-                done with them, starting with Forex but expanding to stocks and
-                crypto.
+              To make participation in the financial markets accessible by enabling individuals benefit from structured financial systems without needing to become traders themselves.
               </p>
             </motion.div>
 
@@ -115,11 +114,7 @@ export default function AboutPage() {
                 Our Vision
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-                We envision a future where individuals can participate in the
-                financial sector as owners rather than operators, building
-                enduring, income-generating financial businesses that function
-                independently of their constant time, attention, or technical
-                expertise.
+                To build a global platform where anyone can participate in the financial markets and grow financially without needing technical trading expertise.
               </p>
             </motion.div>
           </div>
@@ -227,7 +222,7 @@ export default function AboutPage() {
               <span className="text-secondary">Primetrex Family?</span>
             </h2>
             <p className="mt-6 text-lg text-white/60">
-              Start building your financial business today with our affiliate
+              Start building your affiliate business today with our affiliate
               program.
             </p>
             <div className="mt-10">

@@ -40,7 +40,7 @@ const features = [
     icon: Headphones,
     title: "Dedicated Support",
     description:
-      "Real humans available via Telegram and in-app chat. We don't disappear after you sign up.",
+      "Need help? Our support team is available via email and ready to assist you anytime.",
     tag: "We've got your back",
     iconColor: "bg-primary/10 text-primary",
   },
