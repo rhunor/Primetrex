@@ -16,7 +16,7 @@ import {
 const features = [
   {
     icon: Link2,
-    title: "Unique Referral Link",
+    title: "Unique affiliate Link",
     description:
       "Sign up and instantly get your personal affiliate link. Share it anywhere and start earning.",
   },
