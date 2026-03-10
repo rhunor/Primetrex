@@ -69,8 +69,8 @@ export function HeroSection() {
       </div>
 
       {/* Main content */}
-      <div className="relative mx-auto max-w-7xl px-6 py-20 md:py-28 lg:py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative mx-auto max-w-7xl px-6 py-8 md:py-14 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
           {/* Left: Copy */}
           <div className="max-w-xl">
@@ -79,7 +79,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65 }}
-              className="mt-6 text-5xl font-bold leading-[1.08] tracking-tight text-white font-heading sm:text-6xl md:text-7xl"
+              className="text-[2rem] font-bold leading-tight tracking-tight text-white font-heading sm:text-4xl lg:text-5xl"
             >
               1,200+ Nigerians Are Already Earning.{" "}
               <span className="text-secondary">Why Aren&apos;t You?</span>
@@ -90,7 +90,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 text-lg text-white/55 leading-relaxed"
+              className="mt-3 text-sm text-white/55 leading-relaxed md:text-base"
             >
               Join Primetrex Affiliates and earn{" "}
               <span className="text-white/80 font-medium">40% commission</span>{" "}
@@ -104,7 +104,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-6 space-y-2.5"
+              className="mt-3 space-y-1.5"
             >
               {[
                 "No trading experience required",
@@ -123,7 +123,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.38 }}
-              className="mt-10 flex flex-col sm:flex-row gap-3"
+              className="mt-5 flex flex-col sm:flex-row gap-3"
             >
               <Link href="/register" className="w-full sm:w-auto">
                 <Button size="lg" variant="secondary" className="w-full">
@@ -146,7 +146,7 @@ export function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.75 }}
-              className="mt-5 text-xs text-white/25"
+              className="mt-3 text-xs text-white/25"
             >
               Powered by Flutterwave · Payments 100% secured
             </motion.p>
@@ -157,7 +157,7 @@ export function HeroSection() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.85, delay: 0.25 }}
-            className="relative"
+            className="relative hidden lg:block"
           >
             {/* Glow */}
             <div className="absolute -inset-6 bg-primary/10 rounded-3xl blur-3xl pointer-events-none" />
