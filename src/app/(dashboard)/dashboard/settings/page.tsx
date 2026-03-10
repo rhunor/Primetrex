@@ -48,6 +48,7 @@ export default function SettingsPage() {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [banksLoading, setBanksLoading] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState("");
   const [bankSearch, setBankSearch] = useState("");
 
   // Telegram state
@@ -94,6 +95,7 @@ export default function SettingsPage() {
     async (accountNumber: string, bankCode: string) => {
       if (accountNumber.length !== 10 || !bankCode) return;
       setResolving(true);
+      setResolveError("");
       try {
         const res = await fetch(
           `/api/banks?account_number=${accountNumber}&bank_code=${bankCode}`
@@ -104,9 +106,11 @@ export default function SettingsPage() {
             ...prev,
             accountName: data.accountName,
           }));
+        } else {
+          setResolveError("Could not verify account. Please enter name manually.");
         }
       } catch {
-        // Silent fail
+        setResolveError("Could not verify account. Please enter name manually.");
       } finally {
         setResolving(false);
       }
@@ -409,6 +413,7 @@ export default function SettingsPage() {
                     type="text"
                     placeholder="Search banks..."
                     value={bankSearch}
+                    autoComplete="off"
                     onChange={(e) => setBankSearch(e.target.value)}
                     className="w-full rounded-xl border border-border bg-muted pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
@@ -427,6 +432,7 @@ export default function SettingsPage() {
                             accountName: "",
                           });
                           setBankSearch("");
+                          setResolveError("");
                         }}
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-muted ${
                           bankDetails.bankCode === bank.code
@@ -457,12 +463,16 @@ export default function SettingsPage() {
             placeholder="10-digit account number"
             maxLength={10}
             value={bankDetails.accountNumber}
-            onChange={(e) =>
+            autoComplete="off"
+            inputMode="numeric"
+            onChange={(e) => {
               setBankDetails({
                 ...bankDetails,
                 accountNumber: e.target.value.replace(/\D/g, ""),
-              })
-            }
+                accountName: "",
+              });
+              setResolveError("");
+            }}
             required
           />
           <div>
@@ -470,6 +480,7 @@ export default function SettingsPage() {
               label="Account Name"
               placeholder={resolving ? "Resolving..." : "Name on account"}
               value={bankDetails.accountName}
+              autoComplete="off"
               onChange={(e) =>
                 setBankDetails({
                   ...bankDetails,
@@ -484,6 +495,9 @@ export default function SettingsPage() {
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Verifying account...
               </p>
+            )}
+            {resolveError && !resolving && (
+              <p className="text-xs text-warning mt-1">{resolveError}</p>
             )}
           </div>
           <Button type="submit" isLoading={saving}>

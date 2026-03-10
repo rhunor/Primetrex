@@ -8,8 +8,9 @@ const testimonials = [
   {
     name: "Adebayo M.",
     role: "Affiliate since 2026",
+    // A smiling Black man in a white shirt and tie
     image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face&q=90",
+      "https://images.unsplash.com/photo-1770191954675-06f770e6cbd0?w=200&h=200&fit=crop&crop=face&q=90",
     content:
       "I was skeptical at first, but within my first month I earned over ₦200,000 just from referrals. The commission structure is genuinely the best I've seen.",
     rating: 5,
@@ -17,8 +18,9 @@ const testimonials = [
   {
     name: "Chioma A.",
     role: "Affiliate since 2026",
+    // Black woman smiling
     image:
-      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop&crop=face&q=90",
+      "https://images.unsplash.com/photo-1694299352873-0c29d862e87a?w=200&h=200&fit=crop&crop=face&q=90",
     content:
       "The 2-tier system is a game changer. I earn from my referrals AND their referrals. It's truly passive income. Primetrex has changed my financial life.",
     rating: 5,
@@ -26,8 +28,9 @@ const testimonials = [
   {
     name: "Emmanuel O.",
     role: "Affiliate since 2026",
+    // African man smiling (tagged Africa)
     image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face&q=90",
+      "https://images.unsplash.com/photo-1695640479993-73a1f7a1b909?w=200&h=200&fit=crop&crop=face&q=90",
     content:
       "Withdrawals are fast and smooth. I requested ₦150,000 and it hit my bank account the same day. This is legit.",
     rating: 5,

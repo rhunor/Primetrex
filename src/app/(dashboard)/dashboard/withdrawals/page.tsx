@@ -84,6 +84,7 @@ export default function WithdrawalsPage() {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [banksLoading, setBanksLoading] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState("");
   const [bankSearch, setBankSearch] = useState("");
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export default function WithdrawalsPage() {
     async (accountNumber: string, bankCode: string) => {
       if (accountNumber.length !== 10 || !bankCode) return;
       setResolving(true);
+      setResolveError("");
       try {
         const res = await fetch(
           `/api/banks?account_number=${accountNumber}&bank_code=${bankCode}`
@@ -138,9 +140,11 @@ export default function WithdrawalsPage() {
             ...prev,
             accountName: data.accountName,
           }));
+        } else {
+          setResolveError("Could not verify account. Please enter name manually.");
         }
       } catch {
-        // Silent fail — user can still enter name manually
+        setResolveError("Could not verify account. Please enter name manually.");
       } finally {
         setResolving(false);
       }
@@ -373,6 +377,7 @@ export default function WithdrawalsPage() {
                       type="text"
                       placeholder="Search banks..."
                       value={bankSearch}
+                      autoComplete="off"
                       onChange={(e) => setBankSearch(e.target.value)}
                       className="w-full rounded-xl border border-border bg-muted pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
@@ -391,6 +396,7 @@ export default function WithdrawalsPage() {
                               accountName: "",
                             });
                             setBankSearch("");
+                            setResolveError("");
                           }}
                           className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-muted ${
                             formData.bankCode === bank.code
@@ -423,12 +429,16 @@ export default function WithdrawalsPage() {
                 required
                 maxLength={10}
                 value={formData.accountNumber}
-                onChange={(e) =>
+                autoComplete="off"
+                inputMode="numeric"
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     accountNumber: e.target.value.replace(/\D/g, ""),
-                  })
-                }
+                    accountName: "",
+                  });
+                  setResolveError("");
+                }}
               />
               <div>
                 <Input
@@ -437,6 +447,7 @@ export default function WithdrawalsPage() {
                     resolving ? "Resolving..." : "Account holder name"
                   }
                   required
+                  autoComplete="off"
                   value={formData.accountName}
                   onChange={(e) =>
                     setFormData({
@@ -451,6 +462,9 @@ export default function WithdrawalsPage() {
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Verifying account...
                   </p>
+                )}
+                {resolveError && !resolving && (
+                  <p className="text-xs text-warning mt-1">{resolveError}</p>
                 )}
               </div>
             </div>

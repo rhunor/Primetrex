@@ -20,19 +20,19 @@ const values = [
     icon: Clock,
     title: "Sustainability Over Speed",
     description:
-      "We prioritise long-term viability above rapid gains. Growth that cannot survive market cycles is rejected, no matter how attractive it looks in the short term.",
+      "We prioritize building long-term recurring income over one-time payouts. Real wealth comes from systems that pay you month after month, not quick cash that disappears. We help you build an income stream that lasts.",
   },
   {
     icon: Layers,
     title: "Structure Before Ambition",
     description:
-      "We believe wealth is built through systems, governance, and repeatable processes. Personal heroics and unchecked risk have no place in a serious financial business.",
+      "We believe wealth is built through proven systems, not chaos. Our 2-tier commission structure, reliable tracking, and automated payments give you a solid foundation. Your ambition provides the drive, our structure provides the results.",
   },
   {
     icon: Shield,
     title: "Patience as a Competitive Advantage",
     description:
-      "We value consistency, restraint, and time in the market. Wealth is treated as a process, not an event.",
+      "We value patience, consistency, and playing the long game. While others chase trends, we focus on what works: reoccurring commissions, quality product, and sustainable growth for our affiliates.",
   },
 ];
 
@@ -61,18 +61,20 @@ export default function AboutPage() {
             className="max-w-2xl"
           >
             <span className="text-sm font-semibold uppercase tracking-wider text-secondary">
-              About The Primetrex Affilate System
+              About Primetrex Affiliates
             </span>
             <h1 className="mt-4 text-4xl font-bold font-heading text-white md:text-5xl lg:text-6xl">
-              Helping People Build a Business in{" "}
-              <span className="text-secondary">Finance</span>
+              Helping People Earn by Sharing{" "}
+              <span className="text-secondary">Financial Opportunities</span>
             </h1>
             <p className="mt-6 text-lg text-white/60 leading-relaxed">
-Primetrex is designed for people who want to benefit from the financial markets without needing to become traders themselves.
 
-Our platform provides a structured way for individuals to participate in market opportunities while focusing on managing their capital responsibly and growing it over time.
 
-With Primetrex, you can approach the financial markets with a business mindset â€” without needing years of technical trading experience.
+The Primetrex Affiliate Program allows individuals earn by introducing others to Primetrex. Instead of trading or managing financial markets themselves, affiliates simply share the platform with people who want to participate in financial opportunities.
+
+Our system is designed to reward partners who help grow the Primetrex community, providing a structured way to earn commissions whenever someone joins through their referral.
+
+With Primetrex Affiliates, you can build an additional income stream by connecting others to a platform designed to simplify participation in the financial markets.
             </p>
           </motion.div>
         </div>
@@ -96,7 +98,9 @@ With Primetrex, you can approach the financial markets with a business mindset â
                 Our Mission
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-              To make participation in the financial markets accessible by enabling individuals benefit from structured financial systems without needing to become traders themselves.
+            
+
+To create opportunities for individuals to earn by connecting people to structured financial systems that make participation in the financial markets more accessible.
               </p>
             </motion.div>
 
@@ -114,7 +118,9 @@ With Primetrex, you can approach the financial markets with a business mindset â
                 Our Vision
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-                To build a global platform where anyone can participate in the financial markets and grow financially without needing technical trading expertise.
+            
+
+To build a global network of affiliates who grow together by sharing financial opportunities and helping more people access the financial markets through Primetrex.
               </p>
             </motion.div>
           </div>
