@@ -6,11 +6,10 @@
  * 1. Auth: Bearer CRON_SECRET — rejects any request without it.
  * 2. Re-validates each user's available balance before processing
  *    (balance can change between Friday request and Saturday processing).
- * 3. Atomically sets status → "processing" before calling Flutterwave,
+ * 3. Atomically sets status → "processing" before calling Korapay,
  *    so a double-trigger (e.g. cron retried) skips already-in-flight items.
- * 4. Flutterwave reference = WTH-{withdrawalId} — idempotent: Flutterwave
+ * 4. Korapay reference = WTH-{withdrawalId} — idempotent: Korapay
  *    rejects duplicate references, preventing double payouts.
- * 5. FIXIE_URL proxy ensures the call comes from a static, whitelisted IP.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,7 +17,7 @@ import dbConnect from "@/lib/db";
 import Withdrawal from "@/models/Withdrawal";
 import Transaction from "@/models/Transaction";
 import User from "@/models/User";
-import { initiateTransfer } from "@/lib/flutterwave-web";
+import { initiatePayout, generatePayoutRef } from "@/lib/korapay";
 import { notifyWithdrawalUpdate } from "@/lib/notifications";
 import { sendMessage } from "@/lib/telegram";
 
@@ -93,18 +92,18 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    // ── Initiate Flutterwave transfer ─────────────────────────────────────────
+    // ── Initiate Korapay payout ────────────────────────────────────────────────
     // Reference uses withdrawal ID only (no timestamp) for idempotency.
-    // Flutterwave rejects if this reference was already used → safe against double-payout.
-    const transferRef = `WTH-${wId}`;
+    // Korapay rejects if this reference was already used → safe against double-payout.
+    const transferRef = generatePayoutRef(wId);
 
     try {
-      const transferResult = await initiateTransfer({
+      const payoutResult = await initiatePayout({
+        reference: transferRef,
         accountBank: w.bankCode,
         accountNumber: w.accountNumber,
         amount: w.amount,
         narration: "Primetrex affiliate withdrawal",
-        reference: transferRef,
         beneficiaryName: w.accountName,
       });
 
@@ -113,7 +112,7 @@ export async function GET(req: NextRequest) {
         {
           $set: {
             transferReference: transferRef,
-            transferCode: transferResult.data?.id?.toString() ?? null,
+            transferCode: payoutResult.data?.reference ?? null,
             // status stays "processing" — webhook sets it to "completed" / "failed"
           },
         }

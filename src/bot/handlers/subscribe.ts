@@ -15,7 +15,7 @@ import SpecialConfig from "@/models/SpecialConfig";
 import {
   generatePaymentLink,
   generateTxRef,
-} from "@/bot/services/flutterwave";
+} from "@/bot/services/korapay";
 import { botConfig } from "@/bot/config";
 
 function formatNaira(amount: number): string {
@@ -174,21 +174,21 @@ export async function createBotPaymentAndShowLink(ctx: BotContext) {
       `${EMOJI.SUBSCRIBE} <b>Payment Ready</b>\n` +
       `Plan: ${plan.channelName}\n` +
       `Amount: <b>${formatNaira(price)}</b>\n\n` +
-      `Click below to pay with Flutterwave.`;
+      `Click below to complete your payment.`;
 
     await ctx.reply(text, {
       parse_mode: "HTML",
       reply_markup: paymentReadyKeyboard(paymentUrl, formatNaira(price)),
     });
   } catch (error) {
-    console.error("Flutterwave payment link error:", error);
+    console.error("Korapay payment link error:", error);
     await ctx.reply(
       `${EMOJI.CANCEL} Failed to generate payment link. Please try again later.`
     );
   }
 }
 
-async function handlePayFlutterwave(ctx: BotContext) {
+async function handlePayKorapay(ctx: BotContext) {
   await dbConnect();
   const userId = ctx.from!.id.toString();
 
@@ -243,10 +243,10 @@ export function registerSubscribeHandlers(bot: Bot<BotContext>) {
     await showSubscriptionSummary(ctx, true);
   });
 
-  // Pay with Flutterwave callback
-  bot.callbackQuery(CALLBACK.PAY_FLUTTERWAVE, async (ctx) => {
+  // Pay with Korapay callback
+  bot.callbackQuery(CALLBACK.PAY_KORAPAY, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await handlePayFlutterwave(ctx);
+    await handlePayKorapay(ctx);
   });
 
   // Cancel payment callback

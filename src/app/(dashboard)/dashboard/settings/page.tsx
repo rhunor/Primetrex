@@ -16,6 +16,7 @@ import {
   Copy,
   LinkIcon,
   Unlink,
+  Camera,
 } from "lucide-react";
 
 interface Bank {
@@ -51,6 +52,11 @@ export default function SettingsPage() {
   const [resolveError, setResolveError] = useState("");
   const [bankSearch, setBankSearch] = useState("");
 
+  // Profile picture state
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+
   // Telegram state
   const [telegramLinked, setTelegramLinked] = useState(false);
   const [referralCode, setReferralCode] = useState("");
@@ -58,9 +64,11 @@ export default function SettingsPage() {
   const [unlinking, setUnlinking] = useState(false);
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    Promise.all([
+      fetch("/api/dashboard").then((res) => (res.ok ? res.json() : null)),
+      fetch("/api/dashboard/profile").then((res) => (res.ok ? res.json() : null)),
+    ])
+      .then(([data, profile]) => {
         if (data?.user) {
           setReferralCode(data.user.referralCode || "");
           setTelegramLinked(data.user.telegramLinked || false);
@@ -72,6 +80,9 @@ export default function SettingsPage() {
               accountName: data.user.bankDetails.accountName || "",
             });
           }
+        }
+        if (profile?.profileImage) {
+          setProfileImage(profile.profileImage);
         }
       })
       .catch(() => {})
@@ -107,10 +118,12 @@ export default function SettingsPage() {
             accountName: data.accountName,
           }));
         } else {
-          setResolveError("Could not verify account. Please enter name manually.");
+          // Show the actual API error so we can tell if it's "account not found" vs a config issue
+          const msg = data.error || "Could not verify account.";
+          setResolveError(`${msg} You can type the name manually.`);
         }
       } catch {
-        setResolveError("Could not verify account. Please enter name manually.");
+        setResolveError("Could not verify account. You can type the name manually.");
       } finally {
         setResolving(false);
       }
@@ -129,6 +142,68 @@ export default function SettingsPage() {
         b.name.toLowerCase().includes(bankSearch.toLowerCase())
       )
     : banks;
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image must be under 5MB.");
+      return;
+    }
+
+    setPhotoError("");
+    setUploadingPhoto(true);
+
+    try {
+      // Resize client-side using Canvas before uploading (target: 200x200 max)
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new window.Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const MAX = 200;
+          const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { reject(new Error("Canvas not supported")); return; }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+
+      const res = await fetch("/api/dashboard/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileImage: dataUrl }),
+      });
+
+      if (res.ok) {
+        setProfileImage(dataUrl);
+        // Notify topbar to update immediately
+        window.dispatchEvent(new CustomEvent("profile-image-updated", { detail: dataUrl }));
+        setSuccess("Profile picture updated!");
+      } else {
+        const data = await res.json();
+        setPhotoError(data.error || "Upload failed.");
+      }
+    } catch {
+      setPhotoError("Upload failed. Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = "";
+    }
+  }
 
   async function handleSaveBankDetails(e: React.FormEvent) {
     e.preventDefault();
@@ -272,13 +347,53 @@ export default function SettingsPage() {
             Profile
           </h3>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-muted-foreground">Name</span>
-            <span className="text-sm font-medium text-foreground">
-              {session?.user?.name || "—"}
-            </span>
+        {/* Profile picture */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative shrink-0">
+            {profileImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="h-16 w-16 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full gradient-primary text-white text-xl font-semibold">
+                {(session?.user?.name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+              </div>
+            )}
+            <label
+              htmlFor="photo-upload"
+              className="absolute -bottom-1 -right-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-primary text-white shadow hover:bg-primary-dark transition-colors"
+              title="Upload photo"
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Camera className="h-3 w-3" />
+              )}
+              <input
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handlePhotoUpload}
+                disabled={uploadingPhoto}
+              />
+            </label>
           </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">{session?.user?.name || "—"}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Click the camera icon to upload a photo
+            </p>
+            {photoError && (
+              <p className="text-xs text-danger mt-1">{photoError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
           <div className="flex items-center justify-between py-2 border-t border-border">
             <span className="text-sm text-muted-foreground">Email</span>
             <span className="text-sm font-medium text-foreground">

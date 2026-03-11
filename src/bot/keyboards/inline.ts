@@ -64,7 +64,7 @@ export function backButton(callbackData: string = CALLBACK.ADMIN_PANEL): InlineK
 
 export function subscriptionSummaryKeyboard(): InlineKeyboard {
   return new InlineKeyboard()
-    .text("Pay with FlutterWave", CALLBACK.PAY_FLUTTERWAVE)
+    .text("Pay with Korapay", CALLBACK.PAY_KORAPAY)
     .row()
     .text(`${EMOJI.CANCEL} Cancel`, CALLBACK.PAY_CANCEL);
 }

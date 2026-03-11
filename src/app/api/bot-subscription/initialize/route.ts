@@ -5,7 +5,7 @@ import User from "@/models/User";
 import Plan from "@/models/Plan";
 import BotSubscriber from "@/models/BotSubscriber";
 import BotPayment from "@/models/BotPayment";
-import { initializePayment, generateBotTxRef } from "@/lib/flutterwave-web";
+import { initializeCharge, generateBotTxRef } from "@/lib/korapay";
 
 export async function POST() {
   const session = await auth();
@@ -51,6 +51,8 @@ export async function POST() {
 
     const txRef = generateBotTxRef(isRenewal ? "renewal" : "new");
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Korapay appends ?reference=txRef — we pass it as the redirect URL base
+    // so the subscription page reads ?reference= after redirect
     const redirectUrl = `${appUrl}/dashboard/subscription?bot_paid=success&tx_ref=${txRef}`;
 
     // Create BotPayment record in pending state before redirecting
@@ -66,18 +68,18 @@ export async function POST() {
     });
 
     const fullName = `${user.firstName} ${user.lastName}`.trim();
-    const description = isRenewal
+    const narration = isRenewal
       ? "Primetrex Copy Trading Renewal"
       : "Primetrex Copy Trading Subscription";
 
-    const paymentUrl = await initializePayment({
-      txRef,
+    const paymentUrl = await initializeCharge({
+      reference: txRef,
       amount,
       email: user.email,
       name: fullName,
-      description,
+      narration,
       redirectUrl,
-      meta: {
+      metadata: {
         type: isRenewal ? "bot-renewal" : "bot-subscription",
         webUserId: user._id.toString(),
         telegramId: user.telegramId,

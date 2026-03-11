@@ -5,7 +5,7 @@ import User from "@/models/User";
 import Plan from "@/models/Plan";
 import BotPayment from "@/models/BotPayment";
 import BotSubscriber from "@/models/BotSubscriber";
-import { initializePayment, generateBotTxRef } from "@/lib/flutterwave-web";
+import { initializeCharge, generateBotTxRef } from "@/lib/korapay";
 
 export async function GET() {
   try {
@@ -80,7 +80,8 @@ export async function POST(req: NextRequest) {
 
     const txRef = generateBotTxRef("new");
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const redirectUrl = `${appUrl}/dashboard/bot-subscribe/success?tx_ref={tx_ref}`;
+    // Korapay appends ?reference=txRef to the redirect URL
+    const redirectUrl = `${appUrl}/dashboard/bot-subscribe/success`;
 
     await BotPayment.create({
       userId: user.telegramId,
@@ -92,12 +93,12 @@ export async function POST(req: NextRequest) {
       webUserId: user._id,
     });
 
-    const paymentUrl = await initializePayment({
-      txRef,
+    const paymentUrl = await initializeCharge({
+      reference: txRef,
       amount: plan.price,
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
-      description: `Primetrex Bot Subscription — ${plan.channelName}`,
+      narration: `Primetrex Bot Subscription — ${plan.channelName}`,
       redirectUrl,
     });
 

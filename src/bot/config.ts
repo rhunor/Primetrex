@@ -3,11 +3,10 @@ export const botConfig = {
   webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET!,
   timezone: "Africa/Lagos",
 
-  // Flutterwave
-  flwSecretKey: process.env.FLW_SECRET_KEY || "",
-  flwPublicKey: process.env.FLW_PUBLIC_KEY || "",
-  flwWebhookSecret: process.env.FLW_WEBHOOK_SECRET || "",
-  flwRedirectUrl: process.env.FLW_REDIRECT_URL || "",
+  // Korapay
+  koraSecretKey: process.env.KORA_SECRET_KEY || "",
+  koraPublicKey: process.env.KORA_PUBLIC_KEY || "",
+  koraRedirectUrl: process.env.KORA_REDIRECT_URL || "",
 
   // Admin IDs from env (comma-separated)
   adminIds: (process.env.BOT_ADMIN_IDS || "")

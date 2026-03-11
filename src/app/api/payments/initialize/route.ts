@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  initializePayment,
+  initializeCharge,
   generateWebTxRef,
-} from "@/lib/flutterwave-web";
+} from "@/lib/korapay";
 import { siteConfig } from "@/config/site";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
@@ -70,21 +70,20 @@ export async function POST(req: NextRequest) {
 
     const txRef = generateWebTxRef();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    // No query params in redirect_url — Flutterwave always appends ?status=&tx_ref=&transaction_id=
-    // If we include ?tx_ref= here, Flutterwave appends a second ? making the URL malformed
+    // Korapay appends ?reference=YOUR_REFERENCE to the redirect URL
     const redirectUrl = `${appUrl}/register/verify`;
 
-    // Store txRef on the user before they're redirected to Flutterwave
+    // Store txRef on the user before they're redirected to Korapay
     await User.updateOne({ _id: user._id }, { signupPaymentRef: txRef });
 
-    const paymentUrl = await initializePayment({
-      txRef,
+    const paymentUrl = await initializeCharge({
+      reference: txRef,
       amount: siteConfig.signupFee,
       email: lowerEmail,
       name: name || lowerEmail,
-      description: "Primetrex Affiliate Signup Fee",
+      narration: "Primetrex Affiliate Signup Fee",
       redirectUrl,
-      meta: {
+      metadata: {
         type: "signup",
         referralCode: referralCode || null,
       },

@@ -5,7 +5,7 @@ import BotPayment from "@/models/BotPayment";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { activateSubscription } from "@/bot/services/subscription";
-import { verifyPaymentByRef } from "@/lib/flutterwave-web";
+import { verifyCharge } from "@/lib/korapay";
 import { notifyCommissionEarned } from "@/lib/notifications";
 import { siteConfig } from "@/config/site";
 
@@ -44,17 +44,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, already: true });
     }
 
-    // Verify with Flutterwave directly
-    const flwResult = await verifyPaymentByRef(txRef);
-    if (!flwResult.data || flwResult.data.status !== "successful") {
+    // Verify with Korapay directly
+    const koraResult = await verifyCharge(txRef);
+    if (!koraResult.data || koraResult.data.status !== "success") {
       return NextResponse.json(
-        { error: "Payment not yet confirmed by Flutterwave. Please wait a moment and refresh." },
+        { error: "Payment not yet confirmed by Korapay. Please wait a moment and refresh." },
         { status: 402 }
       );
     }
 
-    // Store flwRef without setting status — activateSubscription sets it atomically
-    await BotPayment.updateOne({ paymentRef: txRef }, { flwRef: flwResult.data.flw_ref });
+    // Store payment reference without setting status — activateSubscription sets it atomically
+    await BotPayment.updateOne(
+      { paymentRef: txRef },
+      { flwRef: koraResult.data.payment_reference ?? txRef }
+    );
 
     // Activate: creates BotSubscriber, sets payment.status="successful", sends invite DM
     await activateSubscription(txRef);

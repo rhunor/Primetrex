@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { StatsCards } from "@/components/features/dashboard/stats-cards";
 import { ReferralLinkCard } from "@/components/features/dashboard/referral-link-card";
-import { EarningsChart } from "@/components/features/dashboard/earnings-chart";
 import { CommissionInfo } from "@/components/features/dashboard/tier-progress";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2, TrendingUp, ExternalLink } from "lucide-react";
@@ -23,7 +22,7 @@ interface DashboardData {
     tier2Earnings: number;
     activeReferrals: number;
   };
-  chartData: { month: string; tier1: number; tier2: number }[];
+  chartData?: { month: string; tier1: number; tier2: number }[];
 }
 
 export default function DashboardPage() {
@@ -130,14 +129,9 @@ export default function DashboardPage() {
         <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
       </motion.a>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <EarningsChart data={data.chartData} />
-        </div>
-        <div className="space-y-6">
-          <ReferralLinkCard referralCode={data.user.referralCode} />
-          <CommissionInfo />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ReferralLinkCard referralCode={data.user.referralCode} />
+        <CommissionInfo />
       </div>
     </div>
   );

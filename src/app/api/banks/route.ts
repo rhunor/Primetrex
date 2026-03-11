@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { listBanks, resolveAccount } from "@/lib/flutterwave-web";
+import { listBanks, resolveAccount } from "@/lib/korapay";
 
 export async function GET(req: NextRequest) {
   try {

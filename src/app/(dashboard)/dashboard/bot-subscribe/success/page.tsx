@@ -8,10 +8,11 @@ import Link from "next/link";
 
 function SuccessContent() {
   const params = useSearchParams();
-  const status = params.get("status");
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "PrimetrexBot";
 
-  const isSuccess = status === "successful" || status === "completed";
+  // Korapay appends ?reference=... on success redirect
+  const reference = params.get("reference");
+  const isSuccess = !!reference;
 
   if (!isSuccess) {
     return (

@@ -8,7 +8,7 @@ import BotSubscriber from "@/models/BotSubscriber";
 import BotPayment from "@/models/BotPayment";
 import Plan from "@/models/Plan";
 import User from "@/models/User";
-import { verifyPayment } from "@/bot/services/flutterwave";
+import { verifyPayment } from "@/bot/services/korapay";
 import { generateInviteLink } from "@/bot/services/invite";
 import { createBotPaymentAndShowLink } from "@/bot/handlers/subscribe";
 
@@ -21,7 +21,7 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
   try {
     const result = await verifyPayment(paymentRef);
 
-    if (result.status !== "success" || result.data?.status !== "successful") {
+    if (!result.status || result.data?.status !== "success") {
       await ctx.reply(
         `${EMOJI.CANCEL} <b>Payment Not Found</b>\n\n` +
           `We couldn't verify a successful payment for that reference.\n` +
@@ -61,7 +61,7 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
     // Mark payment as successful
     await BotPayment.updateOne(
       { paymentRef },
-      { status: "successful", flwRef: result.data.flw_ref }
+      { status: "successful", flwRef: result.data.payment_reference ?? paymentRef }
     );
 
     const now = new Date();
@@ -162,7 +162,7 @@ export function registerPaymentHandlers(bot: Bot<BotContext>) {
       `${EMOJI.SUCCESS} <b>Verify Your Payment</b>\n\n` +
         `Please type or paste your <b>transaction reference</b>\n` +
         `(e.g. <code>PTRX-12345-...</code>)\n\n` +
-        `${EMOJI.TIP} <i>The transaction reference can be found in your Flutterwave payment confirmation.</i>`,
+        `${EMOJI.TIP} <i>The transaction reference can be found in your Korapay payment confirmation.</i>`,
       { parse_mode: "HTML" }
     );
   });

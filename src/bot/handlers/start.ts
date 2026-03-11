@@ -6,7 +6,7 @@ import { mainMenuKeyboard, helpKeyboard } from "@/bot/keyboards/inline";
 import { isAdmin } from "@/bot/middleware/auth";
 import { showSubscriptionSummary } from "@/bot/handlers/subscribe";
 import { activateSubscription } from "@/bot/services/subscription";
-import { verifyPayment } from "@/bot/services/flutterwave";
+import { verifyPayment } from "@/bot/services/korapay";
 import { generateInviteLink } from "@/bot/services/invite";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
@@ -173,10 +173,10 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
           return;
         }
 
-        // Verify with Flutterwave
+        // Verify with Korapay
         const result = await verifyPayment(txRef);
 
-        if (result.status !== "success" || result.data?.status !== "successful") {
+        if (!result.status || result.data?.status !== "success") {
           await ctx.reply(
             `${EMOJI.CANCEL} <b>Payment Not Confirmed Yet</b>\n\n` +
               `Your payment may still be processing. Please wait a minute and ` +
@@ -186,10 +186,10 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
           return;
         }
 
-        // Store the Flutterwave reference
+        // Store the Korapay payment reference
         await BotPayment.updateOne(
           { paymentRef: txRef },
-          { flwRef: result.data.flw_ref }
+          { flwRef: result.data.payment_reference ?? txRef }
         );
 
         // Activate: creates BotSubscriber + sends invite link DM

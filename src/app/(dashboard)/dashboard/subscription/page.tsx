@@ -121,10 +121,24 @@ function SubscriptionContent() {
         </p>
       </div>
 
+      {/* Explanation box */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📊</span>
+          <h2 className="font-semibold text-foreground">What is this subscription?</h2>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          This subscription gives you access to the <span className="font-medium text-foreground">Primetrex Copy Trading Platform</span> — a premium service where professional traders place trades on your behalf automatically.
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          <span className="font-medium text-foreground">This is completely optional.</span> As a Primetrex affiliate, you can earn commissions by referring others without subscribing yourself. If you&apos;re interested in using the copy trading service as a product, you can subscribe here. If you just want to earn as an affiliate, you can skip this page entirely.
+        </p>
+      </div>
+
       {/* Success banner */}
       {showSuccess && (
         <div className="flex items-start gap-3 rounded-xl border border-secondary/30 bg-secondary/10 p-4">
-          <CheckCircle className="h-5 w-5 text-secondary-dark mt-0.5 flex-shrink-0" />
+          <CheckCircle className="h-5 w-5 text-secondary-dark mt-0.5 shrink-0" />
           <div>
             <p className="font-semibold text-secondary-dark">Payment received!</p>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -138,7 +152,7 @@ function SubscriptionContent() {
       {/* Error banner */}
       {error && (
         <div className="flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-4">
-          <AlertCircle className="h-5 w-5 text-danger mt-0.5 flex-shrink-0" />
+          <AlertCircle className="h-5 w-5 text-danger mt-0.5 shrink-0" />
           <p className="text-sm text-danger">{error}</p>
         </div>
       )}
@@ -308,15 +322,15 @@ function SubscriptionContent() {
             </p>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 shrink-0" />
                 Your subscription activates automatically
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 shrink-0" />
                 You&apos;ll receive your channel invite link in the Telegram bot
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-4 w-4 text-secondary-dark mt-0.5 shrink-0" />
                 Your referrer is credited automatically
               </li>
             </ul>

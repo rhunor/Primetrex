@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyPaymentByRef, verifyPaymentById, FlwVerifyResponse } from "@/lib/flutterwave-web";
+import { verifyCharge } from "@/lib/korapay";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Referral from "@/models/Referral";
@@ -14,61 +14,33 @@ import { siteConfig } from "@/config/site";
 
 export async function GET(req: NextRequest) {
   try {
-    const txRef = req.nextUrl.searchParams.get("tx_ref");
-    const transactionId = req.nextUrl.searchParams.get("transaction_id");
+    // Korapay appends ?reference=YOUR_REFERENCE to the redirect URL
+    const reference = req.nextUrl.searchParams.get("reference");
 
-    if (!txRef && !transactionId) {
+    if (!reference) {
       return NextResponse.json(
         { error: "Payment reference is required" },
         { status: 400 }
       );
     }
 
-    // Verify with Flutterwave — try transaction_id first (most reliable), then tx_ref
-    let verification: FlwVerifyResponse | null = null;
-    let verifyError: string | null = null;
-
-    if (transactionId) {
-      try {
-        verification = await verifyPaymentById(transactionId);
-      } catch (err) {
-        verifyError = err instanceof Error ? err.message : String(err);
-        console.error("[verify] verifyPaymentById failed:", verifyError);
-      }
-    }
-
-    // Fall back to tx_ref if ID verification failed or wasn't attempted
-    if (
-      txRef &&
-      (!verification || verification.status !== "success" || verification.data?.status !== "successful")
-    ) {
-      try {
-        verification = await verifyPaymentByRef(txRef);
-        verifyError = null; // clear previous error if this succeeds
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("[verify] verifyPaymentByRef failed:", msg);
-        if (!verifyError) verifyError = msg;
-      }
-    }
+    const verification = await verifyCharge(reference);
 
     if (
-      !verification ||
-      verification.status !== "success" ||
-      verification.data?.status !== "successful"
+      !verification.status ||
+      !verification.data ||
+      verification.data.status !== "success"
     ) {
-      console.error("[verify] Final verification status:", {
-        txRef,
-        transactionId,
-        verifyStatus: verification?.status,
-        dataStatus: verification?.data?.status,
-        verifyError,
+      console.error("[verify] Korapay verification failed:", {
+        reference,
+        status: verification.data?.status,
+        message: verification.message,
       });
       return NextResponse.json(
         {
           error: "Payment verification failed",
           verified: false,
-          status: verification?.data?.status,
+          status: verification.data?.status,
         },
         { status: 400 }
       );
@@ -77,17 +49,16 @@ export async function GET(req: NextRequest) {
     const { customer, amount } = verification.data;
     await dbConnect();
 
-    // Look up user by txRef stored during payment initialization — more reliable than
-    // customer.email because Flutterwave checkout allows customers to change their email.
-    let user = txRef ? await User.findOne({ signupPaymentRef: txRef }) : null;
+    // Look up user by stored signupPaymentRef first (more reliable than email)
+    let user = await User.findOne({ signupPaymentRef: reference });
 
-    // Fallback to customer.email for any records that predate the txRef approach
+    // Fallback to customer email
     if (!user && customer.email) {
       user = await User.findOne({ email: customer.email.toLowerCase() });
     }
 
     if (!user) {
-      console.error("[verify] User not found. txRef:", txRef, "customer.email:", customer.email);
+      console.error("[verify] User not found. reference:", reference, "email:", customer.email);
       return NextResponse.json(
         { error: "User not found for this payment", verified: false },
         { status: 404 }
@@ -97,34 +68,33 @@ export async function GET(req: NextRequest) {
     if (!user.hasPaidSignup) {
       user.hasPaidSignup = true;
       user.isActive = true;
-      user.signupPaymentRef = txRef || transactionId;
+      user.signupPaymentRef = reference;
       await user.save();
 
-      // Record signup transaction if not already done
-      const ref = txRef || transactionId!;
-      const existingTx = await Transaction.findOne({ paymentReference: ref, type: "subscription" });
+      const existingTx = await Transaction.findOne({
+        paymentReference: reference,
+        type: "subscription",
+      });
       if (!existingTx) {
         await Transaction.create({
           userId: user._id,
           type: "subscription",
           amount,
           status: "completed",
-          paymentReference: ref,
+          paymentReference: reference,
           description: "Affiliate signup fee",
           metadata: { type: "signup" },
         });
       }
 
-      // Activate referral records
       if (user.referredBy) {
         await Referral.updateMany(
           { referredUserId: user._id },
           { status: "active" }
         );
 
-        // Generate commissions (idempotent — skip if already recorded)
         const existingCommission = await Transaction.findOne({
-          paymentReference: ref,
+          paymentReference: reference,
           type: "commission",
         });
 
@@ -137,7 +107,7 @@ export async function GET(req: NextRequest) {
             tier: 1,
             status: "completed",
             sourceUserId: user._id,
-            paymentReference: ref,
+            paymentReference: reference,
             description: `Tier 1 commission from ${user.firstName} ${user.lastName} (signup)`,
           });
 
@@ -148,7 +118,6 @@ export async function GET(req: NextRequest) {
             `${user.firstName} ${user.lastName}`
           ).catch(() => {});
 
-          // Tier 2
           const tier1Referrer = await User.findById(user.referredBy);
           if (tier1Referrer?.referredBy) {
             const tier2Amount = amount * (siteConfig.commission.tier2Rate / 100);
@@ -159,7 +128,7 @@ export async function GET(req: NextRequest) {
               tier: 2,
               status: "completed",
               sourceUserId: user._id,
-              paymentReference: `${ref}-t2`,
+              paymentReference: `${reference}-t2`,
               description: `Tier 2 commission from ${user.firstName} ${user.lastName} (signup)`,
             });
 
@@ -173,7 +142,6 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // Send welcome email and notification
       sendWelcomeEmail(user.email, user.firstName).catch(() => {});
       notifyWelcome(user._id, user.firstName).catch(() => {});
       if (user.referredBy) {

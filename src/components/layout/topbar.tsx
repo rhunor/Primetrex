@@ -76,11 +76,30 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch profile image once on mount
+  useEffect(() => {
+    fetch("/api/dashboard/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data?.profileImage) setProfileImage(data.profileImage); })
+      .catch(() => {});
+  }, []);
+
+  // Expose setter so settings page can update without a page reload
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string | null>).detail;
+      setProfileImage(detail);
+    };
+    window.addEventListener("profile-image-updated", handler);
+    return () => window.removeEventListener("profile-image-updated", handler);
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -330,9 +349,18 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             <p className="text-sm font-medium text-foreground">{name}</p>
             <p className="text-xs text-muted-foreground">Affiliate</p>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-white text-sm font-semibold">
-            {initials}
-          </div>
+          {profileImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profileImage}
+              alt={name}
+              className="h-9 w-9 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-white text-sm font-semibold">
+              {initials}
+            </div>
+          )}
         </div>
       </div>
     </motion.header>

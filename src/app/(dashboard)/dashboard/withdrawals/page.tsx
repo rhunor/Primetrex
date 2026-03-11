@@ -141,10 +141,11 @@ export default function WithdrawalsPage() {
             accountName: data.accountName,
           }));
         } else {
-          setResolveError("Could not verify account. Please enter name manually.");
+          const msg = data.error || "Could not verify account.";
+          setResolveError(`${msg} You can type the name manually.`);
         }
       } catch {
-        setResolveError("Could not verify account. Please enter name manually.");
+        setResolveError("Could not verify account. You can type the name manually.");
       } finally {
         setResolving(false);
       }

@@ -109,7 +109,7 @@ export const CALLBACK = {
   ADMIN_RETENTION: "admin_retention",
 
   // Payment
-  PAY_FLUTTERWAVE: "pay_flutterwave",
+  PAY_KORAPAY: "pay_korapay",
   PAY_CANCEL: "pay_cancel",
 
   // Plan selection (dynamic)

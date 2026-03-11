@@ -1,4 +1,18 @@
+/**
+ * Korapay webhook handler.
+ *
+ * Security:
+ * 1. Signature verified: HMAC-SHA256(JSON.stringify(payload.data), KORA_SECRET_KEY)
+ *    compared against the x-korapay-signature header (timing-safe).
+ * 2. Idempotent: each payment type checks for an existing record before writing.
+ * 3. Event types handled:
+ *    - charge.success  → signup payments, bot subscription payments
+ *    - transfer.success → withdrawal completed
+ *    - transfer.failed  → withdrawal failed
+ */
+
 import { NextRequest, NextResponse } from "next/server";
+import { verifyWebhookSignature } from "@/lib/korapay";
 import dbConnect from "@/lib/db";
 import BotPayment from "@/models/BotPayment";
 import User from "@/models/User";
@@ -22,27 +36,35 @@ import {
 import { siteConfig } from "@/config/site";
 
 export async function POST(req: NextRequest) {
-  // Verify Flutterwave webhook signature
-  const signature = req.headers.get("verif-hash");
-  if (signature !== process.env.FLW_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  // ── Verify signature ──────────────────────────────────────────────────────
+  const signature = req.headers.get("x-korapay-signature");
+  if (!signature) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
   }
 
   const payload = await req.json();
   const { event, data } = payload;
 
+  if (!verifyWebhookSignature(signature, data)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
   await dbConnect();
 
-  // ── Successful charge ────────────────────────────────────────────────────────
-  if (event === "charge.completed" && data?.status === "successful") {
-    const txRef: string = data.tx_ref || "";
+  // ── Successful charge ──────────────────────────────────────────────────────
+  if (event === "charge.success" && data?.status === "success") {
+    const txRef: string = data.reference || "";
 
-    // ── Web signup payment ─────────────────────────────────────────────────────
+    // ── Web signup payment ─────────────────────────────────────────────────
     if (txRef.startsWith("PTXW-SIGNUP-")) {
       const email = data.customer?.email;
       if (!email) return NextResponse.json({ status: "ok" });
 
-      const user = await User.findOne({ email });
+      // Look up by stored signupPaymentRef first (more reliable than email)
+      let user = await User.findOne({ signupPaymentRef: txRef });
+      if (!user && email) {
+        user = await User.findOne({ email: email.toLowerCase() });
+      }
       if (!user || user.hasPaidSignup) {
         return NextResponse.json({ status: "ok" });
       }
@@ -73,7 +95,6 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Send order receipt to buyer
       sendOrderReceiptEmail({
         email: user.email,
         firstName: user.firstName,
@@ -115,7 +136,6 @@ export async function POST(req: NextRequest) {
             `${user.firstName} ${user.lastName}`
           ).catch(() => {});
 
-          // Send commission email to tier 1 affiliate
           const tier1Referrer = await User.findById(user.referredBy);
           if (tier1Referrer) {
             sendAffiliateCommissionEmail({
@@ -150,7 +170,6 @@ export async function POST(req: NextRequest) {
               `${user.firstName} ${user.lastName}`
             ).catch(() => {});
 
-            // Send commission email to tier 2 affiliate
             const tier2Referrer = await User.findById(tier1Referrer.referredBy);
             if (tier2Referrer) {
               sendAffiliateCommissionEmail({
@@ -185,22 +204,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "ok" });
     }
 
-    // ── Web-initiated bot subscription (PTXW-BOT-NEW- or PTXW-BOT-REN-) ───────
+    // ── Web-initiated bot subscription (PTXW-BOT-NEW- or PTXW-BOT-REN-) ───
     if (txRef.startsWith("PTXW-BOT-")) {
       const botPayment = await BotPayment.findOne({ paymentRef: txRef });
 
-      // Idempotency: skip if already processed
       if (!botPayment || botPayment.status === "successful") {
         return NextResponse.json({ status: "ok" });
       }
 
-      // Store flwRef without touching status — activateSubscription handles that atomically
-      await BotPayment.updateOne({ paymentRef: txRef }, { flwRef: data.flw_ref });
+      // Store Korapay payment reference for records
+      await BotPayment.updateOne(
+        { paymentRef: txRef },
+        { flwRef: data.payment_reference ?? txRef }
+      );
 
-      // Activate subscription: sets payment.status="successful", creates BotSubscriber, sends invite DM
       await activateSubscription(txRef);
 
-      // Generate commissions via the web user's referredBy chain
       if (botPayment.webUserId) {
         const paidAmount: number = botPayment.amount;
         const webUser = await User.findById(botPayment.webUserId);
@@ -213,7 +232,8 @@ export async function POST(req: NextRequest) {
           });
 
           if (!existingComm) {
-            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
+            const tier1Amount =
+              paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: webUser.referredBy,
               type: "commission",
@@ -245,7 +265,8 @@ export async function POST(req: NextRequest) {
               }).catch(() => {});
             }
             if (tier1Referrer?.referredBy) {
-              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+              const tier2Amount =
+                paidAmount * (siteConfig.commission.tier2Rate / 100);
               await Transaction.create({
                 userId: tier1Referrer.referredBy,
                 type: "commission",
@@ -284,23 +305,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "ok" });
     }
 
-    // ── Bot subscription payment (PTRX-…) ─────────────────────────────────────
+    // ── Direct bot subscription payment (PTRX-…) ─────────────────────────
     if (txRef.startsWith("PTRX-")) {
       const botPaymentCheck = await BotPayment.findOne({ paymentRef: txRef });
-      // Idempotent: skip if already processed
       if (botPaymentCheck && botPaymentCheck.status === "successful") {
         return NextResponse.json({ status: "ok" });
       }
 
-      // Store flwRef without setting status — activateSubscription handles that atomically
       await BotPayment.updateMany(
         { paymentRef: txRef },
-        { flwRef: data.flw_ref }
+        { flwRef: data.payment_reference ?? txRef }
       );
 
       await activateSubscription(txRef);
 
-      // Commission for bot subscription — link Telegram user to web account
       const botPayment = await BotPayment.findOne({ paymentRef: txRef });
       if (botPayment) {
         const paidAmount: number = botPayment.amount;
@@ -366,10 +384,12 @@ export async function POST(req: NextRequest) {
             }
           }
         } else if (!webUser && botPayment.referralCode && !existingComm) {
-          // Referral code fallback: bot user not linked to a web account but typed a referral code
-          const referrer = await User.findOne({ referralCode: botPayment.referralCode });
+          const referrer = await User.findOne({
+            referralCode: botPayment.referralCode,
+          });
           if (referrer) {
-            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
+            const tier1Amount =
+              paidAmount * (siteConfig.commission.subscriptionRate / 100);
             await Transaction.create({
               userId: referrer._id,
               type: "commission",
@@ -388,7 +408,8 @@ export async function POST(req: NextRequest) {
             ).catch(() => {});
 
             if (referrer.referredBy) {
-              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
+              const tier2Amount =
+                paidAmount * (siteConfig.commission.tier2Rate / 100);
               await Transaction.create({
                 userId: referrer.referredBy,
                 type: "commission",
@@ -414,8 +435,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Transfer completed (withdrawal paid out) ──────────────────────────────────
-  if (event === "transfer.completed") {
+  // ── Transfer completed (withdrawal paid out) ───────────────────────────────
+  if (event === "transfer.success") {
     const reference: string = data?.reference || "";
 
     const withdrawal = await Withdrawal.findOne({ transferReference: reference });
@@ -445,7 +466,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: "ok" });
   }
 
-  // ── Transfer failed ───────────────────────────────────────────────────────────
+  // ── Transfer failed ────────────────────────────────────────────────────────
   if (event === "transfer.failed") {
     const reference: string = data?.reference || "";
 
@@ -453,7 +474,7 @@ export async function POST(req: NextRequest) {
     if (withdrawal && withdrawal.status !== "completed") {
       withdrawal.status = "failed";
       withdrawal.rejectionReason =
-        data?.complete_message || "Transfer failed. Please try again.";
+        data?.reason || "Transfer failed. Please try again.";
       await withdrawal.save();
 
       notifyWithdrawalUpdate(

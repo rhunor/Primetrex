@@ -199,7 +199,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     await ctx.editMessageText(
       `${EMOJI.PAYMENT_PROVIDERS} <b>Payment Providers</b>\n\n` +
         `Configure payment gateways.\n\n` +
-        `Currently active: <b>Flutterwave</b> ${EMOJI.SUCCESS}`,
+        `Currently active: <b>Korapay</b> ${EMOJI.SUCCESS}`,
       { parse_mode: "HTML", reply_markup: backButton(CALLBACK.ADMIN_PANEL) }
     );
   });
