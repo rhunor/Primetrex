@@ -19,13 +19,30 @@ function EmailVerificationBanner() {
   const isEmailVerified = (session?.user as unknown as Record<string, unknown>)?.isEmailVerified as boolean;
   const emailSent = searchParams.get("emailSent") === "1";
 
-  // When session shows unverified, do a one-time refresh from DB in case the JWT is stale
-  // (e.g. user verified on another tab or the session cookie didn't update in time)
+  // While unverified: refresh JWT immediately on mount, re-check when the user
+  // returns to this tab, and poll every 15 s in case they verified elsewhere.
   useEffect(() => {
-    if (session && !isEmailVerified && !hasRefreshed.current) {
+    if (!session || isEmailVerified) return;
+
+    // One-time immediate refresh on mount to resolve any stale JWT
+    if (!hasRefreshed.current) {
       hasRefreshed.current = true;
       update();
     }
+
+    // Re-check when user switches back to this tab (verified in another tab/device)
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") update();
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Fallback poll — catches cases where visibilitychange doesn't fire
+    const interval = setInterval(() => update(), 15_000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
   }, [session, isEmailVerified, update]);
 
   if (isEmailVerified || dismissed || !session) return null;
@@ -51,7 +68,7 @@ function EmailVerificationBanner() {
         <div className="flex items-center gap-2.5 text-sm">
           <CheckCircle className="h-4 w-4 text-secondary shrink-0" />
           <span className="text-foreground">
-            Verification email sent! Check your inbox and click the link to verify your account.
+            Verification email sent! Check your inbox (or spam folder) and click the link to verify your account.
           </span>
         </div>
         <button
@@ -70,7 +87,7 @@ function EmailVerificationBanner() {
       <div className="flex items-center gap-2.5 text-sm">
         <Mail className="h-4 w-4 text-warning shrink-0" />
         <span className="text-foreground">
-          Please verify your email address to secure your account.{" "}
+          Please verify your email address to secure your account. Check your inbox or spam folder.{" "}
           <button
             onClick={handleResend}
             disabled={resendState !== "idle"}

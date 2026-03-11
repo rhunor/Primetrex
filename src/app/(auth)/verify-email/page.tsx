@@ -28,8 +28,9 @@ function VerifyEmailContent() {
       .then((res) => res.json())
       .then(async (data) => {
         if (data.success) {
-          // Refresh the JWT so the dashboard no longer shows the banner
-          await update();
+          // Refresh the JWT so the dashboard no longer shows the banner.
+          // Pass {} to explicitly trigger the "update" path in the JWT callback.
+          await update({});
           setStatus("success");
           setMessage(data.message === "Email already verified" ? "Your email is already verified." : "Your email has been verified successfully!");
         } else {

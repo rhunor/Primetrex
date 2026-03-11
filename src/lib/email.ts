@@ -2,8 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Use onboarding@resend.dev as the default — Resend's shared domain, works without domain verification
-const FROM_EMAIL = process.env.EMAIL_FROM || "Primetrex <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.EMAIL_FROM!;
 
 function emailHeader(appUrl: string) {
   return `
