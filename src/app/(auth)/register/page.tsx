@@ -382,7 +382,7 @@ function RegisterForm() {
 
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
                 <Shield className="h-3.5 w-3.5 flex-shrink-0" />
-                Secured by Flutterwave. Your payment information is encrypted.
+                Secured by Korapay. Your payment information is encrypted.
               </div>
 
               {error && (
@@ -397,7 +397,7 @@ function RegisterForm() {
                 size="lg"
                 isLoading={isLoading}
               >
-                Pay {formatCurrency(siteConfig.signupFee)} with Flutterwave
+                Pay {formatCurrency(siteConfig.signupFee)} with Korapay
                 <CreditCard className="h-4 w-4" />
               </Button>
 

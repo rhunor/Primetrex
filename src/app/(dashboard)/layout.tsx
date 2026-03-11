@@ -34,8 +34,12 @@ function EmailVerificationBanner() {
     if (resendState !== "idle") return;
     setResendState("sending");
     try {
-      await fetch("/api/auth/resend-verification", { method: "POST" });
-      setResendState("sent");
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      if (res.ok) {
+        setResendState("sent");
+      } else {
+        setResendState("idle");
+      }
     } catch {
       setResendState("idle");
     }

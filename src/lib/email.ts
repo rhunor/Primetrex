@@ -65,7 +65,7 @@ export async function sendVerificationEmail(
     console.log(`[DEV] Email verification URL for ${email}:`, verifyUrl);
   }
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Verify your Primetrex account",
@@ -100,6 +100,7 @@ export async function sendVerificationEmail(
       </div>
     `,
   });
+  if (error) throw new Error(`Resend error: ${error.message}`);
 }
 
 export async function sendPasswordResetEmail(
@@ -114,7 +115,7 @@ export async function sendPasswordResetEmail(
     console.log(`[DEV] Password reset URL for ${email}:`, resetUrl);
   }
 
-  await resend.emails.send({
+  const { error: resetError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Reset your Primetrex password",
@@ -150,12 +151,13 @@ export async function sendPasswordResetEmail(
       </div>
     `,
   });
+  if (resetError) throw new Error(`Resend error: ${resetError.message}`);
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  await resend.emails.send({
+  const { error: welcomeError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Welcome to Primetrex — Your Affiliate Account is Active!",
@@ -227,6 +229,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
       </div>
     `,
   });
+  if (welcomeError) throw new Error(`Resend error: ${welcomeError.message}`);
 }
 
 // ─── Order ID generator ───────────────────────────────────────────────────────
@@ -248,7 +251,7 @@ export async function sendOrderReceiptEmail(params: {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const { email, firstName, orderId, amount, description, paymentReference } = params;
 
-  await resend.emails.send({
+  const { error: receiptError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: `Order Receipt — ${orderId} | Primetrex`,
@@ -288,6 +291,7 @@ export async function sendOrderReceiptEmail(params: {
       </div>
     `,
   });
+  if (receiptError) throw new Error(`Resend error: ${receiptError.message}`);
 }
 
 // ─── Affiliate commission notification email ──────────────────────────────────
@@ -303,7 +307,7 @@ export async function sendAffiliateCommissionEmail(params: {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const { affiliateEmail, affiliateFirstName, buyerName, commissionAmount, orderId, tier, paymentReference } = params;
 
-  await resend.emails.send({
+  const { error: commissionError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: affiliateEmail,
     subject: `Commission Earned — Order ${orderId} | Primetrex`,
@@ -358,6 +362,7 @@ export async function sendAffiliateCommissionEmail(params: {
       </div>
     `,
   });
+  if (commissionError) throw new Error(`Resend error: ${commissionError.message}`);
 }
 
 // ─── Withdrawal request email ─────────────────────────────────────────────────
@@ -373,7 +378,7 @@ export async function sendWithdrawalRequestEmail(params: {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const { email, firstName, amount, bankName, accountNumber, accountName, withdrawalId } = params;
 
-  await resend.emails.send({
+  const { error: withdrawalError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: `Withdrawal Request Received — ₦${amount.toLocaleString()} | Primetrex`,
@@ -423,6 +428,7 @@ export async function sendWithdrawalRequestEmail(params: {
       </div>
     `,
   });
+  if (withdrawalError) throw new Error(`Resend error: ${withdrawalError.message}`);
 }
 
 // ─── Bank details changed security alert ──────────────────────────────────────
@@ -436,7 +442,7 @@ export async function sendBankDetailsChangedEmail(params: {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const { email, firstName, bankName, accountNumber, accountName } = params;
 
-  await resend.emails.send({
+  const { error: bankError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Security Alert: Bank Details Updated | Primetrex",
@@ -486,13 +492,14 @@ export async function sendBankDetailsChangedEmail(params: {
       </div>
     `,
   });
+  if (bankError) throw new Error(`Resend error: ${bankError.message}`);
 }
 
 // ─── OTP email for 2FA login verification ────────────────────────────────────
 export async function sendOTPEmail(email: string, firstName: string, otp: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  await resend.emails.send({
+  const { error: otpError } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: "Your Primetrex Login Verification Code",
@@ -521,4 +528,5 @@ export async function sendOTPEmail(email: string, firstName: string, otp: string
       </div>
     `,
   });
+  if (otpError) throw new Error(`Resend error: ${otpError.message}`);
 }
