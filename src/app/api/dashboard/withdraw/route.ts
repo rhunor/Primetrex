@@ -27,25 +27,24 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Friday-only gate (WAT = UTC+1) ───────────────────────────────────────
-    // ⚠️ TEST MODE: Friday gate bypassed for testing — restore before go-live
-    // const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
-    // const dayWAT = nowWAT.getUTCDay(); // 5 = Friday
-    // if (dayWAT !== 5) {
-    //   const next = nextFridayWAT();
-    //   const label = next.toLocaleDateString("en-NG", {
-    //     weekday: "long",
-    //     day: "numeric",
-    //     month: "long",
-    //     timeZone: "Africa/Lagos",
-    //   });
-    //   return NextResponse.json(
-    //     {
-    //       error: `Withdrawals can only be requested on Fridays. Next withdrawal window: ${label}.`,
-    //       nextFriday: next.toISOString(),
-    //     },
-    //     { status: 403 }
-    //   );
-    // }
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    const dayWAT = nowWAT.getUTCDay(); // 5 = Friday
+    if (dayWAT !== 5) {
+      const next = nextFridayWAT();
+      const label = next.toLocaleDateString("en-NG", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Africa/Lagos",
+      });
+      return NextResponse.json(
+        {
+          error: `Withdrawals can only be requested on Fridays. Next withdrawal window: ${label}.`,
+          nextFriday: next.toISOString(),
+        },
+        { status: 403 }
+      );
+    }
 
     const userId = (session.user as unknown as Record<string, unknown>)
       .id as string;

@@ -53,12 +53,10 @@ export default function WithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  // ⚠️ TEST MODE: always true so the button/form is accessible — restore before go-live
   // Friday window check (client-side, WAT = UTC+1)
   const isFriday = useMemo(() => {
-    // const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
-    // return nowWAT.getUTCDay() === 5;
-    return true;
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    return nowWAT.getUTCDay() === 5;
   }, []);
 
   const nextFriday = useMemo(() => {
@@ -85,6 +83,7 @@ export default function WithdrawalsPage() {
   // Bank-related state
   const [banks, setBanks] = useState<Bank[]>([]);
   const [banksLoading, setBanksLoading] = useState(false);
+  const [banksLoadFailed, setBanksLoadFailed] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [bankSearch, setBankSearch] = useState("");
@@ -114,17 +113,18 @@ export default function WithdrawalsPage() {
 
   // Load banks when form is shown
   useEffect(() => {
-    if (showForm && banks.length === 0) {
+    if (showForm && banks.length === 0 && !banksLoadFailed) {
       setBanksLoading(true);
       fetch("/api/banks")
-        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => (res.ok ? res.json() : Promise.reject()))
         .then((data) => {
           if (data?.banks) setBanks(data.banks);
+          else setBanksLoadFailed(true);
         })
-        .catch(() => {})
+        .catch(() => setBanksLoadFailed(true))
         .finally(() => setBanksLoading(false));
     }
-  }, [showForm, banks.length]);
+  }, [showForm, banks.length, banksLoadFailed]);
 
   // Auto-resolve account number when 10 digits entered and bank selected
   const resolveAccount = useCallback(
@@ -371,6 +371,28 @@ export default function WithdrawalsPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading banks...
+                </div>
+              ) : banksLoadFailed ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-warning">
+                    Bank list unavailable — enter your bank details manually.
+                  </p>
+                  <Input
+                    label="Bank Name"
+                    placeholder="e.g. Access Bank"
+                    required
+                    autoComplete="off"
+                    value={formData.bankName}
+                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                  />
+                  <Input
+                    label="Bank Code (3–6 digits)"
+                    placeholder="e.g. 044"
+                    required
+                    autoComplete="off"
+                    value={formData.bankCode}
+                    onChange={(e) => setFormData({ ...formData, bankCode: e.target.value })}
+                  />
                 </div>
               ) : (
                 <>
