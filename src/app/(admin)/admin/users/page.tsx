@@ -14,6 +14,7 @@ import {
   Mail,
   MessageCircle,
   CreditCard,
+  Star,
 } from "lucide-react";
 
 interface UserItem {
@@ -26,6 +27,7 @@ interface UserItem {
   hasPaidSignup: boolean;
   isEmailVerified: boolean;
   telegramLinked: boolean;
+  isSpecialAffiliate: boolean;
   bankDetails: {
     bankName: string;
     accountNumber: string;
@@ -53,6 +55,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(
     async (page: number) => {
@@ -83,6 +86,28 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers(1);
   }, [fetchUsers]);
+
+  async function toggleSpecialAffiliate(userId: string, current: boolean) {
+    setTogglingId(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isSpecialAffiliate: !current }),
+      });
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId ? { ...u, isSpecialAffiliate: !current } : u
+          )
+        );
+      }
+    } catch {
+      // Silent
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   const filters = [
     { label: "All", value: "all" },
@@ -158,6 +183,9 @@ export default function AdminUsersPage() {
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Earnings
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Special
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Joined
@@ -237,6 +265,48 @@ export default function AdminUsersPage() {
                         <span className="text-sm font-bold text-foreground">
                           {formatCurrency(user.totalEarnings)}
                         </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <button
+                          onClick={() =>
+                            toggleSpecialAffiliate(
+                              user._id,
+                              user.isSpecialAffiliate
+                            )
+                          }
+                          disabled={togglingId === user._id}
+                          title={
+                            user.isSpecialAffiliate
+                              ? "Remove special affiliate (60% → 40%)"
+                              : "Make special affiliate (40% → 60%)"
+                          }
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                          style={
+                            user.isSpecialAffiliate
+                              ? {
+                                  background: "rgba(234,179,8,0.15)",
+                                  color: "#ca8a04",
+                                }
+                              : {
+                                  background: "rgba(0,0,0,0.05)",
+                                  color: "#888",
+                                }
+                          }
+                        >
+                          {togglingId === user._id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Star
+                              className="h-3.5 w-3.5"
+                              fill={
+                                user.isSpecialAffiliate
+                                  ? "currentColor"
+                                  : "none"
+                              }
+                            />
+                          )}
+                          {user.isSpecialAffiliate ? "Special" : "Standard"}
+                        </button>
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-xs text-muted-foreground">

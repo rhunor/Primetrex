@@ -494,6 +494,88 @@ export async function sendBankDetailsChangedEmail(params: {
   if (bankError) throw new Error(`Resend error: ${bankError.message}`);
 }
 
+// ─── Subscription expiry reminder email ──────────────────────────────────────
+export async function sendSubscriptionExpiryReminderEmail(params: {
+  email: string;
+  firstName: string;
+  channelName: string;
+  daysLeft: number;
+  expiryDate: Date;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { email, firstName, channelName, daysLeft, expiryDate } = params;
+
+  const isExpired = daysLeft <= 0;
+  const formattedDate = expiryDate.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const subject = isExpired
+    ? `Your Primetrex subscription has expired — Renew now`
+    : `Your Primetrex subscription expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`;
+
+  const { error: expiryError } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: ${isExpired ? "#f8d7da" : "#fff3cd"}; border: 2px solid ${isExpired ? "#f5c6cb" : "#ffc107"}; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+          <p style="font-size: 32px; margin: 0;">${isExpired ? "&#9940;" : "&#9203;"}</p>
+          <h2 style="color: ${isExpired ? "#721c24" : "#856404"}; margin: 8px 0 0; font-size: 20px;">
+            ${isExpired ? "Subscription Expired" : `Expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
+          </h2>
+          <p style="color: ${isExpired ? "#721c24" : "#856404"}; margin: 4px 0 0; font-size: 14px;">
+            ${channelName}
+          </p>
+        </div>
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <p style="color: #555; line-height: 1.6; margin-top: 0;">
+            Hi ${firstName},
+            ${
+              isExpired
+                ? ` your subscription to <strong>${channelName}</strong> expired on <strong>${formattedDate}</strong>. You have been removed from the channel.`
+                : ` your subscription to <strong>${channelName}</strong> will expire on <strong>${formattedDate}</strong>. Renew now to keep your access uninterrupted.`
+            }
+          </p>
+
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Channel</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; color: #333; font-size: 13px;">${channelName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #888; font-size: 13px;">${isExpired ? "Expired on" : "Expires on"}</td>
+                <td style="padding: 10px 0; text-align: right; font-weight: bold; color: ${isExpired ? "#dc3545" : "#856404"}; font-size: 13px;">${formattedDate}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin: 24px 0 0;">
+            <a href="https://t.me/Primetrex_bot"
+               style="background: linear-gradient(135deg, #39005E 0%, #8808CC 100%); color: white; padding: 14px 36px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+              Renew Subscription &#8594;
+            </a>
+          </div>
+
+          <p style="color: #aaa; font-size: 12px; text-align: center; margin-top: 16px;">
+            Open the Primetrex bot on Telegram to renew your plan.
+          </p>
+        </div>
+
+        ${emailFooter()}
+      </div>
+    `,
+  });
+  if (expiryError) throw new Error(`Resend error: ${expiryError.message}`);
+}
+
 // ─── OTP email for 2FA login verification ────────────────────────────────────
 export async function sendOTPEmail(email: string, firstName: string, otp: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

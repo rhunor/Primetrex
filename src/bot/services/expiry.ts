@@ -1,8 +1,10 @@
 import dbConnect from "@/lib/db";
 import BotSubscriber from "@/models/BotSubscriber";
+import User from "@/models/User";
 import Plan from "@/models/Plan";
 import { removeUserFromChannel } from "./invite";
 import { bot } from "@/bot/index";
+import { sendSubscriptionExpiryReminderEmail } from "@/lib/email";
 
 /**
  * Check for expired subscriptions and send reminders.
@@ -31,15 +33,30 @@ export async function checkExpiredSubscriptions(): Promise<{
     await removeUserFromChannel(sub.channelId, sub.userId);
 
     const plan = sub.planId as unknown as InstanceType<typeof Plan>;
+    const channelName = plan?.channelName || "the channel";
+
+    // Telegram notification
     try {
       await bot.api.sendMessage(
         Number(sub.userId),
-        `\u23F0 Your subscription to <b>${plan?.channelName || "the channel"}</b> has expired.\n\n` +
+        `\u23F0 Your subscription to <b>${channelName}</b> has expired.\n\n` +
           `Tap \u{1F504} Renew to continue access.`,
         { parse_mode: "HTML" }
       );
     } catch {
       // User may have blocked bot
+    }
+
+    // Email notification — look up web user by Telegram ID
+    const webUser = await User.findOne({ telegramId: sub.userId });
+    if (webUser?.email && webUser.firstName) {
+      sendSubscriptionExpiryReminderEmail({
+        email: webUser.email,
+        firstName: webUser.firstName,
+        channelName,
+        daysLeft: 0,
+        expiryDate: sub.expiryDate,
+      }).catch(() => {});
     }
 
     expiredCount++;
@@ -60,15 +77,30 @@ export async function checkExpiredSubscriptions(): Promise<{
     );
 
     const plan = sub.planId as unknown as InstanceType<typeof Plan>;
+    const channelName = plan?.channelName || "the channel";
+
+    // Telegram notification
     try {
       await bot.api.sendMessage(
         Number(sub.userId),
-        `\u23F3 Your subscription to <b>${plan?.channelName || "the channel"}</b> expires in <b>${daysLeft} day(s)</b>.\n\n` +
+        `\u23F3 Your subscription to <b>${channelName}</b> expires in <b>${daysLeft} day(s)</b>.\n\n` +
           `Tap \u{1F504} Renew to avoid losing access.`,
         { parse_mode: "HTML" }
       );
     } catch {
       // Silent fail
+    }
+
+    // Email notification — look up web user by Telegram ID
+    const webUser = await User.findOne({ telegramId: sub.userId });
+    if (webUser?.email && webUser.firstName) {
+      sendSubscriptionExpiryReminderEmail({
+        email: webUser.email,
+        firstName: webUser.firstName,
+        channelName,
+        daysLeft,
+        expiryDate: sub.expiryDate,
+      }).catch(() => {});
     }
 
     reminderCount++;

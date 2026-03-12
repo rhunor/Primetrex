@@ -116,7 +116,11 @@ export async function POST(req: NextRequest) {
         });
 
         if (!existingCommission) {
-          const tier1Amount = amount * (siteConfig.commission.tier1Rate / 100);
+          const tier1Referrer = await User.findById(user.referredBy);
+          const tier1Rate = tier1Referrer?.isSpecialAffiliate
+            ? 60
+            : siteConfig.commission.tier1Rate;
+          const tier1Amount = amount * (tier1Rate / 100);
           await Transaction.create({
             userId: user.referredBy,
             type: "commission",
@@ -135,8 +139,6 @@ export async function POST(req: NextRequest) {
             1,
             `${user.firstName} ${user.lastName}`
           ).catch(() => {});
-
-          const tier1Referrer = await User.findById(user.referredBy);
           if (tier1Referrer) {
             sendAffiliateCommissionEmail({
               affiliateEmail: tier1Referrer.email,
@@ -232,8 +234,11 @@ export async function POST(req: NextRequest) {
           });
 
           if (!existingComm) {
-            const tier1Amount =
-              paidAmount * (siteConfig.commission.subscriptionRate / 100);
+            const tier1Referrer = await User.findById(webUser.referredBy);
+            const subRate = tier1Referrer?.isSpecialAffiliate
+              ? 60
+              : siteConfig.commission.subscriptionRate;
+            const tier1Amount = paidAmount * (subRate / 100);
             await Transaction.create({
               userId: webUser.referredBy,
               type: "commission",
@@ -251,8 +256,6 @@ export async function POST(req: NextRequest) {
               1,
               `${webUser.firstName} ${webUser.lastName}`
             ).catch(() => {});
-
-            const tier1Referrer = await User.findById(webUser.referredBy);
             if (tier1Referrer) {
               sendAffiliateCommissionEmail({
                 affiliateEmail: tier1Referrer.email,
@@ -331,8 +334,11 @@ export async function POST(req: NextRequest) {
 
         if (webUser?.referredBy) {
           if (!existingComm) {
-            const tier1Amount =
-              paidAmount * (siteConfig.commission.subscriptionRate / 100);
+            const tier1Referrer = await User.findById(webUser.referredBy);
+            const subRate = tier1Referrer?.isSpecialAffiliate
+              ? 60
+              : siteConfig.commission.subscriptionRate;
+            const tier1Amount = paidAmount * (subRate / 100);
             await Transaction.create({
               userId: webUser.referredBy,
               type: "commission",
@@ -350,8 +356,6 @@ export async function POST(req: NextRequest) {
               1,
               `${webUser.firstName} ${webUser.lastName}`
             ).catch(() => {});
-
-            const tier1Referrer = await User.findById(webUser.referredBy);
             if (tier1Referrer?.telegramId) {
               sendMessage(
                 parseInt(tier1Referrer.telegramId),
@@ -388,8 +392,10 @@ export async function POST(req: NextRequest) {
             referralCode: botPayment.referralCode,
           });
           if (referrer) {
-            const tier1Amount =
-              paidAmount * (siteConfig.commission.subscriptionRate / 100);
+            const subRate = referrer.isSpecialAffiliate
+              ? 60
+              : siteConfig.commission.subscriptionRate;
+            const tier1Amount = paidAmount * (subRate / 100);
             await Transaction.create({
               userId: referrer._id,
               type: "commission",

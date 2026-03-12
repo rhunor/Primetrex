@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         .skip((page - 1) * limit)
         .limit(limit)
         .select(
-          "firstName lastName email referralCode isActive hasPaidSignup isEmailVerified telegramLinked bankDetails createdAt"
+          "firstName lastName email referralCode isActive hasPaidSignup isEmailVerified telegramLinked bankDetails isSpecialAffiliate createdAt"
         )
         .lean(),
       User.countDocuments(query),
