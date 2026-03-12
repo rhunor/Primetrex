@@ -6,6 +6,7 @@ import Transaction from "@/models/Transaction";
 import Withdrawal from "@/models/Withdrawal";
 import { siteConfig } from "@/config/site";
 import { sendWithdrawalRequestEmail } from "@/lib/email";
+import { initiatePayout, generatePayoutRef } from "@/lib/korapay";
 
 // Compute next Friday date (WAT = UTC+1)
 function nextFridayWAT(): Date {
@@ -26,24 +27,25 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Friday-only gate (WAT = UTC+1) ───────────────────────────────────────
-    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
-    const dayWAT = nowWAT.getUTCDay(); // 5 = Friday
-    if (dayWAT !== 5) {
-      const next = nextFridayWAT();
-      const label = next.toLocaleDateString("en-NG", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        timeZone: "Africa/Lagos",
-      });
-      return NextResponse.json(
-        {
-          error: `Withdrawals can only be requested on Fridays. Next withdrawal window: ${label}.`,
-          nextFriday: next.toISOString(),
-        },
-        { status: 403 }
-      );
-    }
+    // ⚠️ TEST MODE: Friday gate bypassed for testing — restore before go-live
+    // const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    // const dayWAT = nowWAT.getUTCDay(); // 5 = Friday
+    // if (dayWAT !== 5) {
+    //   const next = nextFridayWAT();
+    //   const label = next.toLocaleDateString("en-NG", {
+    //     weekday: "long",
+    //     day: "numeric",
+    //     month: "long",
+    //     timeZone: "Africa/Lagos",
+    //   });
+    //   return NextResponse.json(
+    //     {
+    //       error: `Withdrawals can only be requested on Fridays. Next withdrawal window: ${label}.`,
+    //       nextFriday: next.toISOString(),
+    //     },
+    //     { status: 403 }
+    //   );
+    // }
 
     const userId = (session.user as unknown as Record<string, unknown>)
       .id as string;
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
     user.bankDetails = { bankName, bankCode, accountNumber, accountName };
     await user.save();
 
-    // Create withdrawal record — admin manually processes payouts
+    // Create withdrawal record in pending state before calling payout API
     const withdrawal = await Withdrawal.create({
       userId,
       amount: numAmount,
@@ -129,6 +131,41 @@ export async function POST(req: NextRequest) {
       accountName,
       status: "pending",
     });
+
+    // Initiate payout via Korapay automatically
+    const payoutRef = generatePayoutRef(withdrawal._id.toString());
+    try {
+      const payoutResult = await initiatePayout({
+        reference: payoutRef,
+        accountBank: bankCode,
+        accountNumber,
+        amount: numAmount,
+        narration: `Primetrex withdrawal for ${user.firstName} ${user.lastName}`,
+        beneficiaryName: accountName,
+        beneficiaryEmail: user.email,
+      });
+
+      // Mark as processing and store the Korapay reference
+      withdrawal.status = "processing";
+      withdrawal.transferReference = payoutResult.data?.reference ?? payoutRef;
+      await withdrawal.save();
+    } catch (payoutError) {
+      // Payout failed — mark the withdrawal as failed so balance is not locked
+      withdrawal.status = "failed";
+      withdrawal.rejectionReason =
+        payoutError instanceof Error
+          ? payoutError.message
+          : "Payout initiation failed. Please try again.";
+      await withdrawal.save();
+
+      return NextResponse.json(
+        {
+          error:
+            "Could not process your withdrawal at this time. Please try again shortly.",
+        },
+        { status: 502 }
+      );
+    }
 
     // Send security notification email (fire-and-forget)
     sendWithdrawalRequestEmail({

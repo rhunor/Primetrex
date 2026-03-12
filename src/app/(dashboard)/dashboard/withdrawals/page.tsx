@@ -53,10 +53,12 @@ export default function WithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
+  // ⚠️ TEST MODE: always true so the button/form is accessible — restore before go-live
   // Friday window check (client-side, WAT = UTC+1)
   const isFriday = useMemo(() => {
-    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
-    return nowWAT.getUTCDay() === 5;
+    // const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    // return nowWAT.getUTCDay() === 5;
+    return true;
   }, []);
 
   const nextFriday = useMemo(() => {
@@ -203,7 +205,7 @@ export default function WithdrawalsPage() {
         setFormError(data.error || "Withdrawal request failed");
       } else {
         setFormSuccess(
-          "Withdrawal is being processed! You will be notified when it completes."
+          "Withdrawal submitted! Your bank transfer is being processed by Korapay. You will be notified when it arrives."
         );
         setShowForm(false);
         setAvailableBalance((prev) => prev - amount);
