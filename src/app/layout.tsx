@@ -4,23 +4,61 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Primetrex | Affiliate Marketing Platform",
-    template: "%s | Primetrex",
+    default: "Primetrex Affiliates | Earn Commissions with Copy Trading",
+    template: "%s | Primetrex Affiliates",
   },
   description:
-    "Earn money by affiliate Primetrex copy trading. Get your unique referral link, share it, and earn commissions every month.",
+    "Join Primetrex Affiliates and earn up to 40% commission every month. Share your referral link, grow your network, and earn passive income through our copy trading platform.",
   keywords: [
-    "affiliate marketing",
-    "copy trading",
-    "referral program",
-    "earn money",
     "Primetrex",
-    "forex",
-    "passive income",
+    "Primetrex affiliates",
+    "primetrexaffiliates.com",
+    "affiliate marketing Nigeria",
+    "copy trading affiliate",
+    "referral program Nigeria",
+    "earn commissions online",
+    "forex affiliate",
+    "passive income Nigeria",
+    "make money online Nigeria",
   ],
+  metadataBase: new URL("https://www.primetrexaffiliates.com"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://www.primetrexaffiliates.com",
+    siteName: "Primetrex Affiliates",
+    title: "Primetrex Affiliates | Earn Commissions with Copy Trading",
+    description:
+      "Join Primetrex Affiliates and earn up to 40% commission every month. Share your referral link, grow your network, and earn passive income through our copy trading platform.",
+    images: [
+      {
+        url: "/logos/PNG/Light Comb.png",
+        width: 1200,
+        height: 630,
+        alt: "Primetrex Affiliates",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Primetrex Affiliates | Earn Commissions with Copy Trading",
+    description:
+      "Join Primetrex Affiliates and earn up to 40% commission every month. Share your referral link and earn passive income.",
+    images: ["/logos/PNG/Light Comb.png"],
+  },
   icons: {
     icon: "/favicon/SVG/Vector-1.svg",
     apple: "/favicon/PNG/Vector-1.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 };
 
