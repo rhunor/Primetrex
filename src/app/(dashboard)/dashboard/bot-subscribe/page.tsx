@@ -182,7 +182,7 @@ export default function BotSubscribePage() {
         <div className="pt-2 space-y-3">
           <Button className="w-full" onClick={handlePay} isLoading={paying}>
             {!paying && <ExternalLink className="h-4 w-4" />}
-            Pay {formatNaira(plan.price)} with Flutterwave
+            Pay {formatNaira(plan.price)} with Korapay
           </Button>
           <p className="text-xs text-muted-foreground text-center">
             After payment, your invite link will be sent to you on Telegram automatically.

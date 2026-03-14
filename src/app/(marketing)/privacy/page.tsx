@@ -12,7 +12,7 @@ const sections = [
   },
   {
     title: "2. Information We Collect",
-    body: `We collect the following categories of personal information:\n\n• Identity Data: First name, last name, email address.\n• Payment Data: Bank account number, bank name, and account holder name (for withdrawal processing). We do not store card details — payments are processed securely by Flutterwave.\n• Account Data: Referral code, referral history, commission earnings, withdrawal records.\n• Technical Data: IP address, browser type, device type, access timestamps.\n• Communication Data: Messages sent via our contact form.`,
+    body: `We collect the following categories of personal information:\n\n• Identity Data: First name, last name, email address.\n• Payment Data: Bank account number, bank name, and account holder name (for withdrawal processing). We do not store card details — payments are processed securely by Korapay.\n• Account Data: Referral code, referral history, commission earnings, withdrawal records.\n• Technical Data: IP address, browser type, device type, access timestamps.\n• Communication Data: Messages sent via our contact form.`,
   },
   {
     title: "3. How We Use Your Information",
@@ -20,7 +20,7 @@ const sections = [
   },
   {
     title: "4. Third-Party Services",
-    body: `We work with trusted third-party services that process your data on our behalf:\n\n• Flutterwave: Processes all payments and payouts. Governed by Flutterwave's own Privacy Policy.\n• Resend: Delivers transactional emails.\n• MongoDB Atlas: Stores your account data securely in encrypted cloud databases.\n• Vercel: Hosts our platform infrastructure.\n\nWe do not sell your personal data to any third party.`,
+    body: `We work with trusted third-party services that process your data on our behalf:\n\n• Korapay: Processes all payments and payouts. Governed by Korapay's own Privacy Policy.\n• Resend: Delivers transactional emails.\n• MongoDB Atlas: Stores your account data securely in encrypted cloud databases.\n• Vercel: Hosts our platform infrastructure.\n\nWe do not sell your personal data to any third party.`,
   },
   {
     title: "5. Data Retention",

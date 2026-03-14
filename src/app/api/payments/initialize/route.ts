@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       redirectUrl,
       metadata: {
         type: "signup",
-        referralCode: referralCode || null,
+        ...(referralCode ? { referralCode } : {}),
       },
     });
 

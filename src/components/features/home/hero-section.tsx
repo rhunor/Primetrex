@@ -148,7 +148,7 @@ export function HeroSection() {
               transition={{ delay: 0.75 }}
               className="mt-2 text-xs text-white/25"
             >
-              Powered by Flutterwave · Payments 100% secured
+              Powered by Korapay · Payments 100% secured
             </motion.p>
           </div>
 

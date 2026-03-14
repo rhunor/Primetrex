@@ -48,7 +48,7 @@ const features = [
     icon: Lock,
     title: "Verified Platform",
     description:
-      "Powered by Flutterwave — Nigeria's most trusted payment processor. Every transaction is verified.",
+      "Powered by Korapay — secure and trusted payment processing. Every transaction is verified.",
     tag: "Trusted payments",
     iconColor: "bg-secondary/20 text-secondary-dark",
   },
