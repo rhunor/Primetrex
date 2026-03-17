@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const baseUrl = "https://www.primetrexaffiliates.com";
+const baseUrl = "https://primetrexaffiliates.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

@@ -4,14 +4,15 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Primetrex Affiliates | Earn Commissions with Copy Trading",
-    template: "%s | Primetrex Affiliates",
+    default: "Primetrex | Affiliate Program — Earn Commissions with Copy Trading",
+    template: "%s | Primetrex",
   },
   description:
-    "Join Primetrex Affiliates and earn up to 40% commission every month. Share your referral link, grow your network, and earn passive income through our copy trading platform.",
+    "Primetrex is a copy trading affiliate platform where you earn up to 40% commission every month. Share your referral link, grow your network, and earn passive income.",
   keywords: [
     "Primetrex",
     "Primetrex affiliates",
+    "Primetrex affiliate program",
     "primetrexaffiliates.com",
     "affiliate marketing Nigeria",
     "copy trading affiliate",
@@ -21,15 +22,15 @@ export const metadata: Metadata = {
     "passive income Nigeria",
     "make money online Nigeria",
   ],
-  metadataBase: new URL("https://www.primetrexaffiliates.com"),
+  metadataBase: new URL("https://primetrexaffiliates.com"),
   alternates: {
-    canonical: "/",
+    canonical: "https://primetrexaffiliates.com",
   },
   openGraph: {
     type: "website",
-    url: "https://www.primetrexaffiliates.com",
-    siteName: "Primetrex Affiliates",
-    title: "Primetrex Affiliates | Earn Commissions with Copy Trading",
+    url: "https://primetrexaffiliates.com",
+    siteName: "Primetrex",
+    title: "Primetrex | Affiliate Program — Earn Commissions with Copy Trading",
     description:
       "Join Primetrex Affiliates and earn up to 40% commission every month. Share your referral link, grow your network, and earn passive income through our copy trading platform.",
     images: [

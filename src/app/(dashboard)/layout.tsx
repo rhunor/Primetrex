@@ -95,6 +95,7 @@ function EmailVerificationBanner() {
           >
             {resendState === "sending" ? "Sending..." : "Resend email"}
           </button>
+          {" "}If you&apos;ve already verified, sign out and sign back in to remove this message.
         </span>
       </div>
       <button
