@@ -368,9 +368,9 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
     );
   });
 
-  // "Main Menu" text from reply keyboard
-  bot.hears("\u2261 Main Menu", showMainMenu);
-  bot.hears(`${EMOJI.SUBSCRIBE} Subscribe`, async (ctx) => {
+  // "Main Menu" text from reply keyboard — regex avoids Android Unicode encoding issues
+  bot.hears(/Main Menu/i, showMainMenu);
+  bot.hears(/Subscribe/i, async (ctx) => {
     await showSubscriptionSummary(ctx, false);
   });
 
