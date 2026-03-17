@@ -2,7 +2,7 @@ import { InlineKeyboard } from "grammy";
 import { EMOJI, CALLBACK } from "@/bot/constants";
 import { botConfig } from "@/bot/config";
 
-export function mainMenuKeyboard(isAdmin: boolean): InlineKeyboard {
+export function mainMenuKeyboard(isAdmin: boolean, isLinked: boolean): InlineKeyboard {
   const kb = new InlineKeyboard()
     .text(`${EMOJI.SUBSCRIBE} Subscribe`, CALLBACK.SUBSCRIBE)
     .row()
@@ -11,11 +11,14 @@ export function mainMenuKeyboard(isAdmin: boolean): InlineKeyboard {
     .text(`${EMOJI.PAID} I've Paid`, CALLBACK.PAID)
     .row()
     .text(`${EMOJI.HELP} Help`, CALLBACK.HELP)
-    .row()
-    .text(`${EMOJI.AFFILIATE} Get Affiliate Link`, CALLBACK.AFFILIATE)
-    .row()
-    .url(`\u{1F310} Affiliate Platform`, botConfig.appUrl)
     .row();
+
+  if (isLinked) {
+    kb.text(`${EMOJI.AFFILIATE} Get Affiliate Link`, CALLBACK.AFFILIATE)
+      .row()
+      .url(`\u{1F310} Affiliate Platform`, botConfig.appUrl)
+      .row();
+  }
 
   if (isAdmin) {
     kb.text(`${EMOJI.ADMIN_PANEL} Admin Panel`, CALLBACK.ADMIN_PANEL);

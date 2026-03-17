@@ -27,6 +27,13 @@ async function showMainMenu(ctx: BotContext) {
   const firstName = ctx.from?.first_name || "there";
   const admin = await isAdmin(ctx);
 
+  await dbConnect();
+  const telegramId = ctx.from?.id.toString();
+  const linkedUser = telegramId
+    ? await User.findOne({ telegramId, telegramLinked: true }).select("_id").lean()
+    : null;
+  const isLinked = !!linkedUser;
+
   const text =
     `${EMOJI.WAVE} Hi <b>${firstName}</b>!\n\n` +
     `Welcome to the official  <b>Primetrex Community Subscription</b> bot.\n\n` +
@@ -37,12 +44,12 @@ async function showMainMenu(ctx: BotContext) {
   if (ctx.callbackQuery) {
     await ctx.editMessageText(text, {
       parse_mode: "HTML",
-      reply_markup: mainMenuKeyboard(admin),
+      reply_markup: mainMenuKeyboard(admin, isLinked),
     });
   } else {
     await ctx.reply(text, {
       parse_mode: "HTML",
-      reply_markup: mainMenuKeyboard(admin),
+      reply_markup: mainMenuKeyboard(admin, isLinked),
     });
     await ctx.reply(`${EMOJI.POINT_DOWN} Use the menu below for quick access:`, {
       reply_markup: replyKeyboard,
