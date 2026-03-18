@@ -30,7 +30,17 @@ export async function checkExpiredSubscriptions(): Promise<{
     sub.status = "expired";
     await sub.save();
 
-    await removeUserFromChannel(sub.channelId, sub.userId);
+    try {
+      await removeUserFromChannel(sub.channelId, sub.userId);
+    } catch (err: unknown) {
+      const description =
+        err && typeof err === "object" && "description" in err
+          ? String((err as { description: string }).description)
+          : "";
+      if (!description.includes("PARTICIPANT_ID_INVALID") && !description.includes("USER_NOT_PARTICIPANT")) {
+        console.error(`Failed to remove user ${sub.userId}:`, err);
+      }
+    }
 
     const plan = sub.planId as unknown as InstanceType<typeof Plan>;
     const channelName = plan?.channelName || "the channel";
@@ -128,8 +138,18 @@ export async function cleanupExpiredFromChannel(): Promise<{
     try {
       await removeUserFromChannel(sub.channelId, sub.userId);
       removed++;
-    } catch {
-      failed++;
+    } catch (err: unknown) {
+      const description =
+        err && typeof err === "object" && "description" in err
+          ? String((err as { description: string }).description)
+          : "";
+      if (description.includes("PARTICIPANT_ID_INVALID") || description.includes("USER_NOT_PARTICIPANT")) {
+        // User was never in the channel or already left — treat as removed
+        removed++;
+      } else {
+        console.error(`Failed to remove user ${sub.userId} from channel ${sub.channelId}:`, err);
+        failed++;
+      }
     }
   }
 

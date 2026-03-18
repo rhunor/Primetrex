@@ -13,15 +13,8 @@ export async function removeUserFromChannel(
   channelId: string,
   userId: string
 ): Promise<void> {
-  try {
-    await bot.api.banChatMember(Number(channelId), Number(userId));
-    await bot.api.unbanChatMember(Number(channelId), Number(userId));
-  } catch (error) {
-    console.error(
-      `Failed to remove user ${userId} from channel ${channelId}:`,
-      error
-    );
-  }
+  await bot.api.banChatMember(Number(channelId), Number(userId));
+  await bot.api.unbanChatMember(Number(channelId), Number(userId));
 }
 
 export async function sendInviteDM(
