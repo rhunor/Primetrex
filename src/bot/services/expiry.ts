@@ -108,3 +108,30 @@ export async function checkExpiredSubscriptions(): Promise<{
 
   return { expired: expiredCount, reminders: reminderCount };
 }
+
+/**
+ * One-time cleanup: remove all expired/non-active subscribers from the channel.
+ * Safe to run multiple times (idempotent).
+ */
+export async function cleanupExpiredFromChannel(): Promise<{
+  removed: number;
+  failed: number;
+}> {
+  await dbConnect();
+
+  const expiredSubs = await BotSubscriber.find({ status: { $ne: "active" } });
+
+  let removed = 0;
+  let failed = 0;
+
+  for (const sub of expiredSubs) {
+    try {
+      await removeUserFromChannel(sub.channelId, sub.userId);
+      removed++;
+    } catch {
+      failed++;
+    }
+  }
+
+  return { removed, failed };
+}

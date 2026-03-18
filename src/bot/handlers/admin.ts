@@ -6,6 +6,7 @@ import { InlineKeyboard } from "grammy";
 import { isAdmin } from "@/bot/middleware/auth";
 import dbConnect from "@/lib/db";
 import Plan from "@/models/Plan";
+import { cleanupExpiredFromChannel } from "@/bot/services/expiry";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -190,6 +191,30 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     } catch (error) {
       console.error("Channel update error:", error);
       await ctx.reply(`${EMOJI.CANCEL} Failed to update. Please try again.`);
+    }
+  });
+
+  // /cleanup command — remove all expired subscribers from channel
+  bot.command("cleanup", async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) {
+      await ctx.reply("You are not authorized.");
+      return;
+    }
+    const msg = await ctx.reply(`${EMOJI.HOURGLASS} Running cleanup — removing expired subscribers from channel...`);
+    try {
+      const { removed, failed } = await cleanupExpiredFromChannel();
+      await ctx.api.editMessageText(
+        ctx.chat.id,
+        msg.message_id,
+        `${EMOJI.SUCCESS} <b>Cleanup complete</b>\n\n` +
+          `Removed: <b>${removed}</b>\n` +
+          `Failed (already left/not found): <b>${failed}</b>`,
+        { parse_mode: "HTML" }
+      );
+    } catch (err) {
+      console.error("Cleanup error:", err);
+      await ctx.reply(`${EMOJI.CANCEL} Cleanup failed. Check logs.`);
     }
   });
 
