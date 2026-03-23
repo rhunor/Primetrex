@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
+import { Loader2, Plus, ToggleLeft, ToggleRight, Trash2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function generateCouponCode(): string {
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // no I/O to avoid confusion
+  const digits = "0123456789";
+  let code = "";
+  for (let i = 0; i < 3; i++) code += letters[Math.floor(Math.random() * letters.length)];
+  for (let i = 0; i < 3; i++) code += digits[Math.floor(Math.random() * digits.length)];
+  return code;
+}
 
 interface Coupon {
   _id: string;
@@ -33,11 +42,15 @@ export default function AdminCouponsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    code: "",
+    code: generateCouponCode(),
     discountType: "fixed" as "fixed" | "percentage",
     discountValue: "",
     expiresAt: "",
   });
+
+  const resetForm = useCallback(() => {
+    setForm({ code: generateCouponCode(), discountType: "fixed", discountValue: "", expiresAt: "" });
+  }, []);
 
   async function fetchCoupons() {
     setLoading(true);
@@ -70,7 +83,7 @@ export default function AdminCouponsPage() {
       setError(data.error);
     } else {
       setShowForm(false);
-      setForm({ code: "", discountType: "fixed", discountValue: "", expiresAt: "" });
+      resetForm();
       fetchCoupons();
     }
     setCreating(false);
@@ -92,13 +105,14 @@ export default function AdminCouponsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 w-full max-w-3xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Coupon Codes</h1>
-          <p className="text-muted-foreground mt-1">Generate and manage discount codes for subscribers.</p>
+          <h1 className="text-xl sm:text-2xl font-bold font-heading text-foreground">Coupon Codes</h1>
+          <p className="text-sm text-muted-foreground mt-1">Generate and manage discount codes for subscribers.</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+        <Button onClick={() => { resetForm(); setShowForm(true); }} className="gap-2 w-full sm:w-auto shrink-0">
           <Plus className="h-4 w-4" />
           New Coupon
         </Button>
@@ -106,23 +120,33 @@ export default function AdminCouponsPage() {
 
       {/* Create form */}
       {showForm && (
-        <form onSubmit={handleCreate} className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <form onSubmit={handleCreate} className="rounded-2xl border border-border bg-card p-4 sm:p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Create Coupon</h2>
 
           {error && <p className="text-sm text-danger">{error}</p>}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">Code</label>
-              <input
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm uppercase"
-                placeholder="e.g. PROMO50"
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                required
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Generated code */}
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-sm font-medium text-foreground">Generated Code</label>
+              <div className="flex gap-2 items-center">
+                <span className="flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm font-mono font-bold tracking-widest text-foreground">
+                  {form.code}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForm({ ...form, code: generateCouponCode() })}
+                  title="Generate new code"
+                  className="shrink-0"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
+            {/* Discount type */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground">Discount Type</label>
               <select
@@ -135,6 +159,7 @@ export default function AdminCouponsPage() {
               </select>
             </div>
 
+            {/* Discount value */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground">
                 {form.discountType === "fixed" ? "Amount (₦)" : "Percentage (%)"}
@@ -154,8 +179,9 @@ export default function AdminCouponsPage() {
               )}
             </div>
 
-            <div className="space-y-1 col-span-2">
-              <label className="text-sm font-medium text-foreground">Expires At (blank = never)</label>
+            {/* Expiry */}
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-sm font-medium text-foreground">Expires At <span className="text-muted-foreground font-normal">(leave blank = never expires)</span></label>
               <input
                 type="date"
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
@@ -165,12 +191,12 @@ export default function AdminCouponsPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" disabled={creating} className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button type="submit" disabled={creating} className="gap-2 w-full sm:w-auto">
               {creating && <Loader2 className="h-4 w-4 animate-spin" />}
               Create Coupon
             </Button>
-            <Button type="button" variant="outline" onClick={() => { setShowForm(false); setError(null); }}>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => { setShowForm(false); setError(null); resetForm(); }}>
               Cancel
             </Button>
           </div>
@@ -189,22 +215,26 @@ export default function AdminCouponsPage() {
       ) : (
         <div className="space-y-3">
           {coupons.map((c) => (
-            <div key={c._id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4">
+            <div key={c._id} className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="space-y-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-foreground">{c.code}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono font-bold text-foreground tracking-wider">{c.code}</span>
                   <span className={cn(
-                    "px-2 py-0.5 rounded-full text-xs font-semibold",
+                    "px-2 py-0.5 rounded-full text-xs font-semibold shrink-0",
                     c.isActive ? "bg-secondary/20 text-secondary-dark" : "bg-muted text-muted-foreground"
                   )}>
                     {c.isActive ? "Active" : "Inactive"}
                   </span>
+                  {c.timesUsed > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground shrink-0">
+                      Used
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {c.discountType === "fixed"
                     ? `${formatNaira(c.discountValue)} off`
-                    : `${c.discountValue}% off${c.discountValue === 100 ? " (free renewal)" : ""}`}
-                  {c.timesUsed > 0 ? " · Used" : " · Not used yet"}
+                    : `${c.discountValue}% off${c.discountValue === 100 ? " · free renewal" : ""}`}
                   {c.expiresAt ? ` · expires ${formatDate(c.expiresAt)}` : ""}
                 </p>
               </div>
