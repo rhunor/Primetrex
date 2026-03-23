@@ -325,10 +325,9 @@ export function registerSubscribeHandlers(bot: Bot<BotContext>) {
     );
   });
 
-  // Skip coupon — proceed directly
+  // Skip coupon — proceed directly (also used for "Continue" after coupon accepted)
   bot.callbackQuery(CALLBACK.PAYMENT_COUPON_SKIP, async (ctx) => {
     await ctx.answerCallbackQuery();
-    ctx.session.pendingPaymentCouponCode = undefined;
     await ctx.editMessageText(
       `${EMOJI.HOURGLASS} Preparing your payment link...`,
       { parse_mode: "HTML" }
