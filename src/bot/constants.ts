@@ -112,6 +112,11 @@ export const CALLBACK = {
   PAY_KORAPAY: "pay_korapay",
   PAY_CANCEL: "pay_cancel",
 
+  // Coupon (user payment flow)
+  PAYMENT_COUPON_YES: "payment_coupon_yes",
+  PAYMENT_COUPON_SKIP: "payment_coupon_skip",
+  PAYMENT_COUPON_RETRY: "payment_coupon_retry",
+
   // Plan selection (dynamic)
   PLAN_PREFIX: "plan_",
 

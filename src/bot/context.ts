@@ -28,7 +28,8 @@ export interface SessionData {
     | "awaiting_channel_id"
     | "awaiting_channel_name"
     | "awaiting_plan_price"
-    | "awaiting_renewal_price";
+    | "awaiting_renewal_price"
+    | "awaiting_payment_coupon";
 
   // Temporary data during multi-step flows
   pendingUserId?: number;
@@ -42,6 +43,8 @@ export interface SessionData {
   pendingCouponType?: string;
   pendingCouponValue?: number;
   pendingCouponMaxUses?: number | null;
+  pendingPaymentCouponCode?: string;
+  pendingPaymentDiscount?: number;
   pendingBroadcastMessage?: string;
   pendingBroadcastMessageId?: number;
   broadcastTarget?: "all" | "channel" | "dm";

@@ -1,3 +1,4 @@
+import { InlineKeyboard } from "grammy";
 import type { Bot } from "grammy";
 import type { BotContext } from "@/bot/context";
 import { EMOJI, CALLBACK } from "@/bot/constants";
@@ -11,6 +12,7 @@ import User from "@/models/User";
 import { verifyPayment } from "@/bot/services/korapay";
 import { generateInviteLink } from "@/bot/services/invite";
 import { createBotPaymentAndShowLink } from "@/bot/handlers/subscribe";
+import { validateCoupon } from "@/lib/coupon";
 
 // ── Core verification logic ───────────────────────────────────────────────────
 
@@ -167,8 +169,57 @@ export function registerPaymentHandlers(bot: Bot<BotContext>) {
     );
   });
 
-  // Handle typed messages — referral code step OR payment reference step
+  // Handle typed messages — coupon, referral code, OR payment reference step
   bot.on("message:text", async (ctx, next) => {
+    // ── Payment coupon step ───────────────────────────────────────────────────
+    if (ctx.session.step === "awaiting_payment_coupon") {
+      const code = ctx.message.text.trim().toUpperCase();
+      const telegramId = ctx.from!.id.toString();
+      ctx.session.step = undefined;
+
+      // Get base price to validate against
+      await dbConnect();
+      const plan = await Plan.findOne({ isActive: true });
+      if (!plan) {
+        await ctx.reply(`${EMOJI.CANCEL} No active plan found.`);
+        return;
+      }
+      const planId = ctx.session.pendingPlanId;
+      const isRenewal = !!planId;
+      const basePrice = isRenewal ? plan.renewalPrice : plan.price;
+
+      const result = await validateCoupon(code, basePrice, telegramId);
+      if (!result.valid) {
+        await ctx.reply(
+          `${EMOJI.CANCEL} <b>Invalid coupon:</b> ${result.error}\n\n` +
+          `Try again or proceed without a coupon.`,
+          {
+            parse_mode: "HTML",
+            reply_markup: new InlineKeyboard()
+              .text(`${EMOJI.COUPONS} Try another code`, CALLBACK.PAYMENT_COUPON_RETRY)
+              .row()
+              .text(`${EMOJI.ARROW} Proceed without coupon`, CALLBACK.PAYMENT_COUPON_SKIP),
+          }
+        );
+        return;
+      }
+
+      ctx.session.pendingPaymentCouponCode = code;
+      const discountText = result.finalAmount === 0
+        ? `${EMOJI.GIFT} <b>Free renewal!</b> You pay nothing this month.`
+        : `${EMOJI.GIFT} Discount applied: <b>${result.discountLabel}</b> — you pay <b>₦${result.finalAmount.toLocaleString("en-NG")}</b>`;
+
+      await ctx.reply(
+        `${EMOJI.SUCCESS} Coupon <code>${code}</code> accepted!\n\n${discountText}`,
+        {
+          parse_mode: "HTML",
+          reply_markup: new InlineKeyboard()
+            .text(`${EMOJI.ARROW} Continue to payment`, CALLBACK.PAYMENT_COUPON_SKIP),
+        }
+      );
+      return;
+    }
+
     // ── Referral code step ────────────────────────────────────────────────────
     if (ctx.session.step === "awaiting_referral_code") {
       const text = ctx.message.text.trim();

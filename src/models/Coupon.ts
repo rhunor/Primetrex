@@ -6,6 +6,7 @@ export interface ICoupon extends Document {
   discountValue: number;
   maxUses: number | null;
   timesUsed: number;
+  usedBy: string[]; // Telegram IDs or web user IDs — prevents same person using twice
   isActive: boolean;
   expiresAt: Date | null;
   createdAt: Date;
@@ -22,6 +23,7 @@ const CouponSchema = new Schema<ICoupon>(
     discountValue: { type: Number, required: true },
     maxUses: { type: Number, default: null },
     timesUsed: { type: Number, default: 0 },
+    usedBy: { type: [String], default: [] },
     isActive: { type: Boolean, default: true },
     expiresAt: { type: Date, default: null },
   },

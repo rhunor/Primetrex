@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw, Tag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SubscriptionStatus {
@@ -42,6 +42,18 @@ function SubscriptionContent() {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [couponApplied, setCouponApplied] = useState<{
+    code: string;
+    discountAmount: number;
+    finalAmount: number;
+    discountLabel: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [showCouponField, setShowCouponField] = useState(false);
+
   const fetchStatus = useCallback(() => {
     setLoading(true);
     return fetch("/api/bot-subscription/status")
@@ -51,12 +63,10 @@ function SubscriptionContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Initial load
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
 
-  // After Flutterwave redirect: confirm payment then re-fetch status
   useEffect(() => {
     const botPaid = searchParams.get("bot_paid");
     const txRef = searchParams.get("tx_ref");
@@ -79,12 +89,71 @@ function SubscriptionContent() {
     }
   }, [searchParams, router, fetchStatus]);
 
+  const baseAmount = data?.plan
+    ? data.subscription?.status === "active"
+      ? data.plan.renewalPrice
+      : data.plan.price
+    : 0;
+
+  async function handleApplyCoupon() {
+    setCouponError(null);
+    setCouponLoading(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput, amount: baseAmount }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setCouponError(json.error || "Invalid coupon.");
+      } else {
+        setCouponApplied({ code: couponInput.toUpperCase(), ...json });
+        setCouponInput("");
+      }
+    } catch {
+      setCouponError("Failed to validate coupon.");
+    }
+    setCouponLoading(false);
+  }
+
+  function removeCoupon() {
+    setCouponApplied(null);
+    setCouponError(null);
+  }
+
   async function handlePay() {
     setError(null);
     setPaying(true);
+
+    // If 100% discount, use free-renewal endpoint instead
+    if (couponApplied && couponApplied.finalAmount === 0) {
+      try {
+        const res = await fetch("/api/bot-subscription/free-renewal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ couponCode: couponApplied.code }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          setShowSuccess(true);
+          setCouponApplied(null);
+          fetchStatus();
+        } else {
+          setError(json.error || "Failed to activate subscription.");
+        }
+      } catch {
+        setError("Something went wrong. Please try again.");
+      }
+      setPaying(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/bot-subscription/initialize", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(couponApplied ? { couponCode: couponApplied.code } : {}),
       });
       const json = await res.json();
       if (res.ok && json.paymentUrl) {
@@ -109,6 +178,8 @@ function SubscriptionContent() {
       </div>
     );
   }
+
+  const finalPayAmount = couponApplied ? couponApplied.finalAmount : baseAmount;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -231,7 +302,6 @@ function SubscriptionContent() {
               </div>
             </div>
 
-            {/* Status badge */}
             {data.subscription && (
               <span
                 className={cn(
@@ -281,20 +351,97 @@ function SubscriptionContent() {
             </div>
           )}
 
-          {/* Price and pay button */}
+          {/* Price and pay section */}
           {data.plan && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {data.subscription?.status === "active" ? "Renewal price" : "Subscription price"}
-                </span>
-                <span className="text-xl font-bold text-foreground">
-                  {data.subscription?.status === "active"
-                    ? formatNaira(data.plan.renewalPrice)
-                    : formatNaira(data.plan.price)}
-                  <span className="text-sm font-normal text-muted-foreground">/month</span>
-                </span>
+            <div className="space-y-4">
+              {/* Price breakdown */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {data.subscription?.status === "active" ? "Renewal price" : "Subscription price"}
+                  </span>
+                  <span className={cn(
+                    "text-xl font-bold text-foreground",
+                    couponApplied && "line-through text-muted-foreground text-base"
+                  )}>
+                    {formatNaira(baseAmount)}
+                    {!couponApplied && <span className="text-sm font-normal text-muted-foreground">/month</span>}
+                  </span>
+                </div>
+
+                {couponApplied && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-secondary-dark flex items-center gap-1">
+                        <Tag className="h-3.5 w-3.5" />
+                        {couponApplied.code} ({couponApplied.discountLabel})
+                      </span>
+                      <span className="text-secondary-dark font-medium">
+                        -{formatNaira(couponApplied.discountAmount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border pt-1 mt-1">
+                      <span className="text-sm font-semibold text-foreground">Total</span>
+                      <span className="text-xl font-bold text-foreground">
+                        {finalPayAmount === 0 ? "FREE" : formatNaira(finalPayAmount)}
+                        <span className="text-sm font-normal text-muted-foreground">/month</span>
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
+
+              {/* Coupon code section */}
+              {!couponApplied && (
+                <div>
+                  {!showCouponField ? (
+                    <button
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={() => setShowCouponField(true)}
+                    >
+                      <Tag className="h-3 w-3" />
+                      Have a coupon code?
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm uppercase placeholder:normal-case placeholder:text-muted-foreground"
+                          placeholder="Enter coupon code"
+                          value={couponInput}
+                          onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
+                          onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponInput.trim()}
+                        >
+                          {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setShowCouponField(false); setCouponError(null); setCouponInput(""); }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {couponError && <p className="text-xs text-danger">{couponError}</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {couponApplied && (
+                <button
+                  className="text-xs text-muted-foreground hover:text-danger flex items-center gap-1"
+                  onClick={removeCoupon}
+                >
+                  <X className="h-3 w-3" />
+                  Remove coupon
+                </button>
+              )}
 
               <Button
                 className="w-full gradient-primary text-white font-semibold py-3"
@@ -304,12 +451,14 @@ function SubscriptionContent() {
                 {paying ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Redirecting to payment...
+                    {finalPayAmount === 0 ? "Activating..." : "Redirecting to payment..."}
                   </>
+                ) : finalPayAmount === 0 ? (
+                  "Activate Free Renewal"
                 ) : data.subscription?.status === "active" ? (
-                  `Renew — ${formatNaira(data.plan.renewalPrice)}`
+                  `Renew — ${formatNaira(finalPayAmount)}`
                 ) : (
-                  `Subscribe — ${formatNaira(data.plan.price)}`
+                  `Subscribe — ${formatNaira(finalPayAmount)}`
                 )}
               </Button>
             </div>

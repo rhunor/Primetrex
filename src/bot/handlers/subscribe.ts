@@ -17,6 +17,8 @@ import {
   generateTxRef,
 } from "@/bot/services/korapay";
 import { botConfig } from "@/bot/config";
+import { validateCoupon, applyCouponUsage } from "@/lib/coupon";
+import { generateInviteLink, sendInviteDM } from "@/bot/services/invite";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -141,14 +143,63 @@ export async function createBotPaymentAndShowLink(ctx: BotContext) {
     }
   }
 
+  // Apply coupon discount from session
+  const couponCode = ctx.session.pendingPaymentCouponCode;
+  if (couponCode) {
+    const couponResult = await validateCoupon(couponCode, price, userIdStr);
+    if (couponResult.valid) {
+      price = couponResult.finalAmount;
+      ctx.session.pendingPaymentDiscount = couponResult.discountAmount;
+    }
+    ctx.session.pendingPaymentCouponCode = undefined;
+  }
+
   price = Math.max(price, 0);
 
   const txRef = generateTxRef(userId);
   const referralCode = ctx.session.pendingReferralCode ?? null;
 
-  // Clear session referral fields after reading
+  // Clear session fields after reading
   ctx.session.pendingReferralCode = undefined;
   ctx.session.pendingIsRenewal = undefined;
+  ctx.session.pendingPaymentDiscount = undefined;
+
+  // Handle free renewal (100% coupon) — skip Korapay entirely
+  if (price === 0) {
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+    const existingSub = await BotSubscriber.findOne({ userId: userIdStr, channelId: plan.channelId, status: "active" });
+    if (existingSub) {
+      existingSub.expiryDate = new Date(existingSub.expiryDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+      await existingSub.save();
+    } else {
+      await BotSubscriber.create({
+        userId: userIdStr,
+        planId: plan._id,
+        channelId: plan.channelId,
+        startDate: now,
+        expiryDate,
+        status: "active",
+        addedBy: "coupon",
+      });
+    }
+
+    if (couponCode) await applyCouponUsage(couponCode, userIdStr);
+
+    try {
+      const inviteLink = await generateInviteLink(plan.channelId);
+      await sendInviteDM(userIdStr, plan.channelName, inviteLink);
+    } catch { /* silent */ }
+
+    await ctx.reply(
+      `${EMOJI.SUCCESS} <b>Free Renewal Activated!</b>\n\n` +
+      `Your coupon code gave you a free month of access to <b>${plan.channelName}</b>.\n\n` +
+      `Check your messages — your invite link has been sent.`,
+      { parse_mode: "HTML" }
+    );
+    return;
+  }
 
   // Create payment record
   await BotPayment.create({
@@ -160,6 +211,8 @@ export async function createBotPaymentAndShowLink(ctx: BotContext) {
     status: "pending",
     referralCode,
   });
+
+  if (couponCode) await applyCouponUsage(couponCode, userIdStr);
 
   try {
     const paymentUrl = await generatePaymentLink({
@@ -204,12 +257,18 @@ async function handlePayKorapay(ctx: BotContext) {
   ctx.session.pendingIsRenewal = isRenewal;
 
   if (isRenewal) {
-    // Renewals skip the referral code step
+    // Ask if user has a coupon code before generating payment link
     await ctx.editMessageText(
-      `${EMOJI.HOURGLASS} Preparing your payment link...`,
-      { parse_mode: "HTML" }
+      `${EMOJI.COUPONS} <b>Do you have a coupon code?</b>\n\n` +
+      `You can apply a discount coupon for your renewal.`,
+      {
+        parse_mode: "HTML",
+        reply_markup: new InlineKeyboard()
+          .text(`${EMOJI.SUCCESS} Yes, I have a code`, CALLBACK.PAYMENT_COUPON_YES)
+          .row()
+          .text(`${EMOJI.ARROW} No, proceed to payment`, CALLBACK.PAYMENT_COUPON_SKIP),
+      }
     );
-    await createBotPaymentAndShowLink(ctx);
     return;
   }
 
@@ -253,5 +312,37 @@ export function registerSubscribeHandlers(bot: Bot<BotContext>) {
   bot.callbackQuery(CALLBACK.PAY_CANCEL, async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText("Subscription cancelled.");
+  });
+
+  // User has a coupon code — prompt for input
+  bot.callbackQuery(CALLBACK.PAYMENT_COUPON_YES, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    ctx.session.step = "awaiting_payment_coupon";
+    await ctx.editMessageText(
+      `${EMOJI.COUPONS} <b>Enter your coupon code:</b>\n\n` +
+      `Type your coupon code below and send it as a message.`,
+      { parse_mode: "HTML" }
+    );
+  });
+
+  // Skip coupon — proceed directly
+  bot.callbackQuery(CALLBACK.PAYMENT_COUPON_SKIP, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    ctx.session.pendingPaymentCouponCode = undefined;
+    await ctx.editMessageText(
+      `${EMOJI.HOURGLASS} Preparing your payment link...`,
+      { parse_mode: "HTML" }
+    );
+    await createBotPaymentAndShowLink(ctx);
+  });
+
+  // Retry coupon entry
+  bot.callbackQuery(CALLBACK.PAYMENT_COUPON_RETRY, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    ctx.session.step = "awaiting_payment_coupon";
+    await ctx.editMessageText(
+      `${EMOJI.COUPONS} <b>Enter your coupon code:</b>`,
+      { parse_mode: "HTML" }
+    );
   });
 }
