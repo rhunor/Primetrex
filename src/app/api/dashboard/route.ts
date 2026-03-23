@@ -55,7 +55,7 @@ export async function GET() {
     const totalEarnings = tier1Earnings + tier2Earnings;
 
     const activeReferrals = [...tier1Referrals, ...tier2Referrals].filter(
-      (r) => r.status === "active"
+      (r) => r.status === "active" && r.referredUserId !== null
     ).length;
 
     const totalWithdrawn = withdrawals
@@ -90,18 +90,14 @@ export async function GET() {
       });
     }
 
-    // Format recent referrals
-    const recentReferrals = recentReferralDocs.map((r) => {
-      const referred = r.referredUserId as unknown as {
-        _id: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-      };
+    type PopulatedUser = { _id: string; firstName: string; lastName: string; email: string };
+
+    function formatReferral(r: typeof recentReferralDocs[number]) {
+      const referred = r.referredUserId as unknown as PopulatedUser | null;
+      if (!referred) return null;
       const referralEarnings = commissions
         .filter((c) => c.sourceUserId?.toString() === referred._id.toString())
         .reduce((sum, c) => sum + c.amount, 0);
-
       return {
         id: r._id.toString(),
         name: `${referred.firstName} ${referred.lastName}`,
@@ -111,30 +107,15 @@ export async function GET() {
         earnings: referralEarnings,
         date: r.createdAt,
       };
-    });
+    }
 
-    // Format all referrals for the referrals page
-    const allReferrals = [...tier1Referrals, ...tier2Referrals].map((r) => {
-      const referred = r.referredUserId as unknown as {
-        _id: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-      };
-      const referralEarnings = commissions
-        .filter((c) => c.sourceUserId?.toString() === referred._id.toString())
-        .reduce((sum, c) => sum + c.amount, 0);
+    // Format recent referrals — skip any whose user was deleted
+    const recentReferrals = recentReferralDocs.map(formatReferral).filter(Boolean);
 
-      return {
-        id: r._id.toString(),
-        name: `${referred.firstName} ${referred.lastName}`,
-        email: referred.email,
-        tier: r.tier,
-        status: r.status,
-        earnings: referralEarnings,
-        date: r.createdAt,
-      };
-    });
+    // Format all referrals for the referrals page — skip deleted users
+    const allReferrals = [...tier1Referrals, ...tier2Referrals]
+      .map(formatReferral)
+      .filter(Boolean);
 
     // Format earnings history
     const earningsHistory = commissions
