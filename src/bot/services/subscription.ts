@@ -108,15 +108,28 @@ export async function manualActivateSubscriber(params: {
     return { success: false, message: "Plan not found." };
   }
 
-  // Check for duplicate
+  // Check for existing active subscription
   const existing = await BotSubscriber.findOne({
     userId: params.userId,
     channelId: plan.channelId,
     status: "active",
   });
 
+  // If already active, just resend invite link (don't block admin)
   if (existing) {
-    return { success: false, message: "duplicate" };
+    try {
+      const inviteLink = await generateInviteLink(plan.channelId);
+      const dmSent = await sendInviteDM(params.userId, plan.channelName, inviteLink);
+      return {
+        success: true,
+        message: dmSent ? "invite_sent" : "invite_failed",
+        inviteLink,
+        subscriber: existing,
+      };
+    } catch (error) {
+      console.error("Failed to resend invite link:", error);
+      return { success: false, message: "Failed to generate invite link." };
+    }
   }
 
   const subscriber = await BotSubscriber.create({
