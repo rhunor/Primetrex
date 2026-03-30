@@ -10,7 +10,8 @@ export interface IBotSubscriber extends Document {
   startDate: Date;
   expiryDate: Date;
   status: "active" | "expired" | "cancelled";
-  addedBy: "payment" | "manual" | "special";
+  addedBy: "payment" | "manual" | "special" | "coupon";
+  inviteSentAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,9 +37,10 @@ const BotSubscriberSchema = new Schema<IBotSubscriber>(
     },
     addedBy: {
       type: String,
-      enum: ["payment", "manual", "special"],
+      enum: ["payment", "manual", "special", "coupon"],
       default: "payment",
     },
+    inviteSentAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
