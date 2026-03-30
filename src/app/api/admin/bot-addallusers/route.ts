@@ -29,13 +29,7 @@ async function runAddAllUsers(chatId: number, messageId: number) {
 
     for (const userId of uniqueUserIds) {
       try {
-        const userSubs = await BotSubscriber.find({ userId, status: "active" });
-        const userChannelIds = new Set(userSubs.map((s) => s.channelId));
-        const missingChannels = plan.channels.filter((c: { channelId: string }) => !userChannelIds.has(c.channelId));
-
-        if (missingChannels.length === 0) continue;
-
-        const invites = await generateMultiChannelInvites(missingChannels);
+        const invites = await generateMultiChannelInvites(plan.channels);
         if (invites.length > 0) {
           await sendMultiChannelInviteDM(userId, invites);
           sent++;
@@ -49,7 +43,7 @@ async function runAddAllUsers(chatId: number, messageId: number) {
     await bot.api.editMessageText(
       chatId,
       messageId,
-      `${EMOJI.SUCCESS} <b>Done!</b>\n\nInvite links sent to: <b>${sent}</b> subscribers\nFailed/skipped: <b>${failed + (uniqueUserIds.length - sent - failed)}</b> (already in all channels)`,
+      `${EMOJI.SUCCESS} <b>Done!</b>\n\nInvite links sent to: <b>${sent}</b> subscribers\nFailed: <b>${failed}</b>`,
       { parse_mode: "HTML" }
     );
   } catch (err) {
