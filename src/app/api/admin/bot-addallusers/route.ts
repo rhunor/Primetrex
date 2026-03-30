@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import dbConnect from "@/lib/db";
 import BotSubscriber from "@/models/BotSubscriber";
 import Plan from "@/models/Plan";
@@ -6,26 +7,20 @@ import { bot } from "@/bot/index";
 import { EMOJI } from "@/bot/constants";
 import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep } from "@/bot/services/invite";
 
-const BATCH_DELAY_MS = 500; // delay between users to avoid rate limits
+export const maxDuration = 300;
 
-export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-internal-secret");
-  if (secret !== process.env.INTERNAL_API_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+const BATCH_DELAY_MS = 400;
 
-  const { chatId, messageId } = await req.json();
-
+async function runAddAllUsers(chatId: number, messageId: number) {
   try {
     await dbConnect();
 
     const plan = await Plan.findOne({ isActive: true });
     if (!plan || !plan.channels?.length) {
       await bot.api.editMessageText(chatId, messageId, `${EMOJI.CANCEL} No channels configured on the active plan.`);
-      return NextResponse.json({ ok: true });
+      return;
     }
 
-    // Get unique active subscriber user IDs
     const activeSubs = await BotSubscriber.find({ status: "active" });
     const uniqueUserIds = [...new Set(activeSubs.map((s) => s.userId))];
 
@@ -34,10 +29,9 @@ export async function POST(req: NextRequest) {
 
     for (const userId of uniqueUserIds) {
       try {
-        // Only send links for channels the user doesn't already have an active record for
         const userSubs = await BotSubscriber.find({ userId, status: "active" });
         const userChannelIds = new Set(userSubs.map((s) => s.channelId));
-        const missingChannels = plan.channels.filter((c) => !userChannelIds.has(c.channelId));
+        const missingChannels = plan.channels.filter((c: { channelId: string }) => !userChannelIds.has(c.channelId));
 
         if (missingChannels.length === 0) continue;
 
@@ -55,13 +49,27 @@ export async function POST(req: NextRequest) {
     await bot.api.editMessageText(
       chatId,
       messageId,
-      `${EMOJI.SUCCESS} <b>Done!</b>\n\nInvite links sent to: <b>${sent}</b> subscribers\nFailed: <b>${failed}</b>`,
+      `${EMOJI.SUCCESS} <b>Done!</b>\n\nInvite links sent to: <b>${sent}</b> subscribers\nFailed/skipped: <b>${failed + (uniqueUserIds.length - sent - failed)}</b> (already in all channels)`,
       { parse_mode: "HTML" }
     );
   } catch (err) {
     console.error("addallusers error:", err);
-    await bot.api.sendMessage(chatId, `${EMOJI.CANCEL} Failed. Check logs.`);
+    try {
+      await bot.api.sendMessage(chatId, `${EMOJI.CANCEL} Failed mid-run. Check Vercel logs.`);
+    } catch { /* silent */ }
   }
+}
+
+export async function POST(req: NextRequest) {
+  const secret = req.headers.get("x-internal-secret");
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { chatId, messageId } = await req.json();
+
+  // Return 200 immediately — run the long work in the background
+  waitUntil(runAddAllUsers(chatId, messageId));
 
   return NextResponse.json({ ok: true });
 }
