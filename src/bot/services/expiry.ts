@@ -6,6 +6,9 @@ import { removeUserFromChannel } from "./invite";
 import { bot } from "@/bot/index";
 import { sendSubscriptionExpiryReminderEmail } from "@/lib/email";
 
+// Legacy channel — left untouched, bot no longer manages membership here
+const LEGACY_CHANNEL_ID = "-1003699209692";
+
 /**
  * Check for expired subscriptions and send reminders.
  * Called from cron job endpoint.
@@ -30,15 +33,17 @@ export async function checkExpiredSubscriptions(): Promise<{
     sub.status = "expired";
     await sub.save();
 
-    try {
-      await removeUserFromChannel(sub.channelId, sub.userId);
-    } catch (err: unknown) {
-      const description =
-        err && typeof err === "object" && "description" in err
-          ? String((err as { description: string }).description)
-          : "";
-      if (!description.includes("PARTICIPANT_ID_INVALID") && !description.includes("USER_NOT_PARTICIPANT")) {
-        console.error(`Failed to remove user ${sub.userId}:`, err);
+    if (sub.channelId !== LEGACY_CHANNEL_ID) {
+      try {
+        await removeUserFromChannel(sub.channelId, sub.userId);
+      } catch (err: unknown) {
+        const description =
+          err && typeof err === "object" && "description" in err
+            ? String((err as { description: string }).description)
+            : "";
+        if (!description.includes("PARTICIPANT_ID_INVALID") && !description.includes("USER_NOT_PARTICIPANT")) {
+          console.error(`Failed to remove user ${sub.userId}:`, err);
+        }
       }
     }
 
@@ -135,6 +140,7 @@ export async function cleanupExpiredFromChannel(): Promise<{
   let failed = 0;
 
   for (const sub of expiredSubs) {
+    if (sub.channelId === LEGACY_CHANNEL_ID) continue;
     try {
       await removeUserFromChannel(sub.channelId, sub.userId);
       removed++;
@@ -144,7 +150,6 @@ export async function cleanupExpiredFromChannel(): Promise<{
           ? String((err as { description: string }).description)
           : "";
       if (description.includes("PARTICIPANT_ID_INVALID") || description.includes("USER_NOT_PARTICIPANT")) {
-        // User was never in the channel or already left — treat as removed
         removed++;
       } else {
         console.error(`Failed to remove user ${sub.userId} from channel ${sub.channelId}:`, err);

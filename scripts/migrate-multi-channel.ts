@@ -99,7 +99,7 @@ async function main() {
         startDate: latestSub.startDate,
         expiryDate: latestSub.expiryDate,
         status: "active",
-        addedBy: "migration",
+        addedBy: "manual",
       });
 
       created++;
