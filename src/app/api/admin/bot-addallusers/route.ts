@@ -9,7 +9,7 @@ import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep } from "@/
 
 export const maxDuration = 300;
 
-const BATCH_DELAY_MS = 400;
+const BATCH_DELAY_MS = 2000; // 2s between users — avoids Telegram 429 rate limits
 
 async function runAddAllUsers(chatId: number, messageId: number) {
   try {

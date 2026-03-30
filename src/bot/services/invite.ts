@@ -47,6 +47,26 @@ export async function sendInviteDM(
  * Generate invite links for multiple channels with rate-limit delay between each,
  * then send a single DM with all links.
  */
+async function generateInviteLinkWithRetry(channelId: string, maxRetries = 3): Promise<string> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await generateInviteLink(channelId);
+    } catch (err: unknown) {
+      const retryAfter =
+        err && typeof err === "object" && "parameters" in err
+          ? (err as { parameters?: { retry_after?: number } }).parameters?.retry_after
+          : undefined;
+
+      if (retryAfter && attempt < maxRetries - 1) {
+        await sleep((retryAfter + 1) * 1000);
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
+
 export async function generateMultiChannelInvites(
   channels: { channelId: string; channelName: string }[]
 ): Promise<{ channelId: string; channelName: string; link: string }[]> {
@@ -54,7 +74,7 @@ export async function generateMultiChannelInvites(
 
   for (const channel of channels) {
     try {
-      const link = await generateInviteLink(channel.channelId);
+      const link = await generateInviteLinkWithRetry(channel.channelId);
       results.push({ ...channel, link });
     } catch (err) {
       console.error(`Failed to generate invite for channel ${channel.channelId}:`, err);
