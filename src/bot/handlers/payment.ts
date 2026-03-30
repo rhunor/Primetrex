@@ -10,7 +10,7 @@ import BotPayment from "@/models/BotPayment";
 import Plan from "@/models/Plan";
 import User from "@/models/User";
 import { verifyPayment } from "@/bot/services/korapay";
-import { generateInviteLink } from "@/bot/services/invite";
+import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep, RATE_LIMIT_DELAY_MS } from "@/bot/services/invite";
 import { createBotPaymentAndShowLink } from "@/bot/handlers/subscribe";
 import { validateCoupon } from "@/lib/coupon";
 
@@ -68,38 +68,42 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
 
     const now = new Date();
     const durationMs = plan.durationDays * 24 * 60 * 60 * 1000;
+    const expiryDate = new Date(now.getTime() + durationMs);
+    const channels = plan.channels?.length
+      ? plan.channels
+      : [{ channelId: plan.channelId, channelName: plan.channelName }];
 
-    // Create or extend subscription
-    const existingSub = await BotSubscriber.findOne({
-      userId,
-      channelId: plan.channelId,
-      status: "active",
-    });
-
-    let expiryDate: Date;
-    if (existingSub) {
-      expiryDate = new Date(existingSub.expiryDate.getTime() + durationMs);
-      existingSub.expiryDate = expiryDate;
-      await existingSub.save();
-    } else {
-      expiryDate = new Date(now.getTime() + durationMs);
-      await BotSubscriber.create({
+    // Create or extend subscription for each channel
+    for (const channel of channels) {
+      const existingSub = await BotSubscriber.findOne({
         userId,
-        username: ctx.from?.username || null,
-        firstName: ctx.from?.first_name || null,
-        lastName: ctx.from?.last_name || null,
-        planId: plan._id,
-        channelId: plan.channelId,
-        startDate: now,
-        expiryDate,
+        channelId: channel.channelId,
         status: "active",
-        addedBy: "payment",
       });
+
+      if (existingSub) {
+        existingSub.expiryDate = new Date(existingSub.expiryDate.getTime() + durationMs);
+        await existingSub.save();
+      } else {
+        await BotSubscriber.create({
+          userId,
+          username: ctx.from?.username || null,
+          firstName: ctx.from?.first_name || null,
+          lastName: ctx.from?.last_name || null,
+          planId: plan._id,
+          channelId: channel.channelId,
+          startDate: now,
+          expiryDate,
+          status: "active",
+          addedBy: "payment",
+        });
+      }
+      await sleep(RATE_LIMIT_DELAY_MS);
     }
 
-    // Generate invite link and show to user
+    // Generate invite links for all channels and show to user
     try {
-      const inviteLink = await generateInviteLink(plan.channelId);
+      const invites = await generateMultiChannelInvites(channels);
       const expiryStr = expiryDate.toLocaleDateString("en-NG", {
         day: "2-digit",
         month: "long",
@@ -107,13 +111,16 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
         timeZone: botConfig.timezone,
       });
 
+      const linkLines = invites
+        .map((inv, i) => `${i + 1}. <b>${inv.channelName}</b>\n\u{1F517} ${inv.link}`)
+        .join("\n\n");
+
       await ctx.reply(
         `${EMOJI.SUCCESS} <b>Payment Confirmed! Welcome to Primetrex!</b>\n\n` +
-          `You now have access to <b>${plan.channelName}</b>.\n` +
           `Your subscription is active until <b>${expiryStr}</b>.\n\n` +
-          `\u{1F517} <b>Tap below to join the channel:</b>\n` +
-          `${inviteLink}\n\n` +
-          `${EMOJI.WARNING} <i>This link expires in 24 hours and can only be used once. Join now!</i>`,
+          `<b>Join your channels below:</b>\n\n` +
+          `${linkLines}\n\n` +
+          `${EMOJI.WARNING} <i>Each link expires in 24 hours and can only be used once. Join all channels now!</i>`,
         {
           parse_mode: "HTML",
           reply_markup: backButton(CALLBACK.MAIN_MENU),
@@ -122,7 +129,7 @@ async function verifyAndActivate(ctx: BotContext, paymentRef: string) {
     } catch {
       await ctx.reply(
         `${EMOJI.SUCCESS} <b>Payment Confirmed!</b>\n\n` +
-          `Your subscription is active but we couldn't generate your invite link right now.\n` +
+          `Your subscription is active but we couldn't generate your invite links right now.\n` +
           `Please contact the admin to get access.`,
         { parse_mode: "HTML" }
       );

@@ -193,6 +193,27 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     }
   });
 
+  // /addallusers command — send invite links to all active subscribers for all channels
+  bot.command("addallusers", async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) {
+      await ctx.reply("You are not authorized.");
+      return;
+    }
+    const msg = await ctx.reply(
+      `${EMOJI.HOURGLASS} Sending invite links to all active subscribers for all channels...`
+    );
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    fetch(`${appUrl}/api/admin/bot-addallusers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
+      },
+      body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
+    }).catch((err) => console.error("addallusers fetch error:", err));
+  });
+
   // /cleanup command — remove all expired subscribers from channel
   bot.command("cleanup", async (ctx) => {
     const admin = await isAdmin(ctx);

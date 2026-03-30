@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed:admin": "npx tsx scripts/seed-admin.ts",
-    "migrate:subscribers": "npx tsx scripts/migrate-old-subscribers.ts"
+    "migrate:subscribers": "npx tsx scripts/migrate-old-subscribers.ts",
+    "migrate:multi-channel": "npx tsx scripts/migrate-multi-channel.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",

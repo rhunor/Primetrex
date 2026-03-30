@@ -2,11 +2,11 @@ import dbConnect from "@/lib/db";
 import BotPayment from "@/models/BotPayment";
 import BotSubscriber from "@/models/BotSubscriber";
 import Plan from "@/models/Plan";
-import { generateInviteLink, sendInviteDM } from "./invite";
+import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep, RATE_LIMIT_DELAY_MS } from "./invite";
 
 /**
  * Activate a subscription after successful payment verification.
- * Called from Flutterwave webhook or manual "I've Paid" verification.
+ * Called from webhook or manual "I've Paid" verification.
  */
 export async function activateSubscription(txRef: string): Promise<{
   success: boolean;
@@ -30,62 +30,54 @@ export async function activateSubscription(txRef: string): Promise<{
     return { success: false, message: "Plan not found." };
   }
 
+  const channels = plan.channels?.length ? plan.channels : [{ channelId: plan.channelId, channelName: plan.channelName }];
   const now = new Date();
-  const expiryDate = new Date(
-    now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000
-  );
+  const durationMs = plan.durationDays * 24 * 60 * 60 * 1000;
+  let firstSubscriber: InstanceType<typeof BotSubscriber> | undefined;
 
-  // Check for existing active subscription
-  const existing = await BotSubscriber.findOne({
-    userId: payment.userId,
-    channelId: plan.channelId,
-    status: "active",
-  });
+  for (const channel of channels) {
+    const existing = await BotSubscriber.findOne({
+      userId: payment.userId,
+      channelId: channel.channelId,
+      status: "active",
+    });
 
-  if (existing) {
-    // Extend existing subscription
-    existing.expiryDate = new Date(
-      existing.expiryDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000
-    );
-    await existing.save();
-
-    payment.status = "successful";
-    await payment.save();
-
-    return {
-      success: true,
-      message: "Subscription extended.",
-      subscriber: existing,
-    };
+    if (existing) {
+      existing.expiryDate = new Date(existing.expiryDate.getTime() + durationMs);
+      await existing.save();
+      if (!firstSubscriber) firstSubscriber = existing;
+    } else {
+      const sub = await BotSubscriber.create({
+        userId: payment.userId,
+        planId: plan._id,
+        channelId: channel.channelId,
+        startDate: now,
+        expiryDate: new Date(now.getTime() + durationMs),
+        status: "active",
+        addedBy: "payment",
+      });
+      if (!firstSubscriber) firstSubscriber = sub;
+    }
+    await sleep(RATE_LIMIT_DELAY_MS);
   }
-
-  // Create new subscription
-  const subscriber = await BotSubscriber.create({
-    userId: payment.userId,
-    planId: plan._id,
-    channelId: plan.channelId,
-    startDate: now,
-    expiryDate,
-    status: "active",
-    addedBy: "payment",
-  });
 
   payment.status = "successful";
   await payment.save();
 
-  // Generate invite link and DM
+  // Generate invite links for all channels and send combined DM
   try {
-    const inviteLink = await generateInviteLink(plan.channelId);
-    await sendInviteDM(payment.userId, plan.channelName, inviteLink);
-    return { success: true, message: "Subscription activated.", inviteLink, subscriber };
+    const invites = await generateMultiChannelInvites(channels);
+    await sendMultiChannelInviteDM(payment.userId, invites);
+    return { success: true, message: "Subscription activated.", inviteLink: invites[0]?.link, subscriber: firstSubscriber };
   } catch (error) {
-    console.error("Failed to generate invite link:", error);
-    return { success: true, message: "Subscription activated but invite link failed.", subscriber };
+    console.error("Failed to generate invite links:", error);
+    return { success: true, message: "Subscription activated but invite links failed.", subscriber: firstSubscriber };
   }
 }
 
 /**
  * Manually activate a subscriber (admin action).
+ * Adds user to all channels on the plan. If already active, resends invite links.
  */
 export async function manualActivateSubscriber(params: {
   userId: string;
@@ -108,63 +100,48 @@ export async function manualActivateSubscriber(params: {
     return { success: false, message: "Plan not found." };
   }
 
-  // Check for existing active subscription
-  const existing = await BotSubscriber.findOne({
-    userId: params.userId,
-    channelId: plan.channelId,
-    status: "active",
-  });
+  const channels = plan.channels?.length ? plan.channels : [{ channelId: plan.channelId, channelName: plan.channelName }];
+  let firstSubscriber: InstanceType<typeof BotSubscriber> | undefined;
 
-  // If already active, just resend invite link (don't block admin)
-  if (existing) {
-    try {
-      const inviteLink = await generateInviteLink(plan.channelId);
-      const dmSent = await sendInviteDM(params.userId, plan.channelName, inviteLink);
-      return {
-        success: true,
-        message: dmSent ? "invite_sent" : "invite_failed",
-        inviteLink,
-        subscriber: existing,
-      };
-    } catch (error) {
-      console.error("Failed to resend invite link:", error);
-      return { success: false, message: "Failed to generate invite link." };
+  for (const channel of channels) {
+    const existing = await BotSubscriber.findOne({
+      userId: params.userId,
+      channelId: channel.channelId,
+      status: "active",
+    });
+
+    if (!existing) {
+      const sub = await BotSubscriber.create({
+        userId: params.userId,
+        username: params.username || null,
+        firstName: params.firstName || null,
+        lastName: params.lastName || null,
+        planId: plan._id,
+        channelId: channel.channelId,
+        startDate: params.startDate,
+        expiryDate: params.expiryDate,
+        status: "active",
+        addedBy: "manual",
+      });
+      if (!firstSubscriber) firstSubscriber = sub;
+    } else {
+      if (!firstSubscriber) firstSubscriber = existing;
     }
+    await sleep(RATE_LIMIT_DELAY_MS);
   }
 
-  const subscriber = await BotSubscriber.create({
-    userId: params.userId,
-    username: params.username || null,
-    firstName: params.firstName || null,
-    lastName: params.lastName || null,
-    planId: plan._id,
-    channelId: plan.channelId,
-    startDate: params.startDate,
-    expiryDate: params.expiryDate,
-    status: "active",
-    addedBy: "manual",
-  });
-
-  // Generate invite and DM
+  // Generate invite links for all channels and send combined DM
   try {
-    const inviteLink = await generateInviteLink(plan.channelId);
-    const dmSent = await sendInviteDM(
-      params.userId,
-      plan.channelName,
-      inviteLink
-    );
+    const invites = await generateMultiChannelInvites(channels);
+    const dmSent = await sendMultiChannelInviteDM(params.userId, invites);
     return {
       success: true,
       message: dmSent ? "invite_sent" : "invite_failed",
-      inviteLink,
-      subscriber,
+      inviteLink: invites[0]?.link,
+      subscriber: firstSubscriber,
     };
   } catch (error) {
-    console.error("Failed to generate invite link:", error);
-    return {
-      success: true,
-      message: "invite_failed",
-      subscriber,
-    };
+    console.error("Failed to generate invite links:", error);
+    return { success: true, message: "invite_failed", subscriber: firstSubscriber };
   }
 }

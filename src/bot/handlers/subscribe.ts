@@ -18,7 +18,7 @@ import {
 } from "@/bot/services/korapay";
 import { botConfig } from "@/bot/config";
 import { validateCoupon, applyCouponUsage } from "@/lib/coupon";
-import { generateInviteLink, sendInviteDM } from "@/bot/services/invite";
+import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep, RATE_LIMIT_DELAY_MS } from "@/bot/services/invite";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -78,11 +78,17 @@ export async function showSubscriptionSummary(
 
   const total = basePrice - discount;
   const planLabel = isRenewal ? "Primetrex renewal" : "Primetrex first payment";
+  const channels = plan.channels?.length
+    ? plan.channels
+    : [{ channelId: plan.channelId, channelName: plan.channelName }];
+  const channelLine = channels.length > 1
+    ? `Channels: <b>${channels.length} Primetrex channels</b>\n`
+    : `Channel: ${channels[0]?.channelName || plan.channelName}\n`;
 
   const text =
     `${EMOJI.SUBSCRIBE} <b>Subscription Summary</b>\n` +
     `Plan: <b>${planLabel}</b>\n` +
-    `Channel: ${plan.channelName}\n` +
+    channelLine +
     `Price: ${formatNaira(basePrice)}\n` +
     discountText +
     `Total: <b>${formatNaira(total)}</b>\n\n` +
@@ -167,35 +173,42 @@ export async function createBotPaymentAndShowLink(ctx: BotContext) {
   // Handle free renewal (100% coupon) — skip Korapay entirely
   if (price === 0) {
     const now = new Date();
-    const expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    const durationMs = plan.durationDays * 24 * 60 * 60 * 1000;
+    const expiryDate = new Date(now.getTime() + durationMs);
+    const channels = plan.channels?.length
+      ? plan.channels
+      : [{ channelId: plan.channelId, channelName: plan.channelName }];
 
-    const existingSub = await BotSubscriber.findOne({ userId: userIdStr, channelId: plan.channelId, status: "active" });
-    if (existingSub) {
-      existingSub.expiryDate = new Date(existingSub.expiryDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
-      await existingSub.save();
-    } else {
-      await BotSubscriber.create({
-        userId: userIdStr,
-        planId: plan._id,
-        channelId: plan.channelId,
-        startDate: now,
-        expiryDate,
-        status: "active",
-        addedBy: "coupon",
-      });
+    for (const channel of channels) {
+      const existingSub = await BotSubscriber.findOne({ userId: userIdStr, channelId: channel.channelId, status: "active" });
+      if (existingSub) {
+        existingSub.expiryDate = new Date(existingSub.expiryDate.getTime() + durationMs);
+        await existingSub.save();
+      } else {
+        await BotSubscriber.create({
+          userId: userIdStr,
+          planId: plan._id,
+          channelId: channel.channelId,
+          startDate: now,
+          expiryDate,
+          status: "active",
+          addedBy: "coupon",
+        });
+      }
+      await sleep(RATE_LIMIT_DELAY_MS);
     }
 
     if (couponCode) await applyCouponUsage(couponCode, userIdStr);
 
     try {
-      const inviteLink = await generateInviteLink(plan.channelId);
-      await sendInviteDM(userIdStr, plan.channelName, inviteLink);
+      const invites = await generateMultiChannelInvites(channels);
+      await sendMultiChannelInviteDM(userIdStr, invites);
     } catch { /* silent */ }
 
     await ctx.reply(
       `${EMOJI.SUCCESS} <b>Free Renewal Activated!</b>\n\n` +
-      `Your coupon code gave you a free month of access to <b>${plan.channelName}</b>.\n\n` +
-      `Check your messages — your invite link has been sent.`,
+      `Your coupon code gave you a free month of access to all Primetrex channels.\n\n` +
+      `Check your messages — your invite links have been sent.`,
       { parse_mode: "HTML" }
     );
     return;
@@ -225,7 +238,7 @@ export async function createBotPaymentAndShowLink(ctx: BotContext) {
 
     const text =
       `${EMOJI.SUBSCRIBE} <b>Payment Ready</b>\n` +
-      `Plan: ${plan.channelName}\n` +
+      `Plan: Primetrex Community\n` +
       `Amount: <b>${formatNaira(price)}</b>\n\n` +
       `Click below to complete your payment.`;
 
