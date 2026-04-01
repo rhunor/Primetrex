@@ -8,8 +8,7 @@ function sleep(ms: number) {
 
 export async function generateInviteLink(channelId: string): Promise<string> {
   const invite = await bot.api.createChatInviteLink(Number(channelId), {
-    member_limit: 1,
-    expire_date: Math.floor(Date.now() / 1000) + 86400, // 24 hours
+    member_limit: 1, // expires after 1 use only — no time expiry
   });
 
   return invite.invite_link;
