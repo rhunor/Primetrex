@@ -26,33 +26,26 @@ export function registerAnalyticsHandlers(bot: Bot<BotContext>) {
     startOfWeek.setHours(0, 0, 0, 0);
 
     const [
-      totalSubs,
-      activeSubs,
-      expiredSubs,
+      allUserIds,
+      activeUserIds,
+      expiredUserIds,
+      weeklyNewUserIds,
       monthlyPayments,
       allTimePayments,
-      weeklyNew,
       monthlyRenewals,
     ] = await Promise.all([
-      BotSubscriber.countDocuments(),
-      BotSubscriber.countDocuments({ status: "active" }),
-      BotSubscriber.countDocuments({ status: "expired" }),
+      BotSubscriber.distinct("userId"),
+      BotSubscriber.distinct("userId", { status: "active" }),
+      BotSubscriber.distinct("userId", { status: "expired" }),
+      BotSubscriber.distinct("userId", { createdAt: { $gte: startOfWeek } }),
       BotPayment.aggregate([
-        {
-          $match: {
-            status: "successful",
-            createdAt: { $gte: startOfMonth },
-          },
-        },
+        { $match: { status: "successful", createdAt: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
       BotPayment.aggregate([
         { $match: { status: "successful" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
-      BotSubscriber.countDocuments({
-        createdAt: { $gte: startOfWeek },
-      }),
       BotPayment.countDocuments({
         status: "successful",
         paymentType: "renewal",
@@ -65,13 +58,13 @@ export function registerAnalyticsHandlers(bot: Bot<BotContext>) {
 
     const text =
       `${EMOJI.ANALYTICS} <b>Analytics Dashboard</b>\n\n` +
-      `${EMOJI.CHART} Total Subscribers: ${totalSubs}\n` +
-      `${EMOJI.ACTIVE} Active: ${activeSubs}\n` +
-      `${EMOJI.EXPIRED} Expired: ${expiredSubs}\n` +
-      `${EMOJI.MONEY} Revenue This Month: ${formatNaira(monthlyRevenue)}\n` +
-      `${EMOJI.MONEY} Revenue All Time: ${formatNaira(totalRevenue)}\n` +
-      `${EMOJI.CALENDAR} New This Week: ${weeklyNew}\n` +
-      `${EMOJI.RENEW} Renewals This Month: ${monthlyRenewals}`;
+      `${EMOJI.CHART} <b>Unique Users (all time):</b> ${allUserIds.length}\n` +
+      `${EMOJI.ACTIVE} Active subscribers: ${activeUserIds.length}\n` +
+      `${EMOJI.EXPIRED} Expired subscribers: ${expiredUserIds.length}\n` +
+      `${EMOJI.CALENDAR} New this week: ${weeklyNewUserIds.length}\n` +
+      `${EMOJI.MONEY} Revenue this month: ${formatNaira(monthlyRevenue)}\n` +
+      `${EMOJI.MONEY} Revenue all time: ${formatNaira(totalRevenue)}\n` +
+      `${EMOJI.RENEW} Renewals this month: ${monthlyRenewals}`;
 
     await ctx.editMessageText(text, {
       parse_mode: "HTML",
