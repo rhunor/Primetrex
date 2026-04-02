@@ -203,7 +203,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     const msg = await ctx.reply(
       `${EMOJI.HOURGLASS} Sending invite links to all active subscribers for all channels...`
     );
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
     fetch(`${appUrl}/api/admin/bot-addallusers`, {
       method: "POST",
       headers: {
@@ -211,6 +211,8 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
         "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
       },
       body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
+    }).then(async (res) => {
+      if (!res.ok) console.error(`addallusers fetch failed: ${res.status} ${await res.text()}`);
     }).catch((err) => console.error("addallusers fetch error:", err));
   });
 
@@ -224,7 +226,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     const msg = await ctx.reply(
       `${EMOJI.HOURGLASS} Checking channel membership for all active subscribers...`
     );
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
     fetch(`${appUrl}/api/admin/bot-checkjoined`, {
       method: "POST",
       headers: {
@@ -232,6 +234,8 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
         "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
       },
       body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
+    }).then(async (res) => {
+      if (!res.ok) console.error(`checkjoined fetch failed: ${res.status} ${await res.text()}`);
     }).catch((err) => console.error("checkjoined fetch error:", err));
   });
 
@@ -246,7 +250,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
       `${EMOJI.HOURGLASS} Running cleanup — removing expired subscribers from channel...`
     );
     // Fire-and-forget to a separate API endpoint to avoid webhook 10s timeout
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
     fetch(`${appUrl}/api/admin/bot-cleanup`, {
       method: "POST",
       headers: {
@@ -254,6 +258,8 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
         "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
       },
       body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
+    }).then(async (res) => {
+      if (!res.ok) console.error(`cleanup fetch failed: ${res.status} ${await res.text()}`);
     }).catch((err) => console.error("Cleanup fetch error:", err));
   });
 
