@@ -6,6 +6,7 @@ import { InlineKeyboard } from "grammy";
 import { isAdmin } from "@/bot/middleware/auth";
 import dbConnect from "@/lib/db";
 import Plan from "@/models/Plan";
+import { triggerAddAllUsers } from "@/bot/services/adminJobs";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -203,17 +204,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     const msg = await ctx.reply(
       `${EMOJI.HOURGLASS} Sending invite links to all active subscribers for all channels...`
     );
-    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
-    fetch(`${appUrl}/api/admin/bot-addallusers`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
-      },
-      body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
-    }).then(async (res) => {
-      if (!res.ok) console.error(`addallusers fetch failed: ${res.status} ${await res.text()}`);
-    }).catch((err) => console.error("addallusers fetch error:", err));
+    triggerAddAllUsers(ctx.chat.id, msg.message_id);
   });
 
   // /checkjoined command — check who hasn't joined new channels and reset their inviteSentAt
