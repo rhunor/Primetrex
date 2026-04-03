@@ -57,7 +57,7 @@ async function setupBotCommands() {
     console.error("Failed to set bot commands:", err);
   }
 }
-setupBotCommands();
+if (botConfig.token) setupBotCommands();
 
 // Error handler
 bot.catch((err) => {
