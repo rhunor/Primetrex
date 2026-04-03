@@ -124,10 +124,6 @@ function CopyTradingPageContent() {
               Trade Smarter with{" "}
               <span className="text-secondary">Expert Guidance</span>
             </h1>
-            <p className="mt-6 text-lg text-white/60 leading-relaxed">
-              Get one-time lifetime access to the Primetrex copy trading platform. Mirror
-              verified traders, grow your portfolio, and get dedicated support from our team.
-            </p>
             <div className="mt-8 flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2">
                 <CheckCircle className="h-4 w-4 text-secondary shrink-0" />
@@ -146,67 +142,12 @@ function CopyTradingPageContent() {
       <section className="py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-            {/* Features */}
+            {/* Payment form — first */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <div>
-                <h2 className="text-3xl font-bold font-heading text-foreground">
-                  What You Get
-                </h2>
-                <p className="mt-3 text-muted-foreground">
-                  Everything you need to start copy trading with confidence.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {features.map((feature, i) => (
-                  <motion.div
-                    key={feature.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.1 }}
-                    className="flex items-start gap-4"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-                      <feature.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="rounded-2xl border border-secondary/30 bg-secondary/5 p-6">
-                <p className="text-sm text-muted-foreground">
-                  After payment, you&apos;ll receive a confirmation email with instructions.
-                  Contact{" "}
-                  <a
-                    href="https://t.me/Primetrexsupport"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-secondary hover:underline"
-                  >
-                    @Primetrexsupport
-                  </a>{" "}
-                  on Telegram to complete your onboarding.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Payment form */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
             >
               <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
                 {/* Card header */}
@@ -268,6 +209,61 @@ function CopyTradingPageContent() {
                     Secured by Korapay. Your payment is encrypted and safe.
                   </p>
                 </form>
+              </div>
+            </motion.div>
+
+            {/* Features — second */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="space-y-8"
+            >
+              <div>
+                <h2 className="text-3xl font-bold font-heading text-foreground">
+                  What You Get
+                </h2>
+                <p className="mt-3 text-muted-foreground">
+                  Everything you need to start copy trading with confidence.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {features.map((feature, i) => (
+                  <motion.div
+                    key={feature.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.1 }}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+                      <feature.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{feature.title}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="rounded-2xl border border-secondary/30 bg-secondary/5 p-6">
+                <p className="text-sm text-muted-foreground">
+                  After payment, you&apos;ll receive a confirmation email with instructions.
+                  Contact{" "}
+                  <a
+                    href="https://t.me/Primetrexsupport"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-secondary hover:underline"
+                  >
+                    @Primetrexsupport
+                  </a>{" "}
+                  on Telegram to complete your onboarding.
+                </p>
               </div>
             </motion.div>
           </div>

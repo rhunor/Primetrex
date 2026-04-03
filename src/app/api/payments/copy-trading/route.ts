@@ -26,14 +26,28 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
+    const normalizedEmail = email.trim().toLowerCase();
     const paymentRef = generateCopyTradingRef();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    // If no referralCode in this request, look up a previous successful payment
+    // for this email to carry the original referrer forward (renewal tracking).
+    let resolvedReferralCode: string | null = referralCode?.trim().toUpperCase() || null;
+    if (!resolvedReferralCode) {
+      const previous = await CopyTradingPayment.findOne(
+        { buyerEmail: normalizedEmail, referralCode: { $ne: null } },
+        { referralCode: 1 }
+      ).sort({ createdAt: -1 });
+      if (previous?.referralCode) {
+        resolvedReferralCode = previous.referralCode;
+      }
+    }
 
     await CopyTradingPayment.create({
       paymentRef,
       buyerName: name.trim(),
-      buyerEmail: email.trim().toLowerCase(),
-      referralCode: referralCode?.trim().toUpperCase() || null,
+      buyerEmail: normalizedEmail,
+      referralCode: resolvedReferralCode,
       amount: COPY_TRADING_PRICE,
       status: "pending",
     });
@@ -47,7 +61,7 @@ export async function POST(req: NextRequest) {
       redirectUrl: `${appUrl}/copy-trading/success`,
       metadata: {
         type: "copy_trading",
-        ...(referralCode ? { referralCode: referralCode.trim().toUpperCase() } : {}),
+        ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
       },
     });
 
