@@ -57,7 +57,7 @@ async function setupBotCommands() {
     console.error("Failed to set bot commands:", err);
   }
 }
-if (botConfig.token) setupBotCommands();
+if (botConfig.token && process.env.NEXT_PHASE !== "phase-production-build") setupBotCommands();
 
 // Error handler
 bot.catch((err) => {

@@ -43,7 +43,7 @@ export default function CopyTradingSuccessPage() {
             Payment Successful!
           </h1>
           <p className="mt-4 text-white/60 leading-relaxed">
-            You now have lifetime access to the Primetrex Copy Trading platform.
+            You now have access to the Primetrex Copy Trading platform.
             Check your email for your receipt and onboarding instructions.
           </p>
         </motion.div>

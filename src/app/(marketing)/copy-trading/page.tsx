@@ -32,7 +32,7 @@ const features = [
   {
     icon: ShieldCheck,
     title: "One-Time Access Fee",
-    description: "Pay once and get lifetime access to the copy trading platform — no recurring charges.",
+    description: "Pay your first month and get immediate access to the copy trading platform.",
   },
 ];
 
@@ -131,7 +131,7 @@ function CopyTradingPageContent() {
               </div>
               <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2">
                 <CheckCircle className="h-4 w-4 text-secondary shrink-0" />
-                <span className="text-sm text-white/80">Lifetime access</span>
+                <span className="text-sm text-white/80">Instant access</span>
               </div>
             </div>
           </motion.div>
@@ -159,7 +159,7 @@ function CopyTradingPageContent() {
                   <p className="text-4xl font-bold font-heading text-white">
                     {formatNaira(PRICE)}
                   </p>
-                  <p className="text-sm text-white/60 mt-1">One-time · Lifetime access</p>
+                  <p className="text-sm text-white/60 mt-1">Monthly subscription</p>
                 </div>
 
                 {/* Form */}
