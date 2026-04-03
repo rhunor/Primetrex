@@ -576,6 +576,71 @@ export async function sendSubscriptionExpiryReminderEmail(params: {
   if (expiryError) throw new Error(`Resend error: ${expiryError.message}`);
 }
 
+// ─── Copy trading access email ───────────────────────────────────────────────
+export async function sendCopyTradingAccessEmail(params: {
+  email: string;
+  buyerName: string;
+  orderId: string;
+  amount: number;
+  paymentReference: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { email, buyerName, orderId, amount, paymentReference } = params;
+  const firstName = buyerName.split(" ")[0];
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Payment Confirmed — Access Your Primetrex Copy Trades`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        ${emailHeader(appUrl)}
+
+        <div style="background: #f9f9f9; border-radius: 12px; padding: 30px; margin: 20px 0;">
+          <h2 style="color: #333; margin-top: 0;">&#9989; Payment Confirmed!</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Hi ${firstName}, your payment of <strong>&#8358;${amount.toLocaleString()}</strong> has been received successfully.
+          </p>
+
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Order ID</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold; font-family: monospace; color: #8808CC; font-size: 14px;">${orderId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #888; font-size: 13px;">Payment Reference</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; color: #555; font-size: 12px;">${paymentReference}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #333; font-weight: bold;">Amount Paid</td>
+                <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #8808CC; font-size: 20px;">&#8358;${amount.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background: #8808CC; border-radius: 12px; padding: 24px; margin: 20px 0; text-align: center;">
+            <p style="color: #fff; font-size: 16px; font-weight: bold; margin: 0 0 8px;">Next Step: Get Access on Telegram</p>
+            <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 0 0 20px; line-height: 1.5;">
+              Message our Telegram support with your <strong>Order ID (${orderId})</strong> and we will add you to the copy trading groups immediately.
+            </p>
+            <a href="https://t.me/Primetrexsupport"
+               style="display: inline-block; background: #ffffff; color: #8808CC; font-weight: bold; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 15px;">
+              &#128172; Message @Primetrexsupport
+            </a>
+          </div>
+
+          <p style="color: #888; font-size: 13px; line-height: 1.6; margin: 0;">
+            Save your Order ID <strong>${orderId}</strong>. You will need it when contacting support.
+          </p>
+        </div>
+        ${emailFooter()}
+      </div>
+    `,
+  });
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
 // ─── OTP email for 2FA login verification ────────────────────────────────────
 export async function sendOTPEmail(email: string, firstName: string, otp: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

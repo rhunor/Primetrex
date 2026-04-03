@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/korapay";
 import dbConnect from "@/lib/db";
 import BotPayment from "@/models/BotPayment";
+import CopyTradingPayment from "@/models/CopyTradingPayment";
 import User from "@/models/User";
 import Referral from "@/models/Referral";
 import Transaction from "@/models/Transaction";
@@ -24,6 +25,7 @@ import {
   sendWelcomeEmail,
   sendOrderReceiptEmail,
   sendAffiliateCommissionEmail,
+  sendCopyTradingAccessEmail,
   generateOrderId,
 } from "@/lib/email";
 import { sendMessage } from "@/lib/telegram";
@@ -34,6 +36,8 @@ import {
   notifyWithdrawalUpdate,
 } from "@/lib/notifications";
 import { siteConfig } from "@/config/site";
+
+const ADMIN_TELEGRAM_ID = 6045978065;
 
 export async function POST(req: NextRequest) {
   // ── Verify signature ──────────────────────────────────────────────────────
@@ -201,6 +205,111 @@ export async function POST(req: NextRequest) {
           parseInt(user.telegramId),
           `<b>Account Activated!</b>\n\nYour Primetrex account is now active. Welcome aboard!`
         ).catch(() => {});
+      }
+
+      return NextResponse.json({ status: "ok" });
+    }
+
+    // ── Copy trading payment ───────────────────────────────────────────────
+    if (txRef.startsWith("PTXW-COPY-")) {
+      const copyPayment = await CopyTradingPayment.findOne({ paymentRef: txRef });
+      if (!copyPayment || copyPayment.status === "successful") {
+        return NextResponse.json({ status: "ok" });
+      }
+
+      const orderId = generateOrderId();
+      const amount: number = copyPayment.amount;
+
+      copyPayment.status = "successful";
+      copyPayment.orderId = orderId;
+      await copyPayment.save();
+
+      // Send access email to buyer
+      sendCopyTradingAccessEmail({
+        email: copyPayment.buyerEmail,
+        buyerName: copyPayment.buyerName,
+        orderId,
+        amount,
+        paymentReference: txRef,
+      }).catch(() => {});
+
+      // Notify admin via Telegram bot
+      sendMessage(
+        ADMIN_TELEGRAM_ID,
+        `<b>&#128176; New Copy Trading Payment!</b>\n\n` +
+        `<b>Name:</b> ${copyPayment.buyerName}\n` +
+        `<b>Email:</b> ${copyPayment.buyerEmail}\n` +
+        `<b>Amount:</b> \u20a6${amount.toLocaleString()}\n` +
+        `<b>Order ID:</b> <code>${orderId}</code>\n` +
+        `<b>Reference:</b> <code>${txRef}</code>\n\n` +
+        `Add this user to the bot manually to grant access.`
+      ).catch(() => {});
+
+      // Credit commission to referrer if ref code provided
+      if (copyPayment.referralCode) {
+        const referrer = await User.findOne({ referralCode: copyPayment.referralCode });
+        if (referrer) {
+          const existingComm = await Transaction.findOne({ paymentReference: txRef, type: "commission" });
+          if (!existingComm) {
+            const commRate = referrer.isSpecialAffiliate ? 60 : siteConfig.commission.subscriptionRate;
+            const tier1Amount = amount * (commRate / 100);
+
+            await Transaction.create({
+              userId: referrer._id,
+              type: "commission",
+              amount: tier1Amount,
+              tier: 1,
+              status: "completed",
+              sourceUserId: null,
+              paymentReference: txRef,
+              orderId,
+              description: `Commission from copy trading sale (${copyPayment.buyerName})`,
+            });
+
+            notifyCommissionEarned(referrer._id, tier1Amount, 1, copyPayment.buyerName).catch(() => {});
+
+            sendAffiliateCommissionEmail({
+              affiliateEmail: referrer.email,
+              affiliateFirstName: referrer.firstName,
+              buyerName: copyPayment.buyerName,
+              commissionAmount: tier1Amount,
+              orderId,
+              tier: 1,
+              paymentReference: txRef,
+            }).catch(() => {});
+
+            // Tier 2 commission
+            if (referrer.referredBy) {
+              const tier2Amount = amount * (siteConfig.commission.tier2Rate / 100);
+              await Transaction.create({
+                userId: referrer.referredBy,
+                type: "commission",
+                amount: tier2Amount,
+                tier: 2,
+                status: "completed",
+                sourceUserId: null,
+                paymentReference: `${txRef}-t2`,
+                orderId,
+                description: `Tier 2 commission from copy trading sale (${copyPayment.buyerName})`,
+              });
+
+              notifyCommissionEarned(referrer.referredBy, tier2Amount, 2, copyPayment.buyerName).catch(() => {});
+
+              const tier2Referrer = await User.findById(referrer.referredBy);
+              if (tier2Referrer) {
+                sendAffiliateCommissionEmail({
+                  affiliateEmail: tier2Referrer.email,
+                  affiliateFirstName: tier2Referrer.firstName,
+                  buyerName: copyPayment.buyerName,
+                  commissionAmount: tier2Amount,
+                  orderId,
+                  tier: 2,
+                  paymentReference: `${txRef}-t2`,
+                }).catch(() => {});
+              }
+            }
+          }
+        }
       }
 
       return NextResponse.json({ status: "ok" });
