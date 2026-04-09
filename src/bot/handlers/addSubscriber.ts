@@ -222,6 +222,11 @@ export function registerAddSubscriberHandlers(bot: Bot<BotContext>) {
 
       if (result.message === "invite_sent") {
         successText += `${EMOJI.INVITE} Invite sent to user via DM.`;
+      } else if (result.inviteLinks && result.inviteLinks.length > 0) {
+        successText += `${EMOJI.WARNING} Could not DM user. Send these links manually:\n\n`;
+        successText += result.inviteLinks
+          .map((inv, i) => `${i + 1}. <b>${inv.channelName}</b>\n${inv.link}`)
+          .join("\n\n");
       } else if (result.inviteLink) {
         successText += `${EMOJI.WARNING} Could not DM user.\n${result.inviteLink}`;
       }

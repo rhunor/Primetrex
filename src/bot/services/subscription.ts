@@ -4,6 +4,10 @@ import BotSubscriber from "@/models/BotSubscriber";
 import Plan from "@/models/Plan";
 import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep, RATE_LIMIT_DELAY_MS } from "./invite";
 
+// Legacy channel — included in invites but not tracked in subscription records
+const LEGACY_CHANNEL_ID = "-1003699209692";
+const LEGACY_CHANNEL_NAME = "Primetrex Community (Legacy)";
+
 /**
  * Activate a subscription after successful payment verification.
  * Called from webhook or manual "I've Paid" verification.
@@ -91,6 +95,7 @@ export async function manualActivateSubscriber(params: {
   success: boolean;
   message: string;
   inviteLink?: string;
+  inviteLinks?: { channelName: string; link: string }[];
   subscriber?: InstanceType<typeof BotSubscriber>;
 }> {
   await dbConnect();
@@ -130,14 +135,18 @@ export async function manualActivateSubscriber(params: {
     await sleep(RATE_LIMIT_DELAY_MS);
   }
 
-  // Generate invite links for all channels and send combined DM
+  // Generate invite links for all subscription channels + the legacy channel (link only, no sub record)
   try {
-    const invites = await generateMultiChannelInvites(channels);
+    const invites = await generateMultiChannelInvites([
+      ...channels,
+      { channelId: LEGACY_CHANNEL_ID, channelName: LEGACY_CHANNEL_NAME },
+    ]);
     const dmSent = await sendMultiChannelInviteDM(params.userId, invites);
     return {
       success: true,
       message: dmSent ? "invite_sent" : "invite_failed",
       inviteLink: invites[0]?.link,
+      inviteLinks: invites.map((inv) => ({ channelName: inv.channelName, link: inv.link })),
       subscriber: firstSubscriber,
     };
   } catch (error) {
