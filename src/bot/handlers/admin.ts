@@ -6,6 +6,7 @@ import { InlineKeyboard } from "grammy";
 import { isAdmin } from "@/bot/middleware/auth";
 import dbConnect from "@/lib/db";
 import Plan from "@/models/Plan";
+import BotSubscriber from "@/models/BotSubscriber";
 import { triggerAddAllUsers } from "@/bot/services/adminJobs";
 
 function formatNaira(amount: number): string {
@@ -252,6 +253,55 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     }).then(async (res) => {
       if (!res.ok) console.error(`cleanup fetch failed: ${res.status} ${await res.text()}`);
     }).catch((err) => console.error("Cleanup fetch error:", err));
+  });
+
+  // /removedlast14 — list users whose subscriptions expired in the last 14 days
+  bot.command("removedlast14", async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) { await ctx.reply("You are not authorized."); return; }
+
+    await dbConnect();
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+    const expired = await BotSubscriber.find({
+      status: "expired",
+      updatedAt: { $gte: since },
+      channelId: { $ne: "-1003699209692" },
+    }).lean();
+
+    const uniqueUserIds = [...new Set(expired.map((s) => s.userId))];
+
+    if (uniqueUserIds.length === 0) {
+      await ctx.reply(`${EMOJI.WARNING} No users were removed in the last 14 days.`);
+      return;
+    }
+
+    const lines = uniqueUserIds.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n");
+    await ctx.reply(
+      `${EMOJI.PERSON} <b>Users removed in last 14 days: ${uniqueUserIds.length}</b>\n\n` +
+      `${lines}\n\n` +
+      `Run <b>/sendlegacyinvites</b> to send them all a link back to the legacy channel.`,
+      { parse_mode: "HTML" }
+    );
+  });
+
+  // /sendlegacyinvites — send legacy channel invite to all users expired in last 14 days
+  bot.command("sendlegacyinvites", async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) { await ctx.reply("You are not authorized."); return; }
+
+    const msg = await ctx.reply(`${EMOJI.HOURGLASS} Preparing legacy channel invites...`);
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+    fetch(`${appUrl}/api/admin/bot-legacy-invites`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
+      },
+      body: JSON.stringify({ chatId: ctx.chat.id, messageId: msg.message_id }),
+    }).then(async (res) => {
+      if (!res.ok) console.error(`legacy-invites fetch failed: ${res.status} ${await res.text()}`);
+    }).catch((err) => console.error("legacy-invites fetch error:", err));
   });
 
   // Payment providers

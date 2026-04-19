@@ -18,8 +18,10 @@ export async function removeUserFromChannel(
   channelId: string,
   userId: string
 ): Promise<void> {
+  console.log(`[removeUserFromChannel] Banning userId=${userId} from channelId=${channelId}`);
   await bot.api.banChatMember(Number(channelId), Number(userId));
   await bot.api.unbanChatMember(Number(channelId), Number(userId));
+  console.log(`[removeUserFromChannel] Done — userId=${userId} channelId=${channelId}`);
 }
 
 export async function sendInviteDM(
@@ -66,6 +68,16 @@ async function generateInviteLinkWithRetry(channelId: string, maxRetries = 3): P
   throw new Error("Max retries exceeded");
 }
 
+async function resolveChannelName(channelId: string, providedName: string): Promise<string> {
+  if (providedName && providedName.toLowerCase() !== "untitled") return providedName;
+  try {
+    const chat = await bot.api.getChat(Number(channelId));
+    return ("title" in chat && chat.title) ? chat.title : providedName || channelId;
+  } catch {
+    return providedName || channelId;
+  }
+}
+
 export async function generateMultiChannelInvites(
   channels: { channelId: string; channelName: string }[]
 ): Promise<{ channelId: string; channelName: string; link: string }[]> {
@@ -74,7 +86,8 @@ export async function generateMultiChannelInvites(
   for (const channel of channels) {
     try {
       const link = await generateInviteLinkWithRetry(channel.channelId);
-      results.push({ ...channel, link });
+      const channelName = await resolveChannelName(channel.channelId, channel.channelName);
+      results.push({ channelId: channel.channelId, channelName, link });
     } catch (err) {
       console.error(`Failed to generate invite for channel ${channel.channelId}:`, err);
     }

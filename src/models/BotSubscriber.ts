@@ -12,6 +12,7 @@ export interface IBotSubscriber extends Document {
   status: "active" | "expired" | "cancelled";
   addedBy: "payment" | "manual" | "special" | "coupon";
   inviteSentAt: Date | null;
+  removedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,7 @@ const BotSubscriberSchema = new Schema<IBotSubscriber>(
       default: "payment",
     },
     inviteSentAt: { type: Date, default: null },
+    removedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

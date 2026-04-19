@@ -33,16 +33,24 @@ export async function checkExpiredSubscriptions(): Promise<{
     sub.status = "expired";
     await sub.save();
 
-    if (sub.channelId !== LEGACY_CHANNEL_ID) {
+    if (sub.channelId === LEGACY_CHANNEL_ID) {
+      console.log(`[expiry] SKIP legacy channel removal — userId=${sub.userId} channelId=${sub.channelId}`);
+    } else {
+      console.log(`[expiry] Removing userId=${sub.userId} from channelId=${sub.channelId}`);
       try {
         await removeUserFromChannel(sub.channelId, sub.userId);
+        sub.removedAt = new Date();
+        await sub.save();
+        console.log(`[expiry] Removed userId=${sub.userId} from channelId=${sub.channelId}`);
       } catch (err: unknown) {
         const description =
           err && typeof err === "object" && "description" in err
             ? String((err as { description: string }).description)
             : "";
         if (!description.includes("PARTICIPANT_ID_INVALID") && !description.includes("USER_NOT_PARTICIPANT")) {
-          console.error(`Failed to remove user ${sub.userId}:`, err);
+          console.error(`[expiry] Failed to remove userId=${sub.userId} from channelId=${sub.channelId}:`, err);
+        } else {
+          console.log(`[expiry] userId=${sub.userId} already left channelId=${sub.channelId}`);
         }
       }
     }

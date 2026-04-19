@@ -4,7 +4,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Plan from "@/models/Plan";
 import BotSubscriber from "@/models/BotSubscriber";
-import { generateInviteLink, sendInviteDM } from "@/bot/services/invite";
+import { generateMultiChannelInvites, sendMultiChannelInviteDM } from "@/bot/services/invite";
 import { applyCouponUsage } from "@/lib/coupon";
 
 /**
@@ -32,43 +32,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No active plan found." }, { status: 404 });
     }
 
-    const now = new Date();
-    const expiryDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
-
-    const existing = await BotSubscriber.findOne({
-      userId: user.telegramId,
-      channelId: plan.channelId,
-      status: "active",
-    });
-
-    if (existing) {
-      // Extend subscription
-      existing.expiryDate = new Date(
-        existing.expiryDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000
-      );
-      await existing.save();
-    } else {
-      // New subscription
-      await BotSubscriber.create({
-        userId: user.telegramId,
-        planId: plan._id,
-        channelId: plan.channelId,
-        startDate: now,
-        expiryDate,
-        status: "active",
-        addedBy: "coupon",
-      });
+    // Use plan.channels array (multi-channel) — never fall back to legacy plan.channelId
+    const channels = plan.channels?.length ? plan.channels : [];
+    if (channels.length === 0) {
+      console.error("[free-renewal] No channels configured on active plan.");
+      return NextResponse.json({ error: "No channels configured." }, { status: 500 });
     }
 
-    // Mark coupon as used (track web user ID to prevent reuse)
+    const now = new Date();
+    const durationMs = plan.durationDays * 24 * 60 * 60 * 1000;
+
+    for (const channel of channels) {
+      const existing = await BotSubscriber.findOne({
+        userId: user.telegramId,
+        channelId: channel.channelId,
+        status: "active",
+      });
+
+      if (existing) {
+        existing.expiryDate = new Date(existing.expiryDate.getTime() + durationMs);
+        await existing.save();
+      } else {
+        await BotSubscriber.create({
+          userId: user.telegramId,
+          planId: plan._id,
+          channelId: channel.channelId,
+          startDate: now,
+          expiryDate: new Date(now.getTime() + durationMs),
+          status: "active",
+          addedBy: "coupon",
+        });
+      }
+    }
+
+    // Mark coupon as used
     if (couponCode) {
       await applyCouponUsage(couponCode, session.user.id);
     }
 
-    // Send invite link via Telegram DM
+    // Send invite links for all channels via Telegram DM
     try {
-      const inviteLink = await generateInviteLink(plan.channelId);
-      await sendInviteDM(user.telegramId, plan.channelName, inviteLink);
+      const invites = await generateMultiChannelInvites(channels);
+      await sendMultiChannelInviteDM(user.telegramId, invites);
     } catch {
       // Don't fail if DM fails
     }
