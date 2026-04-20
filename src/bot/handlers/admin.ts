@@ -256,7 +256,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     }).catch((err) => console.error("Cleanup fetch error:", err));
   });
 
-  // /removedlast14 — list users whose subscriptions expired in the last 14 days
+  // /removedlast14 — list users who were bot-removed from subscription groups in the last 14 days
   bot.command("removedlast14", async (ctx) => {
     const admin = await isAdmin(ctx);
     if (!admin) { await ctx.reply("You are not authorized."); return; }
@@ -264,24 +264,45 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     await dbConnect();
     const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
-    const expired = await BotSubscriber.find({
+    // Primary: records with removedAt set (tracked since latest deploy)
+    const removedRecords = await BotSubscriber.find({
+      removedAt: { $gte: since },
+      channelId: { $ne: "-1003699209692" },
+    }).lean();
+
+    // Fallback: expired records updated recently (catches pre-removedAt era)
+    const expiredRecords = await BotSubscriber.find({
       status: "expired",
       updatedAt: { $gte: since },
       channelId: { $ne: "-1003699209692" },
     }).lean();
 
-    const uniqueUserIds = [...new Set(expired.map((s) => s.userId))];
+    const allIds = [
+      ...removedRecords.map((s) => s.userId),
+      ...expiredRecords.map((s) => s.userId),
+    ];
+    const uniqueUserIds = [...new Set(allIds)];
+
+    // Stats breakdown
+    const removedTracked = [...new Set(removedRecords.map((s) => s.userId))].length;
+    const expiredOnly = [...new Set(expiredRecords.map((s) => s.userId))].length;
 
     if (uniqueUserIds.length === 0) {
-      await ctx.reply(`${EMOJI.WARNING} No users were removed in the last 14 days.`);
+      await ctx.reply(
+        `${EMOJI.WARNING} No subscription removals found in the last 14 days.\n\n` +
+        `<i>Note: If subscriptions were extended by 14 days in a recent migration, expirations may not have occurred yet.</i>`,
+        { parse_mode: "HTML" }
+      );
       return;
     }
 
     const lines = uniqueUserIds.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n");
     await ctx.reply(
-      `${EMOJI.PERSON} <b>Users removed in last 14 days: ${uniqueUserIds.length}</b>\n\n` +
+      `${EMOJI.PERSON} <b>Users removed from subscription groups (last 14 days): ${uniqueUserIds.length}</b>\n` +
+      `📍 Tracked removals: <b>${removedTracked}</b> | Expired records: <b>${expiredOnly}</b>\n\n` +
       `${lines}\n\n` +
-      `Run <b>/sendlegacyinvites</b> to send them all a link back to the legacy channel.`,
+      `Run <b>/sendlegacyinvites</b> to send them all a link back to the legacy channel.\n\n` +
+      `<i>Note: This lists subscription group removals only. /sendlegacyinvites checks ALL subscribers against actual legacy group membership.</i>`,
       { parse_mode: "HTML" }
     );
   });

@@ -3,113 +3,208 @@ import { waitUntil } from "@vercel/functions";
 import dbConnect from "@/lib/db";
 import BotSubscriber from "@/models/BotSubscriber";
 import { bot } from "@/bot/index";
-import { generateInviteLink, sleep } from "@/bot/services/invite";
+import { sleep } from "@/bot/services/invite";
 import { EMOJI } from "@/bot/constants";
 
 export const maxDuration = 300;
 
 const LEGACY_CHANNEL_ID = "-1003699209692";
-const LEGACY_CHANNEL_NAME = "Primetrex Community";
+
+const INVITE_MESSAGE = `Hello, this is Primetrex community
+
+We noticed the bot malfunctioned and removed you from the general community
+
+We apologise for this
+
+This is a link to join the community again👇👇`;
+
+type MembershipStatus = "in_group" | "left_voluntarily" | "kicked" | "never_joined" | "unknown";
+
+async function checkLegacyMembership(userId: string): Promise<MembershipStatus> {
+  try {
+    const member = await bot.api.getChatMember(Number(LEGACY_CHANNEL_ID), Number(userId));
+    if (member.status === "member" || member.status === "administrator" || member.status === "creator") {
+      return "in_group";
+    }
+    if (member.status === "left") return "left_voluntarily";
+    if (member.status === "kicked" || member.status === "restricted") return "kicked";
+    return "unknown";
+  } catch {
+    return "never_joined";
+  }
+}
+
+function buildProgressMsg(
+  phase: "checking" | "sending",
+  current: number,
+  total: number,
+  stats: {
+    inGroup: number;
+    leftVoluntarily: number;
+    kicked: number;
+    neverJoined: number;
+    sent: number;
+    failed: number;
+    toSend: number;
+  }
+): string {
+  if (phase === "checking") {
+    return (
+      `${EMOJI.HOURGLASS} <b>Phase 1/2 — Checking legacy group membership...</b>\n\n` +
+      `Checked: <b>${current}/${total}</b>\n\n` +
+      `✅ Still in group: <b>${stats.inGroup}</b>\n` +
+      `🚶 Left voluntarily: <b>${stats.leftVoluntarily}</b>\n` +
+      `🚫 Removed/kicked: <b>${stats.kicked}</b>\n` +
+      `❓ Never joined / unknown: <b>${stats.neverJoined}</b>`
+    );
+  }
+  return (
+    `${EMOJI.HOURGLASS} <b>Phase 2/2 — Sending invites...</b>\n\n` +
+    `Progress: <b>${current}/${stats.toSend}</b>\n` +
+    `✅ Invite sent: <b>${stats.sent}</b>\n` +
+    `❌ Could not DM (blocked bot): <b>${stats.failed}</b>\n\n` +
+    `<i>If this stops, re-run /sendlegacyinvites — it only sends to those who still haven't received one.</i>`
+  );
+}
 
 async function runSendLegacyInvites(chatId: number, messageId: number) {
   try {
     await dbConnect();
 
-    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-
-    // Find unique userIds whose subscriptions expired in the last 14 days
-    const expired = await BotSubscriber.find({
-      status: "expired",
-      updatedAt: { $gte: since },
-      channelId: { $ne: LEGACY_CHANNEL_ID },
-    }).lean();
-
-    const uniqueUserIds = [...new Set(expired.map((s) => s.userId))];
-    const total = uniqueUserIds.length;
+    const allUserIds = await BotSubscriber.distinct("userId");
+    const total = allUserIds.length;
 
     if (total === 0) {
-      await bot.api.editMessageText(
-        chatId,
-        messageId,
-        `${EMOJI.WARNING} No users found with expired subscriptions in the last 14 days.`
-      );
+      await bot.api.editMessageText(chatId, messageId, `${EMOJI.WARNING} No subscribers found in the database.`);
       return;
     }
 
     await bot.api.editMessageText(
       chatId,
       messageId,
-      `${EMOJI.HOURGLASS} <b>Generating legacy channel invite link...</b>`,
+      `${EMOJI.HOURGLASS} <b>Phase 1/2 — Checking legacy group membership...</b>\n\nChecking <b>${total}</b> total subscribers...`,
       { parse_mode: "HTML" }
     );
 
-    // Generate one shared legacy channel invite link (member_limit: 0 = unlimited)
-    let legacyLink: string;
-    try {
-      const invite = await bot.api.createChatInviteLink(Number(LEGACY_CHANNEL_ID), {
-        member_limit: 0, // unlimited uses for bulk send
-      });
-      legacyLink = invite.invite_link;
-    } catch (err) {
-      console.error("[legacy-invites] Failed to generate invite link:", err);
-      await bot.api.editMessageText(chatId, messageId, `${EMOJI.CANCEL} Failed to generate invite link for legacy channel. Check bot permissions.`);
-      return;
-    }
+    // Phase 1: Check membership status for every subscriber
+    const stats = { inGroup: 0, leftVoluntarily: 0, kicked: 0, neverJoined: 0, sent: 0, failed: 0, toSend: 0 };
+    const notInGroup: string[] = [];
 
-    await bot.api.editMessageText(
-      chatId,
-      messageId,
-      `${EMOJI.HOURGLASS} <b>Sending legacy channel invites...</b>\n\nProgress: <b>0/${total}</b>`,
-      { parse_mode: "HTML" }
-    );
+    for (let i = 0; i < allUserIds.length; i++) {
+      const userId = allUserIds[i];
+      const status = await checkLegacyMembership(userId);
 
-    let sent = 0;
-    let failed = 0;
-
-    for (let i = 0; i < uniqueUserIds.length; i++) {
-      const userId = uniqueUserIds[i];
-
-      try {
-        await bot.api.sendMessage(
-          Number(userId),
-          `${EMOJI.INVITE} <b>Primetrex Community Access</b>\n\n` +
-          `You've been sent a link to re-join the Primetrex Community group:\n\n` +
-          `${"\u{1F517}"} ${legacyLink}`,
-          { parse_mode: "HTML" }
-        );
-        sent++;
-      } catch {
-        failed++;
+      if (status === "in_group") {
+        stats.inGroup++;
+      } else {
+        notInGroup.push(userId);
+        if (status === "left_voluntarily") stats.leftVoluntarily++;
+        else if (status === "kicked") stats.kicked++;
+        else stats.neverJoined++;
       }
 
-      if ((i + 1) % 10 === 0) {
+      await sleep(300);
+
+      // Update every 5 users
+      if ((i + 1) % 5 === 0 || i === allUserIds.length - 1) {
         try {
           await bot.api.editMessageText(
             chatId,
             messageId,
-            `${EMOJI.HOURGLASS} <b>Sending legacy channel invites...</b>\n\nProgress: <b>${i + 1}/${total}</b>\n✅ Sent: <b>${sent}</b>\n❌ Failed (blocked bot): <b>${failed}</b>`,
+            buildProgressMsg("checking", i + 1, total, stats),
             { parse_mode: "HTML" }
           );
-        } catch { /* non-critical */ }
+        } catch { /* non-critical — Telegram rate limits edits */ }
       }
-
-      await sleep(400);
     }
+
+    if (notInGroup.length === 0) {
+      await bot.api.editMessageText(
+        chatId,
+        messageId,
+        `${EMOJI.SUCCESS} <b>All ${total} subscribers are in the legacy group.</b>\n\nNo invites needed.`,
+        { parse_mode: "HTML" }
+      );
+      return;
+    }
+
+    // Generate one unlimited invite link
+    let legacyLink: string;
+    try {
+      const invite = await bot.api.createChatInviteLink(Number(LEGACY_CHANNEL_ID), { member_limit: 0 });
+      legacyLink = invite.invite_link;
+    } catch (err) {
+      console.error("[legacy-invites] Failed to generate invite link:", err);
+      await bot.api.editMessageText(
+        chatId,
+        messageId,
+        `${EMOJI.CANCEL} Failed to generate invite link. Make sure the bot is an admin in the legacy group.`
+      );
+      return;
+    }
+
+    stats.toSend = notInGroup.length;
 
     await bot.api.editMessageText(
       chatId,
       messageId,
+      `${EMOJI.HOURGLASS} <b>Phase 2/2 — Sending invites to ${notInGroup.length} users...</b>\n\nStarting...`,
+      { parse_mode: "HTML" }
+    );
+
+    // Phase 2: Send invites
+    for (let i = 0; i < notInGroup.length; i++) {
+      const userId = notInGroup[i];
+
+      try {
+        await bot.api.sendMessage(Number(userId), `${INVITE_MESSAGE}\n\n${legacyLink}`);
+        stats.sent++;
+      } catch {
+        stats.failed++;
+      }
+
+      await sleep(400);
+
+      // Update every 5 users
+      if ((i + 1) % 5 === 0 || i === notInGroup.length - 1) {
+        try {
+          await bot.api.editMessageText(
+            chatId,
+            messageId,
+            buildProgressMsg("sending", i + 1, total, stats),
+            { parse_mode: "HTML" }
+          );
+        } catch { /* non-critical */ }
+      }
+    }
+
+    // Final summary
+    await bot.api.editMessageText(
+      chatId,
+      messageId,
       `${EMOJI.SUCCESS} <b>Done!</b>\n\n` +
-      `Total users from last 14 days: <b>${total}</b>\n` +
-      `✅ Invite sent: <b>${sent}</b>\n` +
-      `❌ Could not DM (blocked bot): <b>${failed}</b>`,
+      `<b>📊 Membership Report (${total} total subscribers)</b>\n` +
+      `✅ Already in group: <b>${stats.inGroup}</b>\n` +
+      `🚶 Left voluntarily: <b>${stats.leftVoluntarily}</b>\n` +
+      `🚫 Removed/kicked: <b>${stats.kicked}</b>\n` +
+      `❓ Never joined / bot can't check: <b>${stats.neverJoined}</b>\n\n` +
+      `<b>📨 Invites sent (${notInGroup.length} users)</b>\n` +
+      `✅ DM delivered: <b>${stats.sent}</b>\n` +
+      `❌ Could not DM (blocked bot): <b>${stats.failed}</b>`,
       { parse_mode: "HTML" }
     );
   } catch (err) {
-    console.error("[legacy-invites] Job error:", err);
+    console.error("[legacy-invites] Job crashed:", err);
     try {
-      await bot.api.sendMessage(chatId, `${EMOJI.CANCEL} Failed mid-run. Check Vercel logs.`);
-    } catch { /* silent */ }
+      await bot.api.editMessageText(
+        chatId,
+        messageId,
+        `${EMOJI.CANCEL} <b>Job crashed mid-run.</b>\n\nRun <b>/sendlegacyinvites</b> again — it will resume from where it left off and only send to users who haven't received an invite yet.`,
+        { parse_mode: "HTML" }
+      );
+    } catch {
+      await bot.api.sendMessage(chatId, `${EMOJI.CANCEL} Job crashed. Re-run /sendlegacyinvites to resume.`);
+    }
   }
 }
 
