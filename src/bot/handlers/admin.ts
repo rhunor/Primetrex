@@ -132,6 +132,7 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
 
   // Handle text input for channel edits
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     const step = ctx.session.step;
     const channelSteps = [
       "awaiting_channel_id",

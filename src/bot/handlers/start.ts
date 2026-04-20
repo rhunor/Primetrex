@@ -324,56 +324,6 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
   // /help command
   bot.command("help", showHelp);
 
-  // /status command
-  bot.command("status", async (ctx) => {
-    await dbConnect();
-    const telegramUserId = ctx.from!.id.toString();
-    const user = await User.findOne({ telegramId: telegramUserId });
-
-    if (!user) {
-      await ctx.reply(
-        "Your Telegram is not linked to any Primetrex account.\n\n" +
-          "Visit your dashboard to link your account."
-      );
-      return;
-    }
-
-    const statusText = user.isActive ? "Active" : "Inactive";
-
-    // Retention streak
-    const sub = await BotSubscriber.findOne({ userId: telegramUserId }).sort({
-      startDate: 1,
-    });
-
-    let streakLine = "";
-    if (sub) {
-      const now = new Date();
-      const msPerDay = 1000 * 60 * 60 * 24;
-      if (sub.status === "active") {
-        const days = Math.floor(
-          (now.getTime() - new Date(sub.startDate).getTime()) / msPerDay
-        );
-        streakLine = `\n${EMOJI.STREAK} Active streak: <b>${days} day${days === 1 ? "" : "s"}</b>`;
-      } else {
-        const days = Math.floor(
-          (new Date(sub.expiryDate).getTime() -
-            new Date(sub.startDate).getTime()) /
-            msPerDay
-        );
-        streakLine = `\n${EMOJI.STREAK} Last streak: <b>${days} day${days === 1 ? "" : "s"}</b> (expired)`;
-      }
-    }
-
-    await ctx.reply(
-      `<b>Account Status</b>\n\n` +
-        `Name: ${user.firstName} ${user.lastName}\n` +
-        `Email: ${user.email}\n` +
-        `Status: ${statusText}\n` +
-        `Referral Code: <code>${user.referralCode}</code>` +
-        streakLine,
-      { parse_mode: "HTML" }
-    );
-  });
 
   // "Main Menu" text from reply keyboard — regex avoids Android Unicode encoding issues
   bot.hears(/Main Menu/i, showMainMenu);

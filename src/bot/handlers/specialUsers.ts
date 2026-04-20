@@ -180,6 +180,7 @@ export function registerSpecialUserHandlers(bot: Bot<BotContext>) {
 
   // Handle text inputs for special user flows
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     const { step } = ctx.session;
 
     if (step === "awaiting_special_user_id") {

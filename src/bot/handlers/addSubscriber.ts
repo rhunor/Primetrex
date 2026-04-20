@@ -52,6 +52,7 @@ export function registerAddSubscriberHandlers(bot: Bot<BotContext>) {
 
   // Handle text inputs for the multi-step add subscriber flow
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     const { step } = ctx.session;
 
     if (

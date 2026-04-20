@@ -140,6 +140,7 @@ export function registerSubscriberHandlers(bot: Bot<BotContext>) {
 
   // Handle search query text
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     if (ctx.session.step !== "awaiting_search_query") {
       return next();
     }

@@ -97,6 +97,7 @@ export function registerBroadcastHandlers(bot: Bot<BotContext>) {
 
   // Handle DM target user ID input
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     if (ctx.session.step === "awaiting_broadcast_dm_user_id") {
       const text = ctx.message.text.trim();
 
@@ -132,6 +133,7 @@ export function registerBroadcastHandlers(bot: Bot<BotContext>) {
 
   // Handle broadcast message text (all targets)
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     if (
       ctx.session.step !== "awaiting_broadcast_message" &&
       ctx.session.step !== "awaiting_broadcast_dm_message"

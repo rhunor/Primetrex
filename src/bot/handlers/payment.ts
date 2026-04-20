@@ -10,7 +10,7 @@ import BotPayment from "@/models/BotPayment";
 import Plan from "@/models/Plan";
 import User from "@/models/User";
 import { verifyPayment } from "@/bot/services/korapay";
-import { generateMultiChannelInvites, sendMultiChannelInviteDM, sleep, RATE_LIMIT_DELAY_MS } from "@/bot/services/invite";
+import { generateMultiChannelInvites, sleep, RATE_LIMIT_DELAY_MS } from "@/bot/services/invite";
 import { createBotPaymentAndShowLink } from "@/bot/handlers/subscribe";
 import { validateCoupon } from "@/lib/coupon";
 
@@ -178,6 +178,7 @@ export function registerPaymentHandlers(bot: Bot<BotContext>) {
 
   // Handle typed messages — coupon, referral code, OR payment reference step
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     // ── Payment coupon step ───────────────────────────────────────────────────
     if (ctx.session.step === "awaiting_payment_coupon") {
       const code = ctx.message.text.trim().toUpperCase();

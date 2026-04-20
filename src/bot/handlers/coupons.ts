@@ -91,6 +91,7 @@ export function registerCouponHandlers(bot: Bot<BotContext>) {
 
   // Handle coupon creation text flow
   bot.on("message:text", async (ctx, next) => {
+    if (ctx.chat.type !== "private") return next();
     const { step } = ctx.session;
 
     if (step === "awaiting_coupon_code") {
