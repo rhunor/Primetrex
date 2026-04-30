@@ -7,7 +7,7 @@ import { isAdmin } from "@/bot/middleware/auth";
 import dbConnect from "@/lib/db";
 import Plan from "@/models/Plan";
 import BotSubscriber from "@/models/BotSubscriber";
-import { triggerAddAllUsers, triggerSendLegacyInvites } from "@/bot/services/adminJobs";
+import { triggerAddAllUsers, triggerSendLegacyInvites, triggerRemovedLast20 } from "@/bot/services/adminJobs";
 
 function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -256,89 +256,12 @@ export function registerAdminHandlers(bot: Bot<BotContext>) {
     }).catch((err) => console.error("Cleanup fetch error:", err));
   });
 
-  // /removedlast20 — show who left or was removed from the legacy group in the last 20 days
+  // /removedlast20 — check legacy group membership for all subscribers (background job)
   bot.command("removedlast20", async (ctx) => {
     const admin = await isAdmin(ctx);
     if (!admin) { await ctx.reply("You are not authorized."); return; }
-
     const msg = await ctx.reply(`${EMOJI.HOURGLASS} Checking legacy group membership for all subscribers...`);
-
-    await dbConnect();
-    const since = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
-    const allUserIds = await BotSubscriber.distinct("userId");
-    const total = allUserIds.length;
-
-    const kicked: string[] = [];
-    const leftVoluntarily: string[] = [];
-    const inGroup: string[] = [];
-
-    for (let i = 0; i < allUserIds.length; i++) {
-      const userId = allUserIds[i];
-      try {
-        const member = await ctx.api.getChatMember(Number("-1003699209692"), Number(userId));
-        if (member.status === "member" || member.status === "administrator" || member.status === "creator") {
-          inGroup.push(userId);
-        } else if (member.status === "left") {
-          leftVoluntarily.push(userId);
-        } else if (member.status === "kicked" || member.status === "restricted") {
-          kicked.push(userId);
-        }
-      } catch {
-        // can't determine
-      }
-
-      if ((i + 1) % 20 === 0) {
-        try {
-          await ctx.api.editMessageText(
-            ctx.chat.id,
-            msg.message_id,
-            `${EMOJI.HOURGLASS} Checking... <b>${i + 1}/${total}</b>`,
-            { parse_mode: "HTML" }
-          );
-        } catch { /* non-critical */ }
-      }
-    }
-
-    // Also check DB for recent bot-triggered removals (subscription expiry) in last 20 days
-    const recentExpired = await BotSubscriber.find({
-      status: "expired",
-      updatedAt: { $gte: since },
-      channelId: { $ne: "-1003699209692" },
-    }).lean();
-    const recentExpiredIds = [...new Set(recentExpired.map((s) => s.userId))];
-
-    let summary = `${EMOJI.PERSON} <b>Legacy Group Report (${total} total subscribers)</b>\n\n`;
-    summary += `✅ Currently in group: <b>${inGroup.length}</b>\n`;
-    summary += `🚶 Left voluntarily: <b>${leftVoluntarily.length}</b>\n`;
-    summary += `🚫 Removed/kicked: <b>${kicked.length}</b>\n\n`;
-
-    if (leftVoluntarily.length > 0) {
-      summary += `<b>🚶 Left voluntarily (${leftVoluntarily.length}):</b>\n`;
-      summary += leftVoluntarily.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
-    }
-
-    if (kicked.length > 0) {
-      summary += `<b>🚫 Removed/kicked (${kicked.length}):</b>\n`;
-      summary += kicked.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
-    }
-
-    summary += `<b>📋 Subscription expiries (last 20 days): ${recentExpiredIds.length}</b>\n`;
-    if (recentExpiredIds.length > 0) {
-      summary += recentExpiredIds.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
-    }
-
-    summary += `\nRun <b>/sendlegacyinvites</b> to send invite links to everyone not in the group.`;
-
-    // Split if too long for one message
-    if (summary.length > 4000) {
-      const chunks = summary.match(/[\s\S]{1,4000}/g) || [];
-      await ctx.api.editMessageText(ctx.chat.id, msg.message_id, chunks[0] ?? summary, { parse_mode: "HTML" });
-      for (let c = 1; c < chunks.length; c++) {
-        await ctx.reply(chunks[c], { parse_mode: "HTML" });
-      }
-    } else {
-      await bot.api.editMessageText(ctx.chat.id, msg.message_id, summary, { parse_mode: "HTML" });
-    }
+    triggerRemovedLast20(ctx.chat.id, msg.message_id);
   });
 
   // /sendlegacyinvites — send legacy channel invite to all subscribers not currently in the group

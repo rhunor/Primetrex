@@ -262,3 +262,107 @@ export async function runSendLegacyInvites(chatId: number, messageId: number) {
 export function triggerSendLegacyInvites(chatId: number, messageId: number) {
   waitUntil(runSendLegacyInvites(chatId, messageId));
 }
+
+// ── Legacy group membership report ────────────────────────────────────────────
+
+async function runRemovedLast20(chatId: number, messageId: number) {
+  try {
+    await dbConnect();
+
+    const since = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+    const allUserIds = await BotSubscriber.distinct("userId");
+    const total = allUserIds.length;
+
+    if (total === 0) {
+      await bot.api.editMessageText(chatId, messageId, `${EMOJI.WARNING} No subscribers found.`);
+      return;
+    }
+
+    const kicked: string[] = [];
+    const leftVoluntarily: string[] = [];
+    const inGroup: string[] = [];
+
+    for (let i = 0; i < allUserIds.length; i++) {
+      const userId = allUserIds[i];
+      try {
+        const member = await bot.api.getChatMember(Number(LEGACY_CHANNEL_ID), Number(userId));
+        if (member.status === "member" || member.status === "administrator" || member.status === "creator") {
+          inGroup.push(userId);
+        } else if (member.status === "left") {
+          leftVoluntarily.push(userId);
+        } else if (member.status === "kicked" || member.status === "restricted") {
+          kicked.push(userId);
+        }
+      } catch { /* can't determine */ }
+
+      await sleep(300);
+
+      if ((i + 1) % 10 === 0 || i === allUserIds.length - 1) {
+        try {
+          await bot.api.editMessageText(
+            chatId, messageId,
+            `${EMOJI.HOURGLASS} <b>Checking legacy group membership...</b>\n\n` +
+            `Checked: <b>${i + 1}/${total}</b>\n` +
+            `✅ In group: <b>${inGroup.length}</b>  🚶 Left: <b>${leftVoluntarily.length}</b>  🚫 Kicked: <b>${kicked.length}</b>`,
+            { parse_mode: "HTML" }
+          );
+        } catch { /* non-critical */ }
+      }
+    }
+
+    const recentExpired = await BotSubscriber.find({
+      status: "expired",
+      updatedAt: { $gte: since },
+      channelId: { $ne: LEGACY_CHANNEL_ID },
+    }).lean();
+    const recentExpiredIds = [...new Set(recentExpired.map((s) => s.userId))];
+
+    let summary =
+      `${EMOJI.PERSON} <b>Legacy Group Report (${total} subscribers)</b>\n\n` +
+      `✅ Currently in group: <b>${inGroup.length}</b>\n` +
+      `🚶 Left voluntarily: <b>${leftVoluntarily.length}</b>\n` +
+      `🚫 Removed/kicked: <b>${kicked.length}</b>\n\n`;
+
+    if (leftVoluntarily.length > 0) {
+      summary += `<b>🚶 Left voluntarily:</b>\n` +
+        leftVoluntarily.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
+    }
+    if (kicked.length > 0) {
+      summary += `<b>🚫 Removed/kicked:</b>\n` +
+        kicked.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
+    }
+
+    summary += `<b>📋 Subscription expiries last 20 days: ${recentExpiredIds.length}</b>\n`;
+    if (recentExpiredIds.length > 0) {
+      summary += recentExpiredIds.map((id, i) => `${i + 1}. <code>${id}</code>`).join("\n") + "\n\n";
+    }
+    summary += `\nRun <b>/sendlegacyinvites</b> to send invites to everyone not in the group.`;
+
+    // Send in chunks if over Telegram's 4096 char limit
+    const chunks: string[] = [];
+    let current = "";
+    for (const line of summary.split("\n")) {
+      if ((current + "\n" + line).length > 4000) {
+        chunks.push(current);
+        current = line;
+      } else {
+        current += (current ? "\n" : "") + line;
+      }
+    }
+    if (current) chunks.push(current);
+
+    await bot.api.editMessageText(chatId, messageId, chunks[0], { parse_mode: "HTML" });
+    for (let c = 1; c < chunks.length; c++) {
+      await bot.api.sendMessage(chatId, chunks[c], { parse_mode: "HTML" });
+    }
+  } catch (err) {
+    console.error("[removedlast20] crashed:", err);
+    try {
+      await bot.api.editMessageText(chatId, messageId, `${EMOJI.CANCEL} Job crashed. Re-run /removedlast20.`);
+    } catch { /* silent */ }
+  }
+}
+
+export function triggerRemovedLast20(chatId: number, messageId: number) {
+  waitUntil(runRemovedLast20(chatId, messageId));
+}
