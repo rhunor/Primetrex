@@ -276,25 +276,31 @@ export function registerSpecialUserHandlers(bot: Bot<BotContext>) {
           }
         }
 
-        // Check if already has active subscription
-        const existingSub = await BotSubscriber.findOne({
-          userId: userId.toString(),
-          status: "active",
-        });
+        const channels = plan.channels?.length
+          ? plan.channels
+          : [{ channelId: plan.channelId, channelName: plan.channelName }];
 
-        if (!existingSub) {
-          await BotSubscriber.create({
+        for (const channel of channels) {
+          const existingSub = await BotSubscriber.findOne({
             userId: userId.toString(),
-            username,
-            firstName,
-            lastName,
-            planId: plan._id,
-            channelId: plan.channelId,
-            startDate: now,
-            expiryDate,
+            channelId: channel.channelId,
             status: "active",
-            addedBy: "special",
           });
+
+          if (!existingSub) {
+            await BotSubscriber.create({
+              userId: userId.toString(),
+              username,
+              firstName,
+              lastName,
+              planId: plan._id,
+              channelId: channel.channelId,
+              startDate: now,
+              expiryDate,
+              status: "active",
+              addedBy: "special",
+            });
+          }
         }
         hasActiveSub = true;
       }

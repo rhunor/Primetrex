@@ -62,7 +62,7 @@ export async function checkExpiredSubscriptions(): Promise<{
     try {
       await bot.api.sendMessage(
         Number(sub.userId),
-        `\u23F0 Your subscription to <b>${channelName}</b> has expired.\n\n` +
+        `⏰ Your subscription to <b>${channelName}</b> has expired.\n\n` +
           `Tap \u{1F504} Renew to continue access.`,
         { parse_mode: "HTML" }
       );
@@ -70,7 +70,7 @@ export async function checkExpiredSubscriptions(): Promise<{
       // User may have blocked bot
     }
 
-    // Email notification — look up web user by Telegram ID
+    // Email notification
     const webUser = await User.findOne({ telegramId: sub.userId });
     if (webUser?.email && webUser.firstName) {
       sendSubscriptionExpiryReminderEmail({
@@ -85,19 +85,31 @@ export async function checkExpiredSubscriptions(): Promise<{
     expiredCount++;
   }
 
-  // Send reminders for subscriptions expiring in 3 days
-  const threeDaysFromNow = new Date(
-    now.getTime() + 3 * 24 * 60 * 60 * 1000
-  );
+  // Send reminders at 7, 3, and 1 day before expiry — active tracked channels only
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const soonExpiring = await BotSubscriber.find({
     status: "active",
-    expiryDate: { $gte: now, $lte: threeDaysFromNow },
+    channelId: { $ne: LEGACY_CHANNEL_ID },
+    expiryDate: { $gte: now, $lte: sevenDaysFromNow },
   }).populate("planId");
 
+  // One reminder per user — pick their earliest-expiring record to avoid
+  // duplicate messages when a user has records across multiple channels
+  const userReminderMap = new Map<string, (typeof soonExpiring)[0]>();
   for (const sub of soonExpiring) {
+    const existing = userReminderMap.get(sub.userId);
+    if (!existing || sub.expiryDate < existing.expiryDate) {
+      userReminderMap.set(sub.userId, sub);
+    }
+  }
+
+  for (const sub of userReminderMap.values()) {
     const daysLeft = Math.ceil(
       (sub.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
+
+    // Only fire at specific milestones — prevents daily spam across the 7-day window
+    if (![7, 3, 1].includes(daysLeft)) continue;
 
     const plan = sub.planId as unknown as InstanceType<typeof Plan>;
     const channelName = plan?.channelName || "the channel";
@@ -106,7 +118,7 @@ export async function checkExpiredSubscriptions(): Promise<{
     try {
       await bot.api.sendMessage(
         Number(sub.userId),
-        `\u23F3 Your subscription to <b>${channelName}</b> expires in <b>${daysLeft} day(s)</b>.\n\n` +
+        `⏳ Your Primetrex subscription expires in <b>${daysLeft} day(s)</b>.\n\n` +
           `Tap \u{1F504} Renew to avoid losing access.`,
         { parse_mode: "HTML" }
       );
@@ -114,7 +126,7 @@ export async function checkExpiredSubscriptions(): Promise<{
       // Silent fail
     }
 
-    // Email notification — look up web user by Telegram ID
+    // Email notification
     const webUser = await User.findOne({ telegramId: sub.userId });
     if (webUser?.email && webUser.firstName) {
       sendSubscriptionExpiryReminderEmail({
