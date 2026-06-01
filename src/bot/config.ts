@@ -22,4 +22,9 @@ export const botConfig = {
 
   // Cron secret
   cronSecret: process.env.CRON_SECRET || "",
+
+  // Averis Academy integration
+  averisAppUrl: process.env.AVERIS_APP_URL || "https://app.averisacademy.com",
+  averisGroupId: process.env.AVERIS_TELEGRAM_GROUP_ID || "",
+  averisMongoUri: process.env.AVERIS_MONGODB_URI || "",
 } as const;

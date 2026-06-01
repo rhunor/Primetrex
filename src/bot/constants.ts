@@ -122,6 +122,11 @@ export const CALLBACK = {
 
   // Pagination
   PAGE_PREFIX: "page_",
+
+  // Averis Academy
+  AVERIS_MENU: "averis_menu",
+  AVERIS_STATUS: "averis_status",
+  AVERIS_REINVITE: "averis_reinvite",
 } as const;
 
 export const PAGE_SIZE = 5;

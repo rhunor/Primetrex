@@ -25,8 +25,10 @@ import { registerBroadcastHandlers } from "@/bot/handlers/broadcast";
 import { registerRetentionHandlers } from "@/bot/handlers/retention";
 import { registerPaymentHandlers } from "@/bot/handlers/payment";
 import { registerAffiliateHandlers } from "@/bot/handlers/affiliate";
+import { registerAverisHandlers } from "@/bot/handlers/averis/index";
 
 registerStartHandlers(bot);
+registerAverisHandlers(bot);
 registerAdminHandlers(bot);
 registerSubscribeHandlers(bot);
 registerAddSubscriberHandlers(bot);

@@ -13,6 +13,9 @@ export function mainMenuKeyboard(isAdmin: boolean, isLinked: boolean): InlineKey
     .text(`${EMOJI.HELP} Help`, CALLBACK.HELP)
     .row();
 
+  kb.text(`\u{1F393} Averis Academy`, CALLBACK.AVERIS_MENU)
+    .row();
+
   if (isLinked) {
     kb.text(`${EMOJI.AFFILIATE} Get Affiliate Link`, CALLBACK.AFFILIATE)
       .row()

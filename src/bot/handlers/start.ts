@@ -8,6 +8,7 @@ import { showSubscriptionSummary } from "@/bot/handlers/subscribe";
 import { activateSubscription } from "@/bot/services/subscription";
 import { verifyPayment } from "@/bot/services/korapay";
 import { generateInviteLink } from "@/bot/services/invite";
+import { handleAverisJoin } from "@/bot/services/averis/groupManager";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Plan from "@/models/Plan";
@@ -129,6 +130,29 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
 
     if (typeof payload === "string" && payload.startsWith("link_")) {
       await handleStartLink(ctx, payload.replace("link_", ""));
+      return;
+    }
+
+    // Averis Academy deep link: averis_link_{referralCode}
+    if (typeof payload === "string" && payload.startsWith("averis_link_")) {
+      const referralCode = payload.replace("averis_link_", "");
+      const telegramId = ctx.from!.id.toString();
+      const firstName = ctx.from?.first_name || "there";
+
+      await ctx.reply(
+        `${EMOJI.HOURGLASS} <b>Connecting your Averis Academy account...</b>`,
+        { parse_mode: "HTML" }
+      );
+
+      const result = await handleAverisJoin(telegramId, firstName, referralCode);
+
+      if (!result.success) {
+        await ctx.reply(
+          `${EMOJI.WARNING} <b>Could not connect account</b>\n\n${result.message}\n\nNeed help? Contact support.`,
+          { parse_mode: "HTML" }
+        );
+      }
+      // Success message is already sent by handleAverisJoin as a DM
       return;
     }
 
