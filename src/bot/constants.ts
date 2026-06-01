@@ -126,6 +126,7 @@ export const CALLBACK = {
   // Averis Academy
   AVERIS_MENU: "averis_menu",
   AVERIS_STATUS: "averis_status",
+  AVERIS_RENEW: "averis_renew",
   AVERIS_REINVITE: "averis_reinvite",
 } as const;
 
