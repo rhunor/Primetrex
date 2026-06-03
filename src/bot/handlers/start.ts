@@ -1,79 +1,53 @@
-import { Keyboard, InlineKeyboard } from "grammy";
-import { botConfig } from "@/bot/config";
 import type { BotContext } from "@/bot/context";
 import { EMOJI, CALLBACK } from "@/bot/constants";
 import { mainMenuKeyboard, helpKeyboard } from "@/bot/keyboards/inline";
-import { isAdmin } from "@/bot/middleware/auth";
-import { showSubscriptionSummary } from "@/bot/handlers/subscribe";
-import { activateSubscription } from "@/bot/services/subscription";
-import { verifyPayment } from "@/bot/services/korapay";
-import { generateInviteLink } from "@/bot/services/invite";
-import { handleAverisJoin } from "@/bot/services/averis/groupManager";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
-import Plan from "@/models/Plan";
-import BotPayment from "@/models/BotPayment";
-import BotSubscriber from "@/models/BotSubscriber";
-import Transaction from "@/models/Transaction";
-import { notifyCommissionEarned } from "@/lib/notifications";
-import { siteConfig } from "@/config/site";
+import { handleAverisJoin, getAverisStatus } from "@/bot/services/averis/groupManager";
 
-const replyKeyboard = new Keyboard()
-  .text("\u2261 Main Menu")
-  .text(`${EMOJI.SUBSCRIBE} Subscribe`)
-  .resized()
-  .persistent();
+const AVERIS_APP_URL = process.env.AVERIS_APP_URL || "https://app.averisacademy.com";
+
+const WELCOME_TEXT =
+  `${EMOJI.WAVE} <b>Welcome to Averis Academy!</b>\n\n` +
+  `Averis Academy is Africa's #1 wealth creation platform — we help you build real income selling digital products online, then invest that income to build generational wealth.\n\n` +
+  `<b>Here's what I can help you with:</b>\n` +
+  `✅ Check your Averis Academy subscription status\n` +
+  `🔄 Renew your subscription when it's expiring\n` +
+  `🔗 Get your invite link to the Averis community\n` +
+  `🔔 Receive automatic reminders before your subscription expires\n\n` +
+  `<b>To get started:</b>\n` +
+  `Purchase your Averis Academy subscription on our website and tap the <b>Join Community via Bot</b> button in your welcome email — it links your account here automatically.\n\n` +
+  `${EMOJI.POINT_DOWN} Use the menu below to manage your account.`;
 
 async function showMainMenu(ctx: BotContext) {
-  const firstName = ctx.from?.first_name || "there";
-  const admin = await isAdmin(ctx);
-
-  await dbConnect();
-  const telegramId = ctx.from?.id.toString();
-  const linkedUser = telegramId
-    ? await User.findOne({ telegramId, telegramLinked: true }).select("_id").lean()
-    : null;
-  const isLinked = !!linkedUser;
-
-  const text =
-    `${EMOJI.WAVE} Hi <b>${firstName}</b>!\n\n` +
-    `Welcome to the official  <b>Primetrex Community Subscription</b> bot.\n\n` +
-    `${EMOJI.ROCKET} <b>Get Premium Access</b>\n\n` +
-    `Subscribe now to unlock exclusive copy trading from Primetrex\n\n` +
-    `${EMOJI.POINT_DOWN} Tap <b>Subscribe</b> below to view available plans.`;
+  const telegramId = ctx.from!.id.toString();
+  const status = await getAverisStatus(telegramId);
+  const hasSubscription = !!(status?.isSubscribed);
 
   if (ctx.callbackQuery) {
-    await ctx.editMessageText(text, {
+    await ctx.editMessageText(WELCOME_TEXT, {
       parse_mode: "HTML",
-      reply_markup: mainMenuKeyboard(admin, isLinked),
+      reply_markup: mainMenuKeyboard(hasSubscription),
     });
   } else {
-    await ctx.reply(text, {
+    await ctx.reply(WELCOME_TEXT, {
       parse_mode: "HTML",
-      reply_markup: mainMenuKeyboard(admin, isLinked),
-    });
-    await ctx.reply(`${EMOJI.POINT_DOWN} Use the menu below for quick access:`, {
-      reply_markup: replyKeyboard,
+      reply_markup: mainMenuKeyboard(hasSubscription),
     });
   }
 }
 
 async function showHelp(ctx: BotContext) {
-  await dbConnect();
-  const plan = await Plan.findOne({ isActive: true });
-
-  const price = plan ? `\u20A6${plan.price.toLocaleString("en-NG")}` : "\u20A650,000";
-  const renewalPrice = plan
-    ? `\u20A6${plan.renewalPrice.toLocaleString("en-NG")}`
-    : "\u20A635,000";
-  const planName = plan?.name || "Primetrex";
-
   const text =
-    `${EMOJI.HELP} <b>Help</b>\n\n` +
-    `\u2022 Tap subscribe for ${planName} first payment of ${price} if you want to make first payment\n` +
-    `\u2022 Tap renew to make a renewal payment of ${renewalPrice} if you want to renew your subscription\n` +
-    `\u2022 If you paid already, tap <b>I've Paid</b> to verify.\n\n` +
-    `If you have issues, contact the channel admin.`;
+    `${EMOJI.HELP} <b>How Averis Academy Bot Works</b>\n\n` +
+    `<b>1. Subscribe on the website</b>\n` +
+    `Go to <a href="${AVERIS_APP_URL}">${AVERIS_APP_URL}</a> to purchase your subscription.\n\n` +
+    `<b>2. Connect your account</b>\n` +
+    `Tap the <b>Join Community via Bot</b> button in your welcome email to link your Averis account to this bot.\n\n` +
+    `<b>3. Join the community</b>\n` +
+    `The bot verifies your payment and sends you a single-use invite link to the Averis Academy community group.\n\n` +
+    `<b>4. Renewal reminders</b>\n` +
+    `You'll get automatic reminders 30, 15, 7 and 3 days before your subscription expires so you never lose access.\n\n` +
+    `<b>Renewal price:</b> ₦30,000 for another 6 months\n\n` +
+    `Need help? Contact support: <a href="https://wa.me/2348085300040">WhatsApp</a>`;
 
   if (ctx.callbackQuery) {
     await ctx.editMessageText(text, {
@@ -88,52 +62,11 @@ async function showHelp(ctx: BotContext) {
   }
 }
 
-async function handleStartLink(ctx: BotContext, referralCode: string) {
-  await dbConnect();
-  const telegramUserId = ctx.from!.id.toString();
-
-  const user = await User.findOne({ referralCode });
-  if (!user) {
-    await ctx.reply("Invalid link. Please check your referral code and try again.");
-    return;
-  }
-
-  if (user.telegramLinked && user.telegramId !== telegramUserId) {
-    await ctx.reply(
-      "This account is already linked to a different Telegram user."
-    );
-    return;
-  }
-
-  user.telegramId = telegramUserId;
-  user.telegramLinked = true;
-  await user.save();
-
-  const subscribeUrl = `${botConfig.appUrl}/dashboard/bot-subscribe`;
-  await ctx.reply(
-    `<b>Account Linked Successfully!</b>\n\n` +
-      `Name: ${user.firstName} ${user.lastName}\n` +
-      `Email: ${user.email}\n\n` +
-      `${EMOJI.POINT_DOWN} Tap below to complete your first subscription payment. Your channel invite link will be sent here once payment is confirmed.`,
-    {
-      parse_mode: "HTML",
-      reply_markup: new InlineKeyboard()
-        .url(`${EMOJI.LINK} Subscribe on Website`, subscribeUrl),
-    }
-  );
-}
-
 export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
-  // /start command
   bot.command("start", async (ctx) => {
     const payload = ctx.match;
 
-    if (typeof payload === "string" && payload.startsWith("link_")) {
-      await handleStartLink(ctx, payload.replace("link_", ""));
-      return;
-    }
-
-    // Averis Academy deep link: averis_link_{referralCode}
+    // Averis deep link: averis_link_{referralCode}
     if (typeof payload === "string" && payload.startsWith("averis_link_")) {
       const referralCode = payload.replace("averis_link_", "");
       const telegramId = ctx.from!.id.toString();
@@ -148,211 +81,49 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
 
       if (!result.success) {
         await ctx.reply(
-          `${EMOJI.WARNING} <b>Could not connect account</b>\n\n${result.message}\n\nNeed help? Contact support.`,
+          `${EMOJI.WARNING} <b>Could not connect account</b>\n\n${result.message}\n\nNeed help? Contact <a href="https://wa.me/2348085300040">support</a>.`,
           { parse_mode: "HTML" }
         );
       }
-      // Success message is already sent by handleAverisJoin as a DM
-      return;
-    }
-
-    // Handle payment success deep link
-    if (typeof payload === "string" && payload.startsWith("payment_success_")) {
-      const txRef = payload.replace("payment_success_", "");
-
-      await ctx.reply(
-        `${EMOJI.HOURGLASS} <b>Verifying your payment...</b>`,
-        { parse_mode: "HTML" }
-      );
-
-      try {
-        await dbConnect();
-
-        const payment = await BotPayment.findOne({ paymentRef: txRef });
-
-        if (!payment) {
-          await ctx.reply(
-            `${EMOJI.WARNING} <b>Reference Not Found</b>\n\n` +
-              `We could not find this payment reference. Please use the ` +
-              `"I've Paid" button and enter your transaction reference manually.`,
-            { parse_mode: "HTML" }
-          );
-          return;
-        }
-
-        if (payment.status === "successful") {
-          // Already activated — send a fresh invite link
-          const plan = await Plan.findById(payment.planId);
-          if (plan) {
-            try {
-              const inviteLink = await generateInviteLink(plan.channelId);
-              await ctx.reply(
-                `${EMOJI.SUCCESS} <b>Subscription Active!</b>\n\n` +
-                  `Here is your access link to <b>${plan.channelName}</b>:\n` +
-                  `${inviteLink}\n\n` +
-                  `${EMOJI.WARNING} <i>This link expires in 24 hours and can only be used once. Join now!</i>`,
-                { parse_mode: "HTML" }
-              );
-            } catch {
-              await ctx.reply(
-                `${EMOJI.SUCCESS} <b>Your subscription is active!</b>\n\n` +
-                  `Please contact the admin to get your invite link.`,
-                { parse_mode: "HTML" }
-              );
-            }
-          }
-          return;
-        }
-
-        // Verify with Korapay
-        const result = await verifyPayment(txRef);
-
-        if (!result.status || result.data?.status !== "success") {
-          await ctx.reply(
-            `${EMOJI.CANCEL} <b>Payment Not Confirmed Yet</b>\n\n` +
-              `Your payment may still be processing. Please wait a minute and ` +
-              `try again, or use the "I've Paid" button to verify manually.`,
-            { parse_mode: "HTML" }
-          );
-          return;
-        }
-
-        // Store the Korapay payment reference
-        await BotPayment.updateOne(
-          { paymentRef: txRef },
-          { flwRef: result.data.payment_reference ?? txRef }
-        );
-
-        // Activate: creates BotSubscriber + sends invite link DM
-        const activation = await activateSubscription(txRef);
-
-        if (!activation.success) {
-          await ctx.reply(
-            `${EMOJI.CANCEL} Activation issue: ${activation.message}\n\nPlease contact support.`,
-            { parse_mode: "HTML" }
-          );
-          return;
-        }
-
-        // Track commissions
-        const paidAmount = payment.amount;
-        const webUser = await User.findOne({ telegramId: payment.userId });
-
-        const existingComm = await Transaction.findOne({
-          paymentReference: txRef,
-          type: "commission",
-        });
-
-        if (webUser?.referredBy && !existingComm) {
-          const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
-          await Transaction.create({
-            userId: webUser.referredBy,
-            type: "commission",
-            amount: tier1Amount,
-            tier: 1,
-            status: "completed",
-            sourceUserId: webUser._id,
-            paymentReference: txRef,
-            description: `Tier 1 commission from ${webUser.firstName} ${webUser.lastName} (subscription)`,
-          });
-          notifyCommissionEarned(
-            webUser.referredBy,
-            tier1Amount,
-            1,
-            `${webUser.firstName} ${webUser.lastName}`
-          ).catch(() => {});
-
-          const tier1Referrer = await User.findById(webUser.referredBy);
-          if (tier1Referrer?.referredBy) {
-            const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
-            await Transaction.create({
-              userId: tier1Referrer.referredBy,
-              type: "commission",
-              amount: tier2Amount,
-              tier: 2,
-              status: "completed",
-              sourceUserId: webUser._id,
-              paymentReference: `${txRef}-t2`,
-              description: `Tier 2 commission from ${webUser.firstName} ${webUser.lastName} (subscription)`,
-            });
-            notifyCommissionEarned(
-              tier1Referrer.referredBy,
-              tier2Amount,
-              2,
-              `${webUser.firstName} ${webUser.lastName}`
-            ).catch(() => {});
-          }
-        } else if (!webUser && payment.referralCode && !existingComm) {
-          const referrer = await User.findOne({ referralCode: payment.referralCode });
-          if (referrer) {
-            const tier1Amount = paidAmount * (siteConfig.commission.subscriptionRate / 100);
-            await Transaction.create({
-              userId: referrer._id,
-              type: "commission",
-              amount: tier1Amount,
-              tier: 1,
-              status: "completed",
-              sourceUserId: null,
-              paymentReference: txRef,
-              description: `Tier 1 commission from Telegram subscriber (ref: ${payment.referralCode})`,
-            });
-            notifyCommissionEarned(
-              referrer._id,
-              tier1Amount,
-              1,
-              "a Telegram subscriber"
-            ).catch(() => {});
-
-            if (referrer.referredBy) {
-              const tier2Amount = paidAmount * (siteConfig.commission.tier2Rate / 100);
-              await Transaction.create({
-                userId: referrer.referredBy,
-                type: "commission",
-                amount: tier2Amount,
-                tier: 2,
-                status: "completed",
-                sourceUserId: null,
-                paymentReference: `${txRef}-t2`,
-                description: `Tier 2 commission from Telegram subscriber (ref: ${payment.referralCode})`,
-              });
-              notifyCommissionEarned(
-                referrer.referredBy,
-                tier2Amount,
-                2,
-                "a Telegram subscriber"
-              ).catch(() => {});
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Payment success handler error:", error);
-        await ctx.reply(
-          `${EMOJI.CANCEL} Something went wrong. Please use the "I've Paid" button to verify your payment.`,
-          { parse_mode: "HTML" }
-        );
-      }
-      return;
-    }
-
-    if (typeof payload === "string" && payload === "payment_failed") {
-      await ctx.reply(
-        `${EMOJI.CANCEL} Payment was not completed. Please try again.`,
-        { parse_mode: "HTML" }
-      );
+      // On success, handleAverisJoin already sent the invite DM
       return;
     }
 
     await showMainMenu(ctx);
   });
 
-  // /help command
   bot.command("help", showHelp);
 
+  bot.command("status", async (ctx) => {
+    const telegramId = ctx.from!.id.toString();
+    const status = await getAverisStatus(telegramId);
 
-  // "Main Menu" text from reply keyboard — regex avoids Android Unicode encoding issues
-  bot.hears(/Main Menu/i, showMainMenu);
-  bot.hears(/Subscribe/i, async (ctx) => {
-    await showSubscriptionSummary(ctx, false);
+    if (!status?.isSubscribed) {
+      await ctx.reply(
+        `\u{1F534} <b>No Active Subscription</b>\n\n` +
+          `Your Telegram account is not linked to an active Averis Academy subscription.\n\n` +
+          `Subscribe at <a href="${AVERIS_APP_URL}">${AVERIS_APP_URL}</a> then use the link in your welcome email to connect here.`,
+        { parse_mode: "HTML" }
+      );
+      return;
+    }
+
+    const expiryStr = status.expiryDate!.toLocaleDateString("en-NG", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+    const daysLeft = status.daysLeft!;
+    const urgency = daysLeft <= 3 ? "\u{1F534}" : daysLeft <= 15 ? "⚠️" : "\u{1F7E2}";
+
+    await ctx.reply(
+      `${urgency} <b>Subscription Active</b>\n\n` +
+        `Hi <b>${status.firstName}</b>!\n\n` +
+        `Expires: <b>${expiryStr}</b>\n` +
+        `Days left: <b>${daysLeft} day${daysLeft === 1 ? "" : "s"}</b>\n\n` +
+        (daysLeft <= 30
+          ? `<a href="${AVERIS_APP_URL}/dashboard/subscription">Renew for ₦30,000 →</a>`
+          : `Keep sharing your affiliate link to earn commissions!`),
+      { parse_mode: "HTML" }
+    );
   });
 
   // Callback: main_menu
@@ -365,11 +136,5 @@ export function registerStartHandlers(bot: import("grammy").Bot<BotContext>) {
   bot.callbackQuery(CALLBACK.HELP, async (ctx) => {
     await ctx.answerCallbackQuery();
     await showHelp(ctx);
-  });
-
-  // Callback: admin_exit (back to main menu from admin)
-  bot.callbackQuery(CALLBACK.ADMIN_EXIT, async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await showMainMenu(ctx);
   });
 }

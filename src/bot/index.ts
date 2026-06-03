@@ -2,58 +2,47 @@ import { Bot, session, webhookCallback } from "grammy";
 import type { BotContext, SessionData } from "@/bot/context";
 import { botConfig } from "@/bot/config";
 
-// Create bot instance
 const bot = new Bot<BotContext>(botConfig.token);
 
-// Session middleware (in-memory)
 bot.use(
   session({
     initial: (): SessionData => ({}),
   })
 );
 
-// Register handlers (order matters — specific handlers before generic ones)
+// ── Active handlers: Averis Academy ──────────────────────────────────────────
 import { registerStartHandlers } from "@/bot/handlers/start";
-import { registerAdminHandlers } from "@/bot/handlers/admin";
-import { registerSubscribeHandlers } from "@/bot/handlers/subscribe";
-import { registerAddSubscriberHandlers } from "@/bot/handlers/addSubscriber";
-import { registerSubscriberHandlers } from "@/bot/handlers/subscribers";
-import { registerSpecialUserHandlers } from "@/bot/handlers/specialUsers";
-import { registerCouponHandlers } from "@/bot/handlers/coupons";
-import { registerAnalyticsHandlers } from "@/bot/handlers/analytics";
-import { registerBroadcastHandlers } from "@/bot/handlers/broadcast";
-import { registerRetentionHandlers } from "@/bot/handlers/retention";
-import { registerPaymentHandlers } from "@/bot/handlers/payment";
-import { registerAffiliateHandlers } from "@/bot/handlers/affiliate";
 import { registerAverisHandlers } from "@/bot/handlers/averis/index";
 
 registerStartHandlers(bot);
 registerAverisHandlers(bot);
-registerAdminHandlers(bot);
-registerSubscribeHandlers(bot);
-registerAddSubscriberHandlers(bot);
-registerSubscriberHandlers(bot);
-registerSpecialUserHandlers(bot);
-registerCouponHandlers(bot);
-registerAnalyticsHandlers(bot);
-registerBroadcastHandlers(bot);
-registerRetentionHandlers(bot);
-registerPaymentHandlers(bot);
-registerAffiliateHandlers(bot);
 
-// Set up bot commands and menu button (runs once, idempotent)
+// ── Primetrex handlers are preserved in their files for easy re-activation ───
+// To re-enable, uncomment the imports + registrations below:
+//
+// import { registerAdminHandlers }       from "@/bot/handlers/admin";
+// import { registerSubscribeHandlers }   from "@/bot/handlers/subscribe";
+// import { registerAddSubscriberHandlers } from "@/bot/handlers/addSubscriber";
+// import { registerSubscriberHandlers }  from "@/bot/handlers/subscribers";
+// import { registerSpecialUserHandlers } from "@/bot/handlers/specialUsers";
+// import { registerCouponHandlers }      from "@/bot/handlers/coupons";
+// import { registerAnalyticsHandlers }   from "@/bot/handlers/analytics";
+// import { registerBroadcastHandlers }   from "@/bot/handlers/broadcast";
+// import { registerRetentionHandlers }   from "@/bot/handlers/retention";
+// import { registerPaymentHandlers }     from "@/bot/handlers/payment";
+// import { registerAffiliateHandlers }   from "@/bot/handlers/affiliate";
+
+// Set bot commands
 let commandsSet = false;
 async function setupBotCommands() {
   if (commandsSet) return;
   try {
     await bot.api.setMyCommands([
-      { command: "start", description: "Open the main menu" },
-      { command: "help", description: "How to subscribe" },
-      { command: "status", description: "Check your account status" },
+      { command: "start", description: "Welcome to Averis Academy" },
+      { command: "help", description: "How the bot works" },
+      { command: "status", description: "Check your subscription" },
     ]);
-    await bot.api.setChatMenuButton({
-      menu_button: { type: "commands" },
-    });
+    await bot.api.setChatMenuButton({ menu_button: { type: "commands" } });
     commandsSet = true;
   } catch (err) {
     console.error("Failed to set bot commands:", err);
@@ -61,11 +50,9 @@ async function setupBotCommands() {
 }
 if (botConfig.token && process.env.NEXT_PHASE !== "phase-production-build") setupBotCommands();
 
-// Error handler
 bot.catch((err) => {
   console.error("Bot error:", err);
 });
 
-// Export bot instance and webhook handler
 export { bot };
 export const handleUpdate = webhookCallback(bot, "std/http");

@@ -1,7 +1,7 @@
 export const EMOJI = {
   // Menu & Navigation
   ADMIN_PANEL: "\u{1F527}",
-  ADD_SUBSCRIBER: "\u2795",
+  ADD_SUBSCRIBER: "➕",
   COUPONS: "\u{1F3AB}",
   SUBSCRIBERS: "\u{1F465}",
   CHANNELS: "\u{1F5A5}",
@@ -10,22 +10,22 @@ export const EMOJI = {
   ANALYTICS: "\u{1F4CA}",
   BROADCAST: "\u{1F4E2}",
   HOME: "\u{1F3E0}",
-  BACK: "\u2B05\uFE0F",
-  NEXT: "\u25B6\uFE0F",
+  BACK: "⬅️",
+  NEXT: "▶️",
   SEARCH: "\u{1F50D}",
 
   // Actions
   SUBSCRIBE: "\u{1F4B3}",
   RENEW: "\u{1F504}",
-  PAID: "\u2705",
-  HELP: "\u2139\uFE0F",
-  CANCEL: "\u274C",
-  CONFIG: "\u2699\uFE0F",
+  PAID: "✅",
+  HELP: "ℹ️",
+  CANCEL: "❌",
+  CONFIG: "⚙️",
 
   // Status
-  SUCCESS: "\u2705",
+  SUCCESS: "✅",
   BLOCKED: "\u{1F6AB}",
-  WARNING: "\u26A0\uFE0F",
+  WARNING: "⚠️",
   ACTIVE: "\u{1F7E2}",
   EXPIRED: "\u{1F534}",
 
@@ -33,15 +33,15 @@ export const EMOJI = {
   WAVE: "\u{1F44B}",
   ROCKET: "\u{1F680}",
   POINT_DOWN: "\u{1F447}",
-  INVITE: "\u2709\uFE0F",
+  INVITE: "✉️",
   PERSON: "\u{1F9D1}",
   FOLDER: "\u{1F4C1}",
   CALENDAR: "\u{1F4C5}",
-  HOURGLASS: "\u231B",
+  HOURGLASS: "⌛",
   TIP: "\u{1F4A1}",
   GIFT: "\u{1F381}",
-  LINK: "\u2197",
-  ARROW: "\u2192",
+  LINK: "↗",
+  ARROW: "→",
   MONEY: "\u{1F4B0}",
   CHART: "\u{1F4C8}",
   MEGAPHONE: "\u{1F4E3}",
@@ -53,15 +53,19 @@ export const EMOJI = {
 } as const;
 
 export const CALLBACK = {
-  // Main menu
+  // Active: Averis Academy
   MAIN_MENU: "main_menu",
+  HELP: "help",
+  AVERIS_MENU: "averis_menu",
+  AVERIS_STATUS: "averis_status",
+  AVERIS_RENEW: "averis_renew",
+  AVERIS_REINVITE: "averis_reinvite",
+
+  // Preserved (Primetrex — not active but kept for safe re-implementation)
   SUBSCRIBE: "subscribe",
   RENEW: "renew",
   PAID: "ive_paid",
-  HELP: "help",
   AFFILIATE: "affiliate",
-
-  // Admin
   ADMIN_PANEL: "admin_panel",
   ADMIN_ADD_SUB: "admin_add_sub",
   ADMIN_COUPONS: "admin_coupons",
@@ -72,62 +76,36 @@ export const CALLBACK = {
   ADMIN_ANALYTICS: "admin_analytics",
   ADMIN_BROADCAST: "admin_broadcast",
   ADMIN_EXIT: "admin_exit",
-
-  // Subscribers
   SUB_NEXT: "sub_next",
   SUB_PREV: "sub_prev",
   SUB_SEARCH: "sub_search",
   SUB_BACK: "sub_back",
-
-  // Special users
   SPECIAL_LIST: "special_list",
   SPECIAL_ADD: "special_add",
   SPECIAL_CONFIG: "special_config",
   SPECIAL_BACK: "special_back",
   SPECIAL_DISCOUNT_FIXED: "special_discount_fixed",
   SPECIAL_DISCOUNT_PERCENT: "special_discount_percent",
-
-  // Coupons
   COUPON_LIST: "coupon_list",
   COUPON_CREATE: "coupon_create",
   COUPON_BACK: "coupon_back",
-
-  // Channels
   ADMIN_CH_EDIT_ID: "admin_ch_edit_id",
   ADMIN_CH_EDIT_NAME: "admin_ch_edit_name",
   ADMIN_CH_EDIT_PRICE: "admin_ch_edit_price",
   ADMIN_CH_EDIT_RENEWAL: "admin_ch_edit_renewal",
-
-  // Broadcast
   BROADCAST_SEND: "broadcast_send",
   BROADCAST_CANCEL: "broadcast_cancel",
   BROADCAST_TARGET_ALL: "broadcast_target_all",
   BROADCAST_TARGET_CHANNEL: "broadcast_target_channel",
   BROADCAST_TARGET_DM: "broadcast_target_dm",
-
-  // Retention
   ADMIN_RETENTION: "admin_retention",
-
-  // Payment
   PAY_KORAPAY: "pay_korapay",
   PAY_CANCEL: "pay_cancel",
-
-  // Coupon (user payment flow)
   PAYMENT_COUPON_YES: "payment_coupon_yes",
   PAYMENT_COUPON_SKIP: "payment_coupon_skip",
   PAYMENT_COUPON_RETRY: "payment_coupon_retry",
-
-  // Plan selection (dynamic)
   PLAN_PREFIX: "plan_",
-
-  // Pagination
   PAGE_PREFIX: "page_",
-
-  // Averis Academy
-  AVERIS_MENU: "averis_menu",
-  AVERIS_STATUS: "averis_status",
-  AVERIS_RENEW: "averis_renew",
-  AVERIS_REINVITE: "averis_reinvite",
 } as const;
 
 export const PAGE_SIZE = 5;

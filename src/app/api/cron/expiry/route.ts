@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkExpiredSubscriptions } from "@/bot/services/expiry";
 import { checkAverisExpiry } from "@/bot/services/averis/groupManager";
+
+// Primetrex expiry check preserved — re-enable by importing checkExpiredSubscriptions
+// from "@/bot/services/expiry" and adding it back to the Promise.allSettled call
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -9,18 +11,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [primetrex, averis] = await Promise.allSettled([
-      checkExpiredSubscriptions(),
-      process.env.AVERIS_MONGODB_URI
-        ? checkAverisExpiry()
-        : Promise.resolve({ expired: 0, reminders: 0 }),
-    ]);
+    const result = process.env.AVERIS_MONGODB_URI
+      ? await checkAverisExpiry()
+      : { expired: 0, reminders: 0 };
 
-    return NextResponse.json({
-      primetrex: primetrex.status === "fulfilled" ? primetrex.value : { error: String(primetrex.reason) },
-      averis: averis.status === "fulfilled" ? averis.value : { error: String(averis.reason) },
-      timestamp: new Date().toISOString(),
-    });
+    return NextResponse.json({ averis: result, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error("Expiry cron error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
