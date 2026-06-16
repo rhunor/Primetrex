@@ -26,5 +26,6 @@ export const botConfig = {
   // Averis Academy integration
   averisAppUrl: process.env.AVERIS_APP_URL || "https://app.averisacademy.com",
   averisGroupId: process.env.AVERIS_TELEGRAM_GROUP_ID || "",
+  averisChannelId: process.env.AVERIS_TELEGRAM_CHANNEL_ID || "",
   averisMongoUri: process.env.AVERIS_MONGODB_URI || "",
 } as const;

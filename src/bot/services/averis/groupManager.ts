@@ -3,6 +3,7 @@ import { getAverisSubscriberModel } from "@/models/averis/AverisSubscriberModel"
 import { getAverisUserModel } from "@/models/averis/AverisUserModel";
 
 const GROUP_ID = process.env.AVERIS_TELEGRAM_GROUP_ID!;
+const CHANNEL_ID = process.env.AVERIS_TELEGRAM_CHANNEL_ID || "";
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -10,6 +11,14 @@ function sleep(ms: number) {
 
 export async function generateAverisInviteLink(): Promise<string> {
   const invite = await bot.api.createChatInviteLink(Number(GROUP_ID), {
+    member_limit: 1,
+  });
+  return invite.invite_link;
+}
+
+export async function generateAverisChannelInviteLink(): Promise<string | null> {
+  if (!CHANNEL_ID) return null;
+  const invite = await bot.api.createChatInviteLink(Number(CHANNEL_ID), {
     member_limit: 1,
   });
   return invite.invite_link;
@@ -26,7 +35,7 @@ export async function removeFromAverisGroup(telegramId: string): Promise<void> {
  */
 export async function handleAverisJoin(
   telegramId: string,
-  telegramFirstName: string,
+  _telegramFirstName: string,
   referralCode: string
 ): Promise<{ success: boolean; message: string; inviteLink?: string }> {
   const AverisUser = await getAverisUserModel();
@@ -37,7 +46,7 @@ export async function handleAverisJoin(
     return { success: false, message: "No Averis Academy account found for this referral code. Please ensure you have registered and paid." };
   }
 
-  if (!user.isActive || !user.hasPaidSignup) {
+  if (!user.isActive) {
     return { success: false, message: "Your Averis Academy subscription is not active yet. Please complete your payment first." };
   }
 
@@ -75,19 +84,31 @@ export async function handleAverisJoin(
     });
   }
 
-  // Generate invite link and send DM
+  // Generate community group + announcement channel invite links and send DM
   try {
-    const inviteLink = await generateAverisInviteLink();
-    await bot.api.sendMessage(
-      Number(telegramId),
+    const [groupLink, channelLink] = await Promise.all([
+      generateAverisInviteLink(),
+      generateAverisChannelInviteLink(),
+    ]);
+
+    const expiryStr = expiryDate.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
+
+    let message =
       `✅ <b>Welcome to Averis Academy!</b>\n\n` +
-        `Hi <b>${user.firstName}</b>! Your subscription has been confirmed.\n\n` +
-        `\u{1F4AC} Join the Averis Academy Community here:\n${inviteLink}\n\n` +
-        `⚠️ This link is single-use. Join now before it expires!\n\n` +
-        `Your subscription is active until <b>${expiryDate.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}</b>.`,
-      { parse_mode: "HTML" }
-    );
-    return { success: true, message: "Joined successfully.", inviteLink };
+      `Hi <b>${user.firstName}</b>! Your subscription has been confirmed.\n\n` +
+      `\u{1F4AC} <b>Step 1 — Join the Community Group:</b>\n${groupLink}\n\n`;
+
+    if (channelLink) {
+      message +=
+        `\u{1F4E2} <b>Step 2 — Join the Announcement Channel:</b>\n${channelLink}\n\n`;
+    }
+
+    message +=
+      `⚠️ These links are single-use. Join both now before they expire!\n\n` +
+      `Your subscription is active until <b>${expiryStr}</b>.`;
+
+    await bot.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
+    return { success: true, message: "Joined successfully.", inviteLink: groupLink };
   } catch {
     return { success: true, message: "Account linked but invite DM failed — please tap the button above to get your invite link." };
   }
